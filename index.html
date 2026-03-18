@@ -11,8 +11,72 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <main class="app-shell">
-    <aside class="panel side-nav">
+  <main class="show-shell">
+    <header class="show-header panel">
+      <div class="show-header-main">
+        <p class="eyebrow">GAME SHOW LIVE</p>
+        <h1 class="show-main-title" data-show-title>PLACEHOLDER: GameShow Season 1</h1>
+      </div>
+      <div class="show-screen-nav" aria-label="Show flow">
+        <button class="show-screen-btn is-active" type="button" data-show-screen-target="home-intro">Home / Show Intro</button>
+        <button class="show-screen-btn" type="button" data-show-screen-target="game-intro">Game Intro</button>
+        <button class="show-screen-btn" type="button" data-show-screen-target="live-round">Live Round</button>
+        <button class="show-screen-btn" type="button" data-show-screen-target="result-reveal">Result Reveal</button>
+        <button class="show-screen-btn" type="button" data-show-screen-target="leaderboard">Leaderboard</button>
+        <button class="show-screen-btn" type="button" data-show-screen-target="end-screen">End Screen</button>
+      </div>
+      <div class="show-header-actions">
+        <button id="hostPanelToggleBtn" class="primary-btn" type="button">Host Controls</button>
+      </div>
+    </header>
+
+    <section class="show-stage panel">
+      <div class="show-stage-meta">
+        <div class="show-pill">
+          <span class="show-pill-label">Game</span>
+          <span id="showStageGameLabel" class="show-pill-value">Trivia de grup</span>
+        </div>
+        <div class="show-pill">
+          <span class="show-pill-label">Round</span>
+          <span id="showStageRoundLabel" class="show-pill-value">1</span>
+        </div>
+        <div class="show-pill">
+          <span class="show-pill-label">Timer</span>
+          <span id="showStageTimer" class="show-pill-value">01:00</span>
+        </div>
+      </div>
+
+      <div class="show-team-grid">
+        <article class="show-team-card">
+          <p class="show-team-name" data-team-name="teamA">Team 1</p>
+          <p class="show-team-money" data-team-money="teamA">$1,000</p>
+          <p class="show-team-active" id="showActivePlayersTeamA">Active: none</p>
+        </article>
+        <article class="show-team-card">
+          <p class="show-team-name" data-team-name="teamB">Team 2</p>
+          <p class="show-team-money" data-team-money="teamB">$1,000</p>
+          <p class="show-team-active" id="showActivePlayersTeamB">Active: none</p>
+        </article>
+      </div>
+
+      <article class="show-main-card">
+        <h2 id="showScreenTitle">Home / Show Intro</h2>
+        <div id="showScreenContent" class="show-screen-content"></div>
+      </article>
+
+      <article class="show-result-card">
+        <h3>Latest Result</h3>
+        <p id="showLatestResult" class="show-latest-result">PLACEHOLDER: Nu exista rezultat aplicat inca.</p>
+      </article>
+    </section>
+
+    <div id="hostPanelOverlay" class="host-panel-overlay" aria-hidden="true"></div>
+
+    <aside id="hostDrawer" class="panel side-nav host-drawer">
+      <div class="host-drawer-top">
+        <p class="eyebrow">HOST CONTROLS</p>
+        <button id="hostPanelCloseBtn" class="secondary-btn" type="button">Close</button>
+      </div>
       <p class="eyebrow">HOST DASHBOARD</p>
       <h1 data-show-title>PLACEHOLDER: GameShow Season 1</h1>
       <p class="muted">Architecture-first static control app with local autosave.</p>
@@ -40,7 +104,7 @@
       <p id="saveStatus" class="muted status-inline">Not saved yet.</p>
     </aside>
 
-    <section class="content-stack">
+    <section id="hostWorkspace" class="content-stack host-workspace">
       <section class="panel page-section is-active" data-section="home">
         <div class="section-title-row">
           <h2>Home / Control Center</h2>

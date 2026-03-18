@@ -22,6 +22,15 @@ const SECTION_IDS = [
   "settings"
 ];
 
+const SHOW_SCREEN_IDS = [
+  "home-intro",
+  "game-intro",
+  "live-round",
+  "result-reveal",
+  "leaderboard",
+  "end-screen"
+];
+
 const GAME_CONFIG = [
   { id: "trivia", label: "Trivia de grup", section: "trivia", maxBetPercent: 10 },
   { id: "guess-right-order", label: "Guess the Right Order", section: "manual-match", maxBetPercent: 10 },
@@ -247,6 +256,10 @@ const LEGACY_SECTION_NOTES = {
 
 const DEFAULT_STATE = {
   activeSection: "home",
+  showUi: {
+    activeScreen: "home-intro",
+    hostPanelOpen: false
+  },
   settings: {
     showTitle: "PLACEHOLDER: GameShow Season 1",
     hostName: "PLACEHOLDER: Host Name",
@@ -361,6 +374,7 @@ const DEFAULT_STATE = {
 };
 
 const elements = {
+  showScreenButtons: Array.from(document.querySelectorAll("[data-show-screen-target]")),
   navButtons: Array.from(document.querySelectorAll("[data-section-target]")),
   quickOpenSectionButtons: Array.from(document.querySelectorAll("[data-open-section]")),
   quickOpenGameButtons: Array.from(document.querySelectorAll("[data-open-game]")),
@@ -374,6 +388,19 @@ const elements = {
   metricButtons: Array.from(document.querySelectorAll("[data-team][data-metric][data-delta]")),
   leaderByScore: document.getElementById("leaderByScore"),
   leaderByMoney: document.getElementById("leaderByMoney"),
+  hostPanelToggleBtn: document.getElementById("hostPanelToggleBtn"),
+  hostPanelCloseBtn: document.getElementById("hostPanelCloseBtn"),
+  hostPanelOverlay: document.getElementById("hostPanelOverlay"),
+  hostDrawer: document.getElementById("hostDrawer"),
+  hostWorkspace: document.getElementById("hostWorkspace"),
+  showStageGameLabel: document.getElementById("showStageGameLabel"),
+  showStageRoundLabel: document.getElementById("showStageRoundLabel"),
+  showStageTimer: document.getElementById("showStageTimer"),
+  showActivePlayersTeamA: document.getElementById("showActivePlayersTeamA"),
+  showActivePlayersTeamB: document.getElementById("showActivePlayersTeamB"),
+  showScreenTitle: document.getElementById("showScreenTitle"),
+  showScreenContent: document.getElementById("showScreenContent"),
+  showLatestResult: document.getElementById("showLatestResult"),
   roundDuration: document.getElementById("roundDuration"),
   timerDisplay: document.getElementById("timerDisplay"),
   currentGameSelect: document.getElementById("currentGameSelect"),
@@ -1342,6 +1369,10 @@ function sanitizeState(rawState) {
   if (SECTION_IDS.includes(source.activeSection)) {
     clean.activeSection = source.activeSection;
   }
+  if (SHOW_SCREEN_IDS.includes(source.showUi?.activeScreen)) {
+    clean.showUi.activeScreen = source.showUi.activeScreen;
+  }
+  clean.showUi.hostPanelOpen = Boolean(source.showUi?.hostPanelOpen);
 
   clean.settings.showTitle =
     sanitizeString(source.settings?.showTitle, clean.settings.showTitle).trim() || clean.settings.showTitle;
@@ -2440,6 +2471,512 @@ function countActiveWithJoker(teamKey) {
   return baseCount + jokerCount;
 }
 
+function getShowScreenTitle(screenId = state.showUi?.activeScreen) {
+  const labels = {
+    "home-intro": "Home / Show Intro",
+    "game-intro": "Game Intro",
+    "live-round": "Live Round",
+    "result-reveal": "Result Reveal",
+    leaderboard: "Leaderboard",
+    "end-screen": "End Screen"
+  };
+  return labels[screenId] || labels["home-intro"];
+}
+
+function getSectionForShowScreen(screenId) {
+  if (screenId === "home-intro") {
+    return "home";
+  }
+  if (screenId === "leaderboard") {
+    return "leaderboard";
+  }
+  if (screenId === "end-screen") {
+    return "end-screen";
+  }
+  if (["game-intro", "live-round", "result-reveal"].includes(screenId)) {
+    return getGameSection(state.progress.currentGame);
+  }
+  return "home";
+}
+
+function getTeamActivePlayersLabel(teamKey) {
+  const participants = getActiveParticipantsForTeam(teamKey);
+  if (participants.length === 0) {
+    return "Active: none";
+  }
+  const names = participants.map((entry) => entry.displayName).filter((name) => typeof name === "string" && name.trim());
+  return names.length > 0 ? `Active: ${names.join(", ")}` : "Active: none";
+}
+
+function getCurrentRoundResultForShow(gameId) {
+  if (gameId === "trivia") {
+    return state.progress.lastResultSummary || "";
+  }
+  if (gameId === "pretul-corect") {
+    return getOrCreatePretulRoundState().lastResult || "";
+  }
+  if (gameId === "film-joc-franciza-fun-fact") {
+    return getOrCreateFilmRoundState().lastResult || "";
+  }
+  if (gameId === "cel-mai-bun-samsar") {
+    return getOrCreateSamsarRoundState(getSamsarRoundNumber()).lastResult || "";
+  }
+  if (isManualMatchGame(gameId)) {
+    return getOrCreateManualMatchRoundState(getCurrentManualMatchGame(), state.progress.currentRound).lastResult || "";
+  }
+  if (gameId === "curse-de-cai") {
+    return getOrCreateCurseRoundState(state.progress.currentRound).lastResult || "";
+  }
+  return "";
+}
+
+function getGameIntroRules(gameId) {
+  if (gameId === "trivia") {
+    return [
+      "One team plays the round and places the only active bet.",
+      "Correct answer gives fixed bonus and bet win.",
+      "Wrong answer loses the bet; category is marked used."
+    ];
+  }
+  if (gameId === "pretul-corect") {
+    return [
+      "Both teams submit a price estimate and a bet.",
+      "Winner is auto-detected by closest distance to real price.",
+      "Equal distance is a tie and both bets are returned."
+    ];
+  }
+  if (gameId === "film-joc-franciza-fun-fact") {
+    return [
+      "One image round with Character/Title, Franchise, and Fun Fact components.",
+      "Partial payout is based on component scores (1/1/3).",
+      "Bet activates only with minimum 2 of 3 components correct."
+    ];
+  }
+  if (gameId === "cel-mai-bun-samsar") {
+    return [
+      "Team 1 and Team 2 each send one active player.",
+      "Higher manual score wins the round; tie is draw.",
+      "Standard Samsar payout is applied with cap rules."
+    ];
+  }
+  if (gameId === "guess-right-order") {
+    return [
+      "Team vs team manual result entry.",
+      "Standard payout with draw allowed.",
+      "Active players can be selected up to 6 per team."
+    ];
+  }
+  if (gameId === "beer-pong") {
+    return [
+      "Team vs team manual result entry.",
+      "Standard payout with draw allowed.",
+      "Use active player selection and lock when round starts."
+    ];
+  }
+  if (gameId === "shot-fake") {
+    return [
+      "Bet-only mode with no fixed round bonus.",
+      "Round can include multiple side bets.",
+      "Special transfer uses x * active players from both teams."
+    ];
+  }
+  if (gameId === "curse-de-cai") {
+    return [
+      "Bet-only horse race with manual movement by symbol.",
+      "Multiple horse bets are allowed per team.",
+      "Only the winning horse bet pays x4; all others lose."
+    ];
+  }
+  return ["PLACEHOLDER: Add game intro rules."];
+}
+
+function buildLiveRoundContent(gameId) {
+  if (gameId === "trivia") {
+    const roundState = getOrCreateTriviaRoundState();
+    const category = state.trivia.categories.find((entry) => entry.id === roundState.selectedCategoryId);
+    const playingTeam = state.teams[roundState.teamKey];
+    const usedCount = roundState.usedCategoryIds.length;
+    const totalCount = state.trivia.categories.length;
+    return `
+      <div class="show-info-grid">
+        <div class="show-info-card">
+          <p class="show-info-label">Team In Play</p>
+          <p class="show-info-value">${escapeHtml(playingTeam.name)}</p>
+        </div>
+        <div class="show-info-card">
+          <p class="show-info-label">Category Usage</p>
+          <p class="show-info-value">${usedCount} / ${totalCount}</p>
+        </div>
+      </div>
+      <div class="show-round-card">
+        <p class="show-info-label">Category</p>
+        <p class="show-round-title">${escapeHtml(category?.title || "No category selected")}</p>
+        <p class="show-round-copy">${escapeHtml(category?.question || "PLACEHOLDER: Question appears here.")}</p>
+      </div>
+    `;
+  }
+
+  if (gameId === "pretul-corect") {
+    const roundState = getOrCreatePretulRoundState();
+    const item = state.pretul.items.find((entry) => entry.id === roundState.selectedItemId);
+    return `
+      <div class="show-round-card">
+        <p class="show-info-label">Item In Round</p>
+        <p class="show-round-title">${escapeHtml(item?.name || "No item selected")}</p>
+      </div>
+      <div class="show-info-grid">
+        <div class="show-info-card">
+          <p class="show-info-label">${escapeHtml(state.teams.teamA.name)} answer</p>
+          <p class="show-info-value">${formatMoney(roundState.answerTeamA)}</p>
+        </div>
+        <div class="show-info-card">
+          <p class="show-info-label">${escapeHtml(state.teams.teamB.name)} answer</p>
+          <p class="show-info-value">${formatMoney(roundState.answerTeamB)}</p>
+        </div>
+      </div>
+      <p class="show-round-copy">Real price is set in host controls and revealed during result screen.</p>
+    `;
+  }
+
+  if (gameId === "film-joc-franciza-fun-fact") {
+    const roundState = getOrCreateFilmRoundState();
+    const item = state.filmGame.items.find((entry) => entry.id === roundState.selectedItemId);
+    const breakdown = getFilmRoundBreakdown(roundState, roundState.betAmount);
+    const formatComponent = (key, label) => {
+      const revealed = roundState.revealed[key] ? "Revealed" : "Hidden";
+      const outcome = roundState.outcomes[key] === "correct" ? "Correct" : roundState.outcomes[key] === "wrong" ? "Wrong" : "Pending";
+      return `
+        <div class="show-info-card">
+          <p class="show-info-label">${label}</p>
+          <p class="show-info-value">${revealed}</p>
+          <p class="show-info-sub">${outcome}</p>
+        </div>
+      `;
+    };
+    return `
+      <div class="show-round-card">
+        <p class="show-info-label">Round Card</p>
+        <p class="show-round-title">${escapeHtml(item?.title || "No round item selected")}</p>
+        <p class="show-round-copy">Component score: ${breakdown.totalPoints}/${breakdown.maxPoints} | Correct: ${breakdown.correctCount}/3</p>
+      </div>
+      <div class="show-info-grid">
+        ${formatComponent("character", "Character / Title")}
+        ${formatComponent("franchise", "Franchise")}
+        ${formatComponent("funFact", "Fun Fact")}
+      </div>
+    `;
+  }
+
+  if (gameId === "cel-mai-bun-samsar") {
+    const roundNumber = getSamsarRoundNumber();
+    const roundState = getOrCreateSamsarRoundState(roundNumber);
+    const template = state.samsarGame.roundsData[roundNumber - 1] || {
+      personaTitle: "PLACEHOLDER: Persona",
+      personaRequirements: "PLACEHOLDER: Requirements"
+    };
+    const playerA = state.teams.teamA.players.find((player) => player.id === roundState.activePlayerTeamAId);
+    const playerB = state.teams.teamB.players.find((player) => player.id === roundState.activePlayerTeamBId);
+    return `
+      <div class="show-round-card">
+        <p class="show-info-label">Persona</p>
+        <p class="show-round-title">${escapeHtml(template.personaTitle)}</p>
+        <p class="show-round-copy">${escapeHtml(template.personaRequirements)}</p>
+      </div>
+      <div class="show-info-grid">
+        <div class="show-info-card">
+          <p class="show-info-label">${escapeHtml(state.teams.teamA.name)} active</p>
+          <p class="show-info-value">${escapeHtml(playerA?.name || "Not selected")}</p>
+          <p class="show-info-sub">Score: ${roundState.scoreTeamA}</p>
+        </div>
+        <div class="show-info-card">
+          <p class="show-info-label">${escapeHtml(state.teams.teamB.name)} active</p>
+          <p class="show-info-value">${escapeHtml(playerB?.name || "Not selected")}</p>
+          <p class="show-info-sub">Score: ${roundState.scoreTeamB}</p>
+        </div>
+      </div>
+    `;
+  }
+
+  if (isManualMatchGame(gameId)) {
+    const manualGameId = getCurrentManualMatchGame();
+    const roundState = getOrCreateManualMatchRoundState(manualGameId, state.progress.currentRound);
+    const settlement = calculateManualMatchSettlement(manualGameId, roundState);
+    const winnerLabel =
+      settlement.winner === "teamA"
+        ? state.teams.teamA.name
+        : settlement.winner === "teamB"
+          ? state.teams.teamB.name
+          : "Draw";
+    const shotFakeLine =
+      manualGameId === "shot-fake"
+        ? `<p class="show-round-copy">Shot Fake transfer preview: ${formatMoney(settlement.specialTransfer)} (x${roundState.shotFake.multiplier}, active ${settlement.activeCountA} vs ${settlement.activeCountB}).</p>`
+        : "";
+    return `
+      <div class="show-round-card">
+        <p class="show-info-label">${escapeHtml(getGameLabel(manualGameId))}</p>
+        <p class="show-round-title">${escapeHtml(state.teams.teamA.name)} ${roundState.scoreTeamA} - ${roundState.scoreTeamB} ${escapeHtml(state.teams.teamB.name)}</p>
+        <p class="show-round-copy">Winner preview: ${escapeHtml(winnerLabel)} | Bets: ${formatMoney(settlement.effectiveBetA)} / ${formatMoney(settlement.effectiveBetB)}</p>
+        ${shotFakeLine}
+      </div>
+    `;
+  }
+
+  if (gameId === "curse-de-cai") {
+    const roundState = getOrCreateCurseRoundState(state.progress.currentRound);
+    const horsePositions = state.curseRace.horses.map((horse) => ({
+      horse,
+      position: Math.max(0, Math.round(sanitizeNumber(roundState.positions?.[horse.id], 0)))
+    }));
+    horsePositions.sort((left, right) => right.position - left.position);
+    const leader = horsePositions[0];
+    const winnerHorse = state.curseRace.horses.find((horse) => horse.id === roundState.winnerHorseId);
+    return `
+      <div class="show-round-card">
+        <p class="show-info-label">Race Status</p>
+        <p class="show-round-title">${winnerHorse ? `Winner: ${winnerHorse.symbol} ${winnerHorse.name}` : "Race in progress"}</p>
+        <p class="show-round-copy">Leader: ${leader ? `${leader.horse.symbol} ${leader.horse.name} (${leader.position}/${state.curseRace.trackLength})` : "No movement yet"}.</p>
+      </div>
+      <div class="show-info-grid">
+        <div class="show-info-card">
+          <p class="show-info-label">${escapeHtml(state.teams.teamA.name)} bet total</p>
+          <p class="show-info-value">${formatMoney(getCurseTeamBetTotal(roundState, "teamA"))}</p>
+        </div>
+        <div class="show-info-card">
+          <p class="show-info-label">${escapeHtml(state.teams.teamB.name)} bet total</p>
+          <p class="show-info-value">${formatMoney(getCurseTeamBetTotal(roundState, "teamB"))}</p>
+        </div>
+      </div>
+    `;
+  }
+
+  return `<p class="show-round-copy">PLACEHOLDER: Round content for ${escapeHtml(getGameLabel(gameId))}.</p>`;
+}
+
+function buildShowScreenContent(screenId) {
+  const gameId = state.progress.currentGame;
+  const gameLabel = getGameLabel(gameId);
+  const summary = state.progress.lastResultSummary || DEFAULT_RESULT_SUMMARY;
+
+  if (screenId === "home-intro") {
+    return `
+      <div class="show-round-card">
+        <p class="show-info-label">Tonight</p>
+        <p class="show-round-title">${escapeHtml(state.settings.showTitle)}</p>
+        <p class="show-round-copy">Welcome to the show. Current focus is ${escapeHtml(gameLabel)}, round ${state.progress.currentRound}.</p>
+      </div>
+      <div class="show-info-grid">
+        <div class="show-info-card">
+          <p class="show-info-label">${escapeHtml(state.teams.teamA.name)}</p>
+          <p class="show-info-value">${formatMoney(state.teams.teamA.money)}</p>
+          <p class="show-info-sub">Score: ${state.teams.teamA.score}</p>
+        </div>
+        <div class="show-info-card">
+          <p class="show-info-label">${escapeHtml(state.teams.teamB.name)}</p>
+          <p class="show-info-value">${formatMoney(state.teams.teamB.money)}</p>
+          <p class="show-info-sub">Score: ${state.teams.teamB.score}</p>
+        </div>
+      </div>
+    `;
+  }
+
+  if (screenId === "game-intro") {
+    const maxBet = getBetPercent(gameId);
+    const rules = getGameIntroRules(gameId)
+      .map((line) => `<li>${escapeHtml(line)}</li>`)
+      .join("");
+    return `
+      <div class="show-round-card">
+        <p class="show-info-label">Now Playing</p>
+        <p class="show-round-title">${escapeHtml(gameLabel)}</p>
+        <p class="show-round-copy">Max bet cap: ${maxBet}% (rounded to ${BET_ROUNDING_STEP}).</p>
+      </div>
+      <ul class="show-rule-list">${rules}</ul>
+    `;
+  }
+
+  if (screenId === "live-round") {
+    return buildLiveRoundContent(gameId);
+  }
+
+  if (screenId === "result-reveal") {
+    const gameResult = getCurrentRoundResultForShow(gameId);
+    const detailText =
+      gameResult && gameResult !== summary
+        ? gameResult
+        : "Round detail is aligned with the latest summary.";
+    return `
+      <div class="show-round-card">
+        <p class="show-info-label">Latest Outcome</p>
+        <p class="show-round-title">${escapeHtml(summary)}</p>
+        <p class="show-round-copy">${escapeHtml(detailText)}</p>
+      </div>
+    `;
+  }
+
+  if (screenId === "leaderboard") {
+    const teams = [
+      {
+        key: "teamA",
+        name: state.teams.teamA.name,
+        money: state.teams.teamA.money,
+        score: state.teams.teamA.score
+      },
+      {
+        key: "teamB",
+        name: state.teams.teamB.name,
+        money: state.teams.teamB.money,
+        score: state.teams.teamB.score
+      }
+    ].sort((left, right) => {
+      if (right.money !== left.money) {
+        return right.money - left.money;
+      }
+      return right.score - left.score;
+    });
+
+    return `
+      <div class="show-leaderboard">
+        ${teams
+          .map((entry, index) => {
+            return `
+              <article class="show-leader-row ${index === 0 ? "is-leading" : ""}">
+                <p class="show-info-label">${index + 1}. ${escapeHtml(entry.name)}</p>
+                <p class="show-info-value">${formatMoney(entry.money)}</p>
+                <p class="show-info-sub">Score: ${entry.score}</p>
+              </article>
+            `;
+          })
+          .join("")}
+      </div>
+    `;
+  }
+
+  if (screenId === "end-screen") {
+    const winner = getEndScreenWinnerSummary();
+    const players = getAwardsPlayerPool();
+    const highlights = computeGeneralAwards(players).slice(0, 3);
+    return `
+      <div class="show-round-card">
+        <p class="show-info-label">Final Winner</p>
+        <p class="show-round-title">${escapeHtml(winner.title)}</p>
+        <p class="show-round-copy">${escapeHtml(winner.reason)}</p>
+      </div>
+      <div class="show-leaderboard">
+        ${highlights
+          .map((card) => {
+            return `
+              <article class="show-leader-row">
+                <p class="show-info-label">${escapeHtml(card.title)}</p>
+                <p class="show-info-value">${escapeHtml(card.playerName)}</p>
+                <p class="show-info-sub">${escapeHtml(card.primaryStat)}</p>
+              </article>
+            `;
+          })
+          .join("")}
+      </div>
+      <p class="show-round-copy">Joker Player: F1 Gipsy King (fixed title).</p>
+    `;
+  }
+
+  return `<p class="show-round-copy">PLACEHOLDER: Screen content will be provided here.</p>`;
+}
+
+function renderHostPanelState() {
+  const isOpen = Boolean(state.showUi?.hostPanelOpen);
+  document.body.classList.toggle("host-panel-open", isOpen);
+
+  if (elements.hostPanelOverlay) {
+    elements.hostPanelOverlay.setAttribute("aria-hidden", isOpen ? "false" : "true");
+  }
+  if (elements.hostDrawer) {
+    elements.hostDrawer.setAttribute("aria-hidden", isOpen ? "false" : "true");
+  }
+  if (elements.hostWorkspace) {
+    elements.hostWorkspace.setAttribute("aria-hidden", isOpen ? "false" : "true");
+  }
+  if (elements.hostPanelToggleBtn) {
+    elements.hostPanelToggleBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+  }
+}
+
+function renderShowUi() {
+  if (!state.showUi || typeof state.showUi !== "object") {
+    state.showUi = { ...DEFAULT_STATE.showUi };
+  }
+  if (!SHOW_SCREEN_IDS.includes(state.showUi.activeScreen)) {
+    state.showUi.activeScreen = DEFAULT_STATE.showUi.activeScreen;
+  }
+
+  const activeScreen = state.showUi.activeScreen;
+  elements.showScreenButtons.forEach((button) => {
+    button.classList.toggle("is-active", button.dataset.showScreenTarget === activeScreen);
+  });
+
+  if (elements.showStageGameLabel) {
+    elements.showStageGameLabel.textContent = getGameLabel(state.progress.currentGame);
+  }
+  if (elements.showStageRoundLabel) {
+    elements.showStageRoundLabel.textContent = String(state.progress.currentRound);
+  }
+  if (elements.showStageTimer) {
+    elements.showStageTimer.textContent = formatTimer(state.timer.remaining);
+  }
+  if (elements.showActivePlayersTeamA) {
+    elements.showActivePlayersTeamA.textContent = getTeamActivePlayersLabel("teamA");
+  }
+  if (elements.showActivePlayersTeamB) {
+    elements.showActivePlayersTeamB.textContent = getTeamActivePlayersLabel("teamB");
+  }
+  if (elements.showLatestResult) {
+    elements.showLatestResult.textContent = state.progress.lastResultSummary || DEFAULT_RESULT_SUMMARY;
+  }
+  if (elements.showScreenTitle) {
+    elements.showScreenTitle.textContent = getShowScreenTitle(activeScreen);
+  }
+  if (elements.showScreenContent) {
+    elements.showScreenContent.innerHTML = buildShowScreenContent(activeScreen);
+  }
+
+  renderHostPanelState();
+}
+
+function setHostPanelOpen(nextOpen, options = {}) {
+  const persist = options.persist !== false;
+  if (!state.showUi || typeof state.showUi !== "object") {
+    state.showUi = { ...DEFAULT_STATE.showUi };
+  }
+  state.showUi.hostPanelOpen = Boolean(nextOpen);
+  renderHostPanelState();
+  if (persist) {
+    saveState(state.showUi.hostPanelOpen ? "Host controls opened." : "Host controls closed.");
+  }
+}
+
+function setShowScreen(screenId, options = {}) {
+  if (!SHOW_SCREEN_IDS.includes(screenId)) {
+    return;
+  }
+  const persist = options.persist !== false;
+  const syncSection = options.syncSection !== false;
+
+  if (!state.showUi || typeof state.showUi !== "object") {
+    state.showUi = { ...DEFAULT_STATE.showUi };
+  }
+  state.showUi.activeScreen = screenId;
+
+  if (syncSection) {
+    const linkedSection = getSectionForShowScreen(screenId);
+    if (SECTION_IDS.includes(linkedSection) && state.activeSection !== linkedSection) {
+      setActiveSection(linkedSection, { persist: false });
+    }
+  }
+
+  renderShowUi();
+  if (persist) {
+    saveState(`Show screen: ${getShowScreenTitle(screenId)}.`);
+  }
+}
+
 function renderNavigation() {
   elements.navButtons.forEach((button) => {
     const isActive = button.dataset.sectionTarget === state.activeSection;
@@ -2531,10 +3068,21 @@ function renderBoundFields() {
 }
 
 function renderTimer() {
-  elements.roundDuration.value = String(state.timer.duration);
-  elements.timerDisplay.textContent = formatTimer(state.timer.remaining);
-  elements.startTimerBtn.disabled = state.timer.isRunning;
-  elements.pauseTimerBtn.disabled = !state.timer.isRunning;
+  if (elements.roundDuration) {
+    elements.roundDuration.value = String(state.timer.duration);
+  }
+  if (elements.timerDisplay) {
+    elements.timerDisplay.textContent = formatTimer(state.timer.remaining);
+  }
+  if (elements.showStageTimer) {
+    elements.showStageTimer.textContent = formatTimer(state.timer.remaining);
+  }
+  if (elements.startTimerBtn) {
+    elements.startTimerBtn.disabled = state.timer.isRunning;
+  }
+  if (elements.pauseTimerBtn) {
+    elements.pauseTimerBtn.disabled = !state.timer.isRunning;
+  }
 }
 
 function renderProgress() {
@@ -2565,6 +3113,16 @@ function renderProgress() {
   if (elements.betGameSelect) {
     elements.betGameSelect.value = gameId;
   }
+  if (elements.showStageGameLabel) {
+    elements.showStageGameLabel.textContent = gameLabel;
+  }
+  if (elements.showStageRoundLabel) {
+    elements.showStageRoundLabel.textContent = String(state.progress.currentRound);
+  }
+  if (elements.showLatestResult) {
+    elements.showLatestResult.textContent = state.progress.lastResultSummary || DEFAULT_RESULT_SUMMARY;
+  }
+  renderShowUi();
 }
 
 function normalizeBetAmount(rawAmount) {
@@ -2714,6 +3272,7 @@ function renderTriviaControls() {
       `;
     })
     .join("");
+  renderShowUi();
 }
 
 function renderPretulActiveList(teamKey, container) {
@@ -2853,6 +3412,7 @@ function renderPretulControls() {
       `;
     })
     .join("");
+  renderShowUi();
 }
 
 function setPretulSelectedItem(itemId) {
@@ -3227,6 +3787,7 @@ function renderFilmControls() {
   if (elements.filmApplyRoundBtn) {
     elements.filmApplyRoundBtn.disabled = !selectedItem;
   }
+  renderShowUi();
 }
 
 function setFilmPlayingTeam(teamKey) {
@@ -3521,6 +4082,7 @@ function renderSamsarControls() {
       button.classList.toggle("is-active", buttonRound === roundNumber);
     });
   }
+  renderShowUi();
 }
 
 function setSamsarActivePlayer(teamKey, playerId) {
@@ -3935,6 +4497,7 @@ function renderManualMatchControls() {
     elements.shotFakeRulePreview.textContent =
       "Shot Fake preview appears when Shot Fake is selected from the game dropdown.";
   }
+  renderShowUi();
 }
 
 function setManualMatchGame(gameId) {
@@ -4410,6 +4973,7 @@ function renderCurseControls() {
   const overCap = totalBetA > maxBetA || totalBetB > maxBetB;
   elements.curseMoveBtn.disabled = Boolean(roundState.winnerHorseId);
   elements.curseApplyPayoutBtn.disabled = !roundState.winnerHorseId || roundState.payoutApplied || overCap;
+  renderShowUi();
 }
 
 function setCurseRound(rawRoundValue) {
@@ -4963,6 +5527,7 @@ function renderRoundSelection() {
     `Rounds W/L ${jokerPlayerStats.roundsWon}/${jokerPlayerStats.roundsLost}, money net ${jokerNetLabel}, ` +
     `bets W/L ${jokerPlayerStats.betsWon}/${jokerPlayerStats.betsLost}. Final title stays F1 Gipsy King.`;
   renderAwardsTitles();
+  renderShowUi();
 }
 
 function renderAll() {
@@ -4985,6 +5550,7 @@ function renderAll() {
   renderSettingsRulesSnapshot();
   renderUndoControlState();
   renderFullscreenToggleLabel();
+  renderShowUi();
 }
 function setActiveSection(sectionId, options = {}) {
   const persist = options.persist !== false;
@@ -5102,6 +5668,7 @@ function nextGame() {
     state.manualMatch.selectedGame = nextGameId;
   }
   switchRoundContext(nextGameId, 1, { navigateToSection: true });
+  state.showUi.activeScreen = "game-intro";
   setLastResultSummary(`Moved to ${getGameLabel(nextGameId)}. Round reset to 1.`);
   renderAll();
   saveState(`Next game: ${getGameLabel(nextGameId)}`);
@@ -5109,7 +5676,9 @@ function nextGame() {
 
 function openLeaderboard() {
   setActiveSection("leaderboard", { persist: false });
+  state.showUi.activeScreen = "leaderboard";
   setLastResultSummary("Leaderboard opened from Control Center.");
+  renderShowUi();
   saveState("Opened leaderboard.");
 }
 
@@ -5132,6 +5701,7 @@ function resetCurrentGame() {
 
   switchRoundContext(currentGameId, 1, { navigateToSection: false });
   setActiveSection("home", { persist: false });
+  state.showUi.activeScreen = "home-intro";
   setLastResultSummary(`Game progress reset for ${getGameLabel(currentGameId)}. Round set to 1.`);
   renderAll();
   saveState("Game progress reset.");
@@ -5623,6 +6193,32 @@ function onPlayersListInteraction(event, teamKey) {
   }
 }
 function bindEvents() {
+  elements.showScreenButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const target = button.dataset.showScreenTarget;
+      if (!SHOW_SCREEN_IDS.includes(target)) {
+        return;
+      }
+      setShowScreen(target);
+    });
+  });
+
+  if (elements.hostPanelToggleBtn) {
+    elements.hostPanelToggleBtn.addEventListener("click", () => {
+      setHostPanelOpen(!state.showUi?.hostPanelOpen);
+    });
+  }
+  if (elements.hostPanelCloseBtn) {
+    elements.hostPanelCloseBtn.addEventListener("click", () => {
+      setHostPanelOpen(false);
+    });
+  }
+  if (elements.hostPanelOverlay) {
+    elements.hostPanelOverlay.addEventListener("click", () => {
+      setHostPanelOpen(false);
+    });
+  }
+
   elements.navButtons.forEach((button) => {
     button.addEventListener("click", () => {
       setActiveSection(button.dataset.sectionTarget);
@@ -5636,7 +6232,15 @@ function bindEvents() {
         return;
       }
       setActiveSection(sectionId, { persist: false });
+      if (sectionId === "leaderboard") {
+        state.showUi.activeScreen = "leaderboard";
+      } else if (sectionId === "end-screen") {
+        state.showUi.activeScreen = "end-screen";
+      } else if (sectionId === "home") {
+        state.showUi.activeScreen = "home-intro";
+      }
       setLastResultSummary(`Opened ${button.textContent?.trim() || sectionId}.`);
+      renderShowUi();
       saveState(`Section: ${sectionId}`);
     });
   });
@@ -5651,6 +6255,7 @@ function bindEvents() {
         state.manualMatch.selectedGame = gameId;
       }
       switchRoundContext(gameId, state.progress.currentRound, { navigateToSection: true });
+      state.showUi.activeScreen = "live-round";
       setLastResultSummary(`Opened ${getGameLabel(gameId)}.`);
       renderAll();
       saveState(`Opened game: ${getGameLabel(gameId)}`);
@@ -6241,10 +6846,16 @@ function bindEvents() {
     saveCurrentRoundSnapshot();
     saveState();
   });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && state.showUi?.hostPanelOpen) {
+      setHostPanelOpen(false);
+    }
+  });
 }
 
 function init() {
   state = sanitizeState(state);
+  state.showUi.hostPanelOpen = false;
   if (state.activeSection === "manual-match" && !isManualMatchGame(state.progress.currentGame)) {
     switchRoundContext(getCurrentManualMatchGame(), state.progress.currentRound, { navigateToSection: false });
   } else if (state.activeSection === "curse-de-cai" && state.progress.currentGame !== "curse-de-cai") {
