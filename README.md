@@ -1,15 +1,30 @@
 # GameShow
 
-Static host dashboard for a game show with 2 teams.
+Static host dashboard architecture for a game show with 2 teams.
 
 ## Features
 
-- 2-team dashboard (`Team 1`, `Team 2`)
-- score and money controls for both teams
-- separate game sections (`Game 1`, `Game 2`, `Final`)
-- round timer controls (start, pause, reset, duration)
-- host notes + per-game notes
-- autosave to `localStorage` (state is restored on refresh)
+- clear navigation between 12 sections
+- 2-team tracking (`name`, `score`, `money`)
+- starting money: `1000` for each team
+- betting with max caps per game and rounding to `10`
+- dynamic players per team (not fixed)
+- Joker Player round assignment (`Team 1` / `Team 2` / `Out`)
+- Joker fixed final title: `F1 Gipsy King`
+- bench / unavailable statuses for players
+- round selection lock to prevent accidental changes
+- up to `6` active players per team per round
+- persistent round timer (start, pause, reset, duration)
+- undo last result (restores money, round history snapshot, and player stats)
+- export/import full save in JSON format
+- fullscreen toggle for TV/laptop host mode
+- final End Screen with winner, final money, and awards snapshot
+- placeholder data blocks for:
+  - Trivia de grup
+  - Pretul corect
+  - Film / Joc / Franciza / Fun Fact
+  - Cel mai bun samsar
+- autosave in `localStorage` (state restored on refresh)
 
 ## Run Local
 
@@ -21,4 +36,4 @@ No backend and no build step required.
 
 Data is saved under:
 
-`gameshow-host-dashboard-v1`
+`gameshow-host-dashboard-v3`

@@ -4,146 +4,986 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GameShow Host Dashboard</title>
+  <link rel="icon" href="data:,">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <main class="dashboard">
-    <header class="panel app-header">
-      <div>
-        <p class="eyebrow">HOST DASHBOARD</p>
-        <h1>GameShow Control Center</h1>
-        <p class="muted">Local static app. Progress is saved automatically in localStorage.</p>
-      </div>
+  <main class="app-shell">
+    <aside class="panel side-nav">
+      <p class="eyebrow">HOST DASHBOARD</p>
+      <h1 data-show-title>PLACEHOLDER: GameShow Season 1</h1>
+      <p class="muted">Architecture-first static control app with local autosave.</p>
+
+      <nav class="nav-list" aria-label="Dashboard sections">
+        <button class="nav-btn is-active" type="button" data-section-target="home">Home / Control Center</button>
+        <button class="nav-btn" type="button" data-section-target="leaderboard">Leaderboard / Currency</button>
+        <button class="nav-btn" type="button" data-section-target="trivia">Trivia de grup</button>
+        <button class="nav-btn" type="button" data-section-target="pretul-corect">Pretul corect</button>
+        <button class="nav-btn" type="button" data-section-target="film-joc-franciza">Film / Joc / Franciza / Fun Fact</button>
+        <button class="nav-btn" type="button" data-section-target="cel-mai-bun-samsar">Cel mai bun samsar</button>
+        <button class="nav-btn" type="button" data-section-target="manual-match">Manual Match Dashboard</button>
+        <button class="nav-btn" type="button" data-section-target="curse-de-cai">Curse de cai</button>
+        <button class="nav-btn" type="button" data-section-target="players-teams">Players / Teams</button>
+        <button class="nav-btn" type="button" data-section-target="awards-final-titles">Awards / Final Titles</button>
+        <button class="nav-btn" type="button" data-section-target="end-screen">End Screen</button>
+        <button class="nav-btn" type="button" data-section-target="settings">Settings</button>
+      </nav>
+
       <div class="header-actions">
+        <button id="fullscreenToggleBtn" class="secondary-btn" type="button">Fullscreen</button>
         <button id="saveNowBtn" class="secondary-btn" type="button">Save now</button>
         <button id="resetAllBtn" class="danger-btn" type="button">Reset session</button>
       </div>
-    </header>
+      <p id="saveStatus" class="muted status-inline">Not saved yet.</p>
+    </aside>
 
-    <section class="panel">
-      <div class="section-title-row">
-        <h2>Teams</h2>
-        <p class="muted">Two teams, score and money tracking.</p>
-      </div>
+    <section class="content-stack">
+      <section class="panel page-section is-active" data-section="home">
+        <div class="section-title-row">
+          <h2>Home / Control Center</h2>
+          <p class="muted">Main host page for live control and navigation.</p>
+        </div>
 
-      <div class="team-grid">
-        <article class="team-card" data-team-card="teamA">
-          <label class="field-label" for="teamAName">Team 1 Name</label>
-          <input id="teamAName" class="text-input" maxlength="40" placeholder="PLACEHOLDER: Team 1 name">
+        <div class="two-col">
+          <article class="placeholder-card">
+            <h3>Core Setup</h3>
 
-          <div class="metric-grid">
-            <section class="metric-box">
-              <p class="metric-label">Score</p>
-              <p id="teamAScore" class="metric-value">0</p>
-              <div class="metric-actions">
-                <button class="pill-btn" type="button" data-team="teamA" data-metric="score" data-delta="-10">-10</button>
-                <button class="pill-btn" type="button" data-team="teamA" data-metric="score" data-delta="10">+10</button>
-              </div>
-            </section>
+            <label class="field-label" for="homeShowTitle">Titlul jocului</label>
+            <input id="homeShowTitle" class="text-input" data-bind="settings.showTitle">
 
-            <section class="metric-box">
-              <p class="metric-label">Money</p>
-              <p id="teamAMoney" class="metric-value">$0</p>
-              <div class="metric-actions">
-                <button class="pill-btn" type="button" data-team="teamA" data-metric="money" data-delta="-100">-100</button>
-                <button class="pill-btn" type="button" data-team="teamA" data-metric="money" data-delta="100">+100</button>
-              </div>
-            </section>
+            <label class="field-label spaced" for="homeTeamAName">Numele echipei 1</label>
+            <input id="homeTeamAName" class="text-input" data-bind="teams.teamA.name" maxlength="40">
+
+            <label class="field-label spaced" for="homeTeamBName">Numele echipei 2</label>
+            <input id="homeTeamBName" class="text-input" data-bind="teams.teamB.name" maxlength="40">
+          </article>
+
+          <article class="placeholder-card">
+            <h3>Live Progress</h3>
+
+            <label class="field-label" for="currentGameSelect">Jocul curent</label>
+            <select id="currentGameSelect" class="text-input">
+              <option value="trivia">Trivia de grup</option>
+              <option value="guess-right-order">Guess the Right Order</option>
+              <option value="pretul-corect">Pretul corect</option>
+              <option value="film-joc-franciza-fun-fact">Film / Joc / Franciza / Fun Fact</option>
+              <option value="cel-mai-bun-samsar">Cel mai bun samsar</option>
+              <option value="beer-pong">Beer Pong</option>
+              <option value="shot-fake">Shot Fake</option>
+              <option value="curse-de-cai">Curse de cai</option>
+            </select>
+
+            <label class="field-label spaced" for="currentRoundInput">Runda curenta</label>
+            <input id="currentRoundInput" class="text-input compact-input" type="number" min="1" step="1" value="1">
+
+            <div class="quick-action-grid">
+              <button id="nextGameBtn" class="primary-btn" type="button">Next game</button>
+              <button id="openLeaderboardBtn" class="secondary-btn" type="button">Open leaderboard</button>
+              <button id="undoLastResultBtn" class="secondary-btn" type="button">Undo last result</button>
+              <button id="resetGameBtn" class="secondary-btn" type="button">Reset game</button>
+              <button id="resetMoneyBtn" class="danger-btn" type="button">Reset money</button>
+            </div>
+          </article>
+        </div>
+
+        <div class="quick-grid">
+          <article class="metric-box">
+            <p class="metric-label" data-team-name="teamA">Team 1</p>
+            <p class="metric-value" data-team-money="teamA">$0</p>
+            <p class="muted">Money echipa 1</p>
+          </article>
+          <article class="metric-box">
+            <p class="metric-label" data-team-name="teamB">Team 2</p>
+            <p class="metric-value" data-team-money="teamB">$0</p>
+            <p class="muted">Money echipa 2</p>
+          </article>
+          <article class="metric-box">
+            <p class="metric-label">Jocul curent</p>
+            <p id="currentGameLabel" class="metric-value compact">PLACEHOLDER: Trivia de grup</p>
+            <p class="muted">Current game stage</p>
+          </article>
+          <article class="metric-box">
+            <p class="metric-label">Runda curenta</p>
+            <p id="currentRoundLabel" class="metric-value">1</p>
+            <p class="muted">Current round</p>
+          </article>
+          <article class="metric-box">
+            <p class="metric-label">Active host</p>
+            <p class="metric-value compact" data-host-name>PLACEHOLDER: Host Name</p>
+            <p class="muted">From Settings</p>
+          </article>
+        </div>
+
+        <article class="placeholder-card">
+          <h3>Navigare catre toate jocurile</h3>
+          <div class="quick-action-grid">
+            <button class="pill-btn" type="button" data-open-game="trivia">Trivia de grup</button>
+            <button class="pill-btn" type="button" data-open-game="guess-right-order">Guess the Right Order</button>
+            <button class="pill-btn" type="button" data-open-game="pretul-corect">Pretul corect</button>
+            <button class="pill-btn" type="button" data-open-game="film-joc-franciza-fun-fact">Film / Joc / Franciza / Fun Fact</button>
+            <button class="pill-btn" type="button" data-open-game="cel-mai-bun-samsar">Cel mai bun samsar</button>
+            <button class="pill-btn" type="button" data-open-game="beer-pong">Beer Pong</button>
+            <button class="pill-btn" type="button" data-open-game="shot-fake">Shot Fake</button>
+            <button class="pill-btn" type="button" data-open-game="curse-de-cai">Curse de cai</button>
+            <button class="pill-btn" type="button" data-open-section="leaderboard">Open Leaderboard</button>
+            <button class="pill-btn" type="button" data-open-section="end-screen">Open End Screen</button>
           </div>
         </article>
 
-        <article class="team-card" data-team-card="teamB">
-          <label class="field-label" for="teamBName">Team 2 Name</label>
-          <input id="teamBName" class="text-input" maxlength="40" placeholder="PLACEHOLDER: Team 2 name">
+        <article class="placeholder-card">
+          <h3>Rezumat rapid</h3>
+          <p id="lastResultSummary" class="muted">PLACEHOLDER: Nu exista rezultat aplicat inca.</p>
+        </article>
 
-          <div class="metric-grid">
-            <section class="metric-box">
-              <p class="metric-label">Score</p>
-              <p id="teamBScore" class="metric-value">0</p>
-              <div class="metric-actions">
-                <button class="pill-btn" type="button" data-team="teamB" data-metric="score" data-delta="-10">-10</button>
-                <button class="pill-btn" type="button" data-team="teamB" data-metric="score" data-delta="10">+10</button>
-              </div>
-            </section>
+        <div class="round-grid">
+          <article class="timer-box">
+            <label class="field-label" for="roundDuration">Round duration (seconds)</label>
+            <input id="roundDuration" class="text-input" type="number" min="10" max="600" step="5" value="60">
+            <p id="timerDisplay" class="timer-value">01:00</p>
+            <div class="timer-actions">
+              <button id="startTimerBtn" class="primary-btn" type="button">Start</button>
+              <button id="pauseTimerBtn" class="secondary-btn" type="button">Pause</button>
+              <button id="resetTimerBtn" class="secondary-btn" type="button">Reset</button>
+            </div>
+          </article>
 
-            <section class="metric-box">
-              <p class="metric-label">Money</p>
-              <p id="teamBMoney" class="metric-value">$0</p>
-              <div class="metric-actions">
-                <button class="pill-btn" type="button" data-team="teamB" data-metric="money" data-delta="-100">-100</button>
-                <button class="pill-btn" type="button" data-team="teamB" data-metric="money" data-delta="100">+100</button>
-              </div>
-            </section>
+          <article class="notes-box">
+            <label class="field-label" for="homeRunOfShow">Run of show</label>
+            <textarea id="homeRunOfShow" class="text-area" rows="5" data-bind="sections.homeRunOfShow"></textarea>
+
+            <label class="field-label spaced" for="homeEmergencyPlan">Emergency fallback plan</label>
+            <textarea id="homeEmergencyPlan" class="text-area" rows="5" data-bind="sections.homeEmergencyPlan"></textarea>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel page-section" data-section="leaderboard">
+        <div class="section-title-row">
+          <h2>Leaderboard / Currency</h2>
+          <p class="muted">Live scoring, money controls, and betting rules.</p>
+        </div>
+
+        <div class="team-grid">
+          <article class="team-card">
+            <h3 data-team-name="teamA">Team 1</h3>
+            <div class="metric-grid">
+              <section class="metric-box">
+                <p class="metric-label">Score</p>
+                <p class="metric-value" data-team-score="teamA">0</p>
+                <div class="metric-actions">
+                  <button class="pill-btn" type="button" data-team="teamA" data-metric="score" data-delta="-10">-10</button>
+                  <button class="pill-btn" type="button" data-team="teamA" data-metric="score" data-delta="10">+10</button>
+                </div>
+              </section>
+
+              <section class="metric-box">
+                <p class="metric-label">Money</p>
+                <p class="metric-value" data-team-money="teamA">$0</p>
+                <div class="metric-actions">
+                  <button class="pill-btn" type="button" data-team="teamA" data-metric="money" data-delta="-100">-100</button>
+                  <button class="pill-btn" type="button" data-team="teamA" data-metric="money" data-delta="100">+100</button>
+                </div>
+              </section>
+            </div>
+          </article>
+
+          <article class="team-card">
+            <h3 data-team-name="teamB">Team 2</h3>
+            <div class="metric-grid">
+              <section class="metric-box">
+                <p class="metric-label">Score</p>
+                <p class="metric-value" data-team-score="teamB">0</p>
+                <div class="metric-actions">
+                  <button class="pill-btn" type="button" data-team="teamB" data-metric="score" data-delta="-10">-10</button>
+                  <button class="pill-btn" type="button" data-team="teamB" data-metric="score" data-delta="10">+10</button>
+                </div>
+              </section>
+
+              <section class="metric-box">
+                <p class="metric-label">Money</p>
+                <p class="metric-value" data-team-money="teamB">$0</p>
+                <div class="metric-actions">
+                  <button class="pill-btn" type="button" data-team="teamB" data-metric="money" data-delta="-100">-100</button>
+                  <button class="pill-btn" type="button" data-team="teamB" data-metric="money" data-delta="100">+100</button>
+                </div>
+              </section>
+            </div>
+          </article>
+        </div>
+
+        <article class="placeholder-card">
+          <h3>Auto ranking</h3>
+          <p class="muted">Leader by score: <strong id="leaderByScore">PLACEHOLDER: waiting for score data</strong></p>
+          <p class="muted">Leader by money: <strong id="leaderByMoney">PLACEHOLDER: waiting for currency data</strong></p>
+        </article>
+
+        <article class="placeholder-card">
+          <h3>Betting Dashboard</h3>
+          <div class="bet-grid">
+            <div>
+              <label class="field-label" for="betTeamSelect">Team</label>
+              <select id="betTeamSelect" class="text-input">
+                <option value="teamA">Team 1</option>
+                <option value="teamB">Team 2</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="betGameSelect">Game</label>
+              <select id="betGameSelect" class="text-input">
+                <option value="trivia">Trivia de grup (10%)</option>
+                <option value="guess-right-order">Guess the Right Order (10%)</option>
+                <option value="pretul-corect">Pretul corect (15%)</option>
+                <option value="film-joc-franciza-fun-fact">Film / Joc / Franciza / Fun Fact (15%)</option>
+                <option value="cel-mai-bun-samsar">Cel mai bun samsar (20%)</option>
+                <option value="beer-pong">Beer Pong (20%)</option>
+                <option value="shot-fake">Shot Fake (25%)</option>
+                <option value="curse-de-cai">Curse de cai (30%)</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="betAmountInput">Bet amount</label>
+              <input id="betAmountInput" class="text-input compact-input" type="number" step="10" min="10" value="100">
+            </div>
+          </div>
+
+          <p id="betRuleInfo" class="muted spaced">PLACEHOLDER: Betting rule info.</p>
+          <div class="metric-actions">
+            <button id="betWinBtn" class="primary-btn" type="button">Apply Bet Win</button>
+            <button id="betLoseBtn" class="danger-btn" type="button">Apply Bet Loss</button>
           </div>
         </article>
-      </div>
-    </section>
-
-    <section class="panel">
-      <div class="section-title-row">
-        <h2>Game Sections</h2>
-        <p class="muted">Switch between games from one dashboard.</p>
-      </div>
-
-      <nav class="tabs" aria-label="Game sections">
-        <button class="tab-btn is-active" type="button" data-game-tab="game1">Game 1</button>
-        <button class="tab-btn" type="button" data-game-tab="game2">Game 2</button>
-        <button class="tab-btn" type="button" data-game-tab="game3">Final</button>
-      </nav>
-
-      <section class="game-pane is-active" data-game-pane="game1">
-        <h3>Game 1: Fast Quiz</h3>
-        <p class="placeholder-note">PLACEHOLDER: Add rules and question list for Game 1.</p>
-        <label class="field-label" for="game1Notes">Game 1 host notes</label>
-        <textarea id="game1Notes" class="text-area" rows="4" placeholder="PLACEHOLDER: Add quick questions, tie-break rules, bonus points."></textarea>
       </section>
 
-      <section class="game-pane" data-game-pane="game2">
-        <h3>Game 2: Bidding Round</h3>
-        <p class="placeholder-note">PLACEHOLDER: Add bidding categories and values for Game 2.</p>
-        <label class="field-label" for="game2Notes">Game 2 host notes</label>
-        <textarea id="game2Notes" class="text-area" rows="4" placeholder="PLACEHOLDER: Add category board, bid limits, penalties."></textarea>
+      <section class="panel page-section" data-section="trivia">
+        <div class="section-title-row">
+          <h2>Trivia de grup</h2>
+          <p class="muted">One-team-per-round trivia flow with controlled payout.</p>
+        </div>
+
+        <div class="two-col">
+          <article class="placeholder-card">
+            <h3>Round Controller (One Team)</h3>
+
+            <label class="field-label" for="triviaPlayingTeamSelect">Playing team this round</label>
+            <select id="triviaPlayingTeamSelect" class="text-input">
+              <option value="teamA">Team 1</option>
+              <option value="teamB">Team 2</option>
+            </select>
+
+            <label class="field-label spaced" for="triviaCategorySelect">Category for this question</label>
+            <select id="triviaCategorySelect" class="text-input"></select>
+
+            <label class="field-label spaced" for="triviaBetAmountInput">Team bet</label>
+            <input id="triviaBetAmountInput" class="text-input compact-input" type="number" min="10" step="10" value="100">
+
+            <label class="field-label spaced" for="triviaFixedBonusInput">Fixed bonus on correct</label>
+            <input id="triviaFixedBonusInput" class="text-input compact-input" type="number" min="0" step="10" value="100">
+
+            <p id="triviaBetRuleInfo" class="muted spaced">PLACEHOLDER: Trivia payout rule info.</p>
+
+            <div class="metric-actions">
+              <button id="triviaCorrectBtn" class="primary-btn" type="button">Correct Answer</button>
+              <button id="triviaWrongBtn" class="danger-btn" type="button">Wrong Answer</button>
+              <button id="triviaResetUsedBtn" class="secondary-btn" type="button">Reset Used Categories</button>
+            </div>
+          </article>
+
+          <article class="placeholder-card">
+            <h3>Question bank</h3>
+            <textarea id="triviaQuestionBank" class="text-area" rows="10" data-bind="sections.triviaQuestionBank"></textarea>
+          </article>
+        </div>
+
+        <article class="placeholder-card">
+          <h3>Active Players (Playing Team Only)</h3>
+          <p id="triviaActiveSelectionInfo" class="muted">PLACEHOLDER: Active selection summary.</p>
+          <p class="muted">Use Players / Teams to pick active players. Non-playing team is disabled for Trivia rounds.</p>
+        </article>
+
+        <article class="placeholder-card">
+          <h3>Categories / Questions / Answers (Placeholder Board)</h3>
+          <div id="triviaCategoriesBoard" class="trivia-categories-board"></div>
+          <p class="muted">Used categories are marked and disabled for this round.</p>
+        </article>
+
+        <article class="placeholder-card">
+          <h3>Round rules and scoring</h3>
+          <textarea id="triviaRules" class="text-area" rows="10" data-bind="sections.triviaRules"></textarea>
+        </article>
       </section>
 
-      <section class="game-pane" data-game-pane="game3">
-        <h3>Final: Lightning Challenge</h3>
-        <p class="placeholder-note">PLACEHOLDER: Add final challenge script and scoring rules.</p>
-        <label class="field-label" for="game3Notes">Final game host notes</label>
-        <textarea id="game3Notes" class="text-area" rows="4" placeholder="PLACEHOLDER: Add final prompt, answer key, final prize text."></textarea>
+      <section class="panel page-section" data-section="pretul-corect">
+        <div class="section-title-row">
+          <h2>Pretul corect</h2>
+          <p class="muted">Auto winner detection by closest answer.</p>
+        </div>
+
+        <div class="two-col">
+          <article class="placeholder-card">
+            <h3>Round Controller</h3>
+
+            <label class="field-label" for="pretulItemSelect">Current item</label>
+            <select id="pretulItemSelect" class="text-input"></select>
+
+            <div class="bet-grid">
+              <div>
+                <label class="field-label spaced" for="pretulAnswerTeamAInput">Team 1 answer</label>
+                <input id="pretulAnswerTeamAInput" class="text-input compact-input" type="number" step="1" min="0" value="0">
+              </div>
+              <div>
+                <label class="field-label spaced" for="pretulBetTeamAInput">Team 1 bet</label>
+                <input id="pretulBetTeamAInput" class="text-input compact-input" type="number" step="10" min="10" value="100">
+              </div>
+              <div>
+                <label class="field-label spaced" for="pretulAnswerTeamBInput">Team 2 answer</label>
+                <input id="pretulAnswerTeamBInput" class="text-input compact-input" type="number" step="1" min="0" value="0">
+              </div>
+              <div>
+                <label class="field-label spaced" for="pretulBetTeamBInput">Team 2 bet</label>
+                <input id="pretulBetTeamBInput" class="text-input compact-input" type="number" step="10" min="10" value="100">
+              </div>
+            </div>
+
+            <label class="field-label spaced" for="pretulRealPriceInput">Real price</label>
+            <input id="pretulRealPriceInput" class="text-input compact-input" type="number" step="1" min="0" value="0">
+
+            <p id="pretulRuleInfo" class="muted spaced">PLACEHOLDER: Pretul corect payout info.</p>
+
+            <div class="metric-actions">
+              <button id="pretulEvaluateBtn" class="primary-btn" type="button">Detect Winner & Apply Payout</button>
+              <button id="pretulResetUsedBtn" class="secondary-btn" type="button">Reset Used Items</button>
+            </div>
+            <p id="pretulRoundResult" class="muted spaced">PLACEHOLDER: Round result appears here.</p>
+          </article>
+
+          <article class="placeholder-card">
+            <h3>Active Players (Both Teams)</h3>
+            <p class="muted">Manual selection for both teams (max 6 each). Bench/unavailable stay disabled.</p>
+            <div class="two-col">
+              <div>
+                <h4 class="field-label">Team 1 Active</h4>
+                <div id="pretulActiveTeamAList" class="pretul-active-list"></div>
+              </div>
+              <div>
+                <h4 class="field-label">Team 2 Active</h4>
+                <div id="pretulActiveTeamBList" class="pretul-active-list"></div>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <article class="placeholder-card">
+          <h3>Items Board</h3>
+          <div id="pretulItemsBoard" class="pretul-items-board"></div>
+          <p class="muted">Used items are marked and disabled automatically.</p>
+        </article>
+
+        <div class="two-col">
+          <article class="placeholder-card">
+            <h3>Items and hidden prices</h3>
+            <textarea id="pretulItems" class="text-area" rows="10" data-bind="sections.pretulItems"></textarea>
+          </article>
+          <article class="placeholder-card">
+            <h3>Round flow notes</h3>
+            <textarea id="pretulRules" class="text-area" rows="10" data-bind="sections.pretulRules"></textarea>
+          </article>
+        </div>
       </section>
-    </section>
 
-    <section class="panel">
-      <div class="section-title-row">
-        <h2>Round Control</h2>
-        <p class="muted">Timer and show-wide notes.</p>
-      </div>
+      <section class="panel page-section" data-section="film-joc-franciza">
+        <div class="section-title-row">
+          <h2>Film / Joc / Franciza / Fun Fact</h2>
+          <p class="muted">One-team-per-round, component scoring, and partial payout.</p>
+        </div>
 
-      <div class="round-grid">
-        <div class="timer-box">
-          <label class="field-label" for="roundDuration">Round duration (seconds)</label>
-          <input id="roundDuration" class="text-input" type="number" min="10" max="600" step="5" value="60">
-          <p id="timerDisplay" class="timer-value">01:00</p>
-          <div class="timer-actions">
-            <button id="startTimerBtn" class="primary-btn" type="button">Start</button>
-            <button id="pauseTimerBtn" class="secondary-btn" type="button">Pause</button>
-            <button id="resetTimerBtn" class="secondary-btn" type="button">Reset</button>
+        <div class="two-col">
+          <article class="placeholder-card">
+            <h3>Round Controller</h3>
+
+            <label class="field-label" for="filmPlayingTeamSelect">Playing team this round</label>
+            <select id="filmPlayingTeamSelect" class="text-input">
+              <option value="teamA">Team 1</option>
+              <option value="teamB">Team 2</option>
+            </select>
+
+            <label class="field-label spaced" for="filmRoundSelect">Round item</label>
+            <select id="filmRoundSelect" class="text-input"></select>
+
+            <label class="field-label spaced" for="filmBetAmountInput">Team bet</label>
+            <input id="filmBetAmountInput" class="text-input compact-input" type="number" min="10" step="10" value="100">
+
+            <p id="filmRuleInfo" class="muted spaced">PLACEHOLDER: Film/Joc/Franciza/Fun Fact payout rule info.</p>
+
+            <div class="metric-actions">
+              <button id="filmApplyRoundBtn" class="primary-btn" type="button">Apply Round Result</button>
+              <button id="filmResetUsedBtn" class="secondary-btn" type="button">Reset Used Rounds</button>
+            </div>
+            <p id="filmRoundResult" class="muted spaced">PLACEHOLDER: Round result appears here.</p>
+          </article>
+
+          <article class="placeholder-card">
+            <h3>Round Image</h3>
+            <figure class="film-image-wrap">
+              <img id="filmRoundImage" class="film-round-image" src="" alt="Round image placeholder">
+              <figcaption id="filmRoundImageCaption" class="muted">PLACEHOLDER: Round image caption.</figcaption>
+            </figure>
+          </article>
+        </div>
+
+        <article class="placeholder-card">
+          <h3>Reveal Cards + Manual Validation</h3>
+          <div id="filmRevealBoard" class="film-reveal-grid">
+            <article class="film-reveal-card">
+              <h4>Character / Title</h4>
+              <p id="filmCharacterContent" class="muted">Hidden. Press reveal when ready.</p>
+              <div class="metric-actions">
+                <button class="pill-btn" type="button" data-film-reveal="character">Reveal / Hide</button>
+              </div>
+              <div class="metric-actions">
+                <button class="pill-btn" type="button" data-film-set-outcome="character:correct">Correct</button>
+                <button class="pill-btn" type="button" data-film-set-outcome="character:wrong">Wrong</button>
+                <button class="pill-btn" type="button" data-film-set-outcome="character:clear">Clear</button>
+              </div>
+              <p class="muted">Weight: x1</p>
+              <p id="filmStatusCharacter" class="film-status">Status: not checked</p>
+            </article>
+
+            <article class="film-reveal-card">
+              <h4>Franchise</h4>
+              <p id="filmFranchiseContent" class="muted">Hidden. Press reveal when ready.</p>
+              <div class="metric-actions">
+                <button class="pill-btn" type="button" data-film-reveal="franchise">Reveal / Hide</button>
+              </div>
+              <div class="metric-actions">
+                <button class="pill-btn" type="button" data-film-set-outcome="franchise:correct">Correct</button>
+                <button class="pill-btn" type="button" data-film-set-outcome="franchise:wrong">Wrong</button>
+                <button class="pill-btn" type="button" data-film-set-outcome="franchise:clear">Clear</button>
+              </div>
+              <p class="muted">Weight: x1</p>
+              <p id="filmStatusFranchise" class="film-status">Status: not checked</p>
+            </article>
+
+            <article class="film-reveal-card">
+              <h4>Fun Fact</h4>
+              <p id="filmFunFactContent" class="muted">Hidden. Press reveal when ready.</p>
+              <div class="metric-actions">
+                <button class="pill-btn" type="button" data-film-reveal="funFact">Reveal / Hide</button>
+              </div>
+              <div class="metric-actions">
+                <button class="pill-btn" type="button" data-film-set-outcome="funFact:correct">Correct</button>
+                <button class="pill-btn" type="button" data-film-set-outcome="funFact:wrong">Wrong</button>
+                <button class="pill-btn" type="button" data-film-set-outcome="funFact:clear">Clear</button>
+              </div>
+              <p class="muted">Weight: x3</p>
+              <p id="filmStatusFunFact" class="film-status">Status: not checked</p>
+            </article>
           </div>
+        </article>
+
+        <article class="placeholder-card">
+          <h3>Component Scoreboard</h3>
+          <div class="quick-grid film-score-grid">
+            <div class="metric-box">
+              <p class="metric-label">Character / Title</p>
+              <p id="filmScoreCharacter" class="metric-value compact">0 / 1</p>
+            </div>
+            <div class="metric-box">
+              <p class="metric-label">Franchise</p>
+              <p id="filmScoreFranchise" class="metric-value compact">0 / 1</p>
+            </div>
+            <div class="metric-box">
+              <p class="metric-label">Fun Fact</p>
+              <p id="filmScoreFunFact" class="metric-value compact">0 / 3</p>
+            </div>
+            <div class="metric-box">
+              <p class="metric-label">Total Components</p>
+              <p id="filmScoreTotal" class="metric-value compact">0 / 5</p>
+            </div>
+            <div class="metric-box">
+              <p class="metric-label">Correct Components</p>
+              <p id="filmCorrectCount" class="metric-value compact">0 / 3</p>
+            </div>
+            <div class="metric-box">
+              <p class="metric-label">Bet Rule (2/3)</p>
+              <p id="filmBetEligibility" class="metric-value compact">Bet inactive</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="placeholder-card">
+          <h3>Active Players (Playing Team)</h3>
+          <p id="filmActiveSelectionInfo" class="muted">PLACEHOLDER: Active player selection summary.</p>
+          <div id="filmActivePlayingTeamList" class="film-active-list"></div>
+          <div class="metric-actions spaced">
+            <button id="filmClearActiveBtn" class="secondary-btn" type="button">Clear active players (playing team)</button>
+          </div>
+        </article>
+
+        <article class="placeholder-card">
+          <h3>Rounds Board</h3>
+          <div id="filmRoundsBoard" class="film-rounds-board"></div>
+          <p class="muted">Used rounds are marked and disabled for current round number.</p>
+        </article>
+
+        <div class="two-col">
+          <article class="placeholder-card">
+            <h3>Placeholder data source</h3>
+            <textarea id="filmJocBoard" class="text-area" rows="10" data-bind="sections.filmJocBoard"></textarea>
+          </article>
+          <article class="placeholder-card">
+            <h3>Round flow notes</h3>
+            <textarea id="filmJocRules" class="text-area" rows="10" data-bind="sections.filmJocRules"></textarea>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel page-section" data-section="cel-mai-bun-samsar">
+        <div class="section-title-row">
+          <h2>Cel mai bun samsar</h2>
+          <p class="muted">6 rounds, persona requirements, score-based winner, standard payout.</p>
         </div>
 
-        <div class="notes-box">
-          <label class="field-label" for="hostNotes">Host master notes</label>
-          <textarea id="hostNotes" class="text-area" rows="7" placeholder="PLACEHOLDER: Opening line, sponsor insert, transitions, emergency fallback script."></textarea>
+        <article class="placeholder-card">
+          <div class="section-title-row">
+            <h3>Round Persona</h3>
+            <p id="samsarRoundBadge" class="muted">Round 1 / 6</p>
+          </div>
+          <p id="samsarPersonaTitle" class="metric-value compact">PLACEHOLDER: Persona title</p>
+          <p id="samsarPersonaRequirements" class="muted">PLACEHOLDER: Persona requirements for this round.</p>
+        </article>
+
+        <article class="placeholder-card">
+          <h3>Round Result Input</h3>
+          <div class="players-control-grid">
+            <div>
+              <label class="field-label" for="samsarPlayerTeamASelect">Active player Team 1</label>
+              <select id="samsarPlayerTeamASelect" class="text-input"></select>
+            </div>
+            <div>
+              <label class="field-label" for="samsarPlayerTeamBSelect">Active player Team 2</label>
+              <select id="samsarPlayerTeamBSelect" class="text-input"></select>
+            </div>
+            <div>
+              <label class="field-label" for="samsarScoreTeamAInput">Score Team 1</label>
+              <input id="samsarScoreTeamAInput" class="text-input compact-input" type="number" min="0" step="1" value="0">
+            </div>
+            <div>
+              <label class="field-label" for="samsarScoreTeamBInput">Score Team 2</label>
+              <input id="samsarScoreTeamBInput" class="text-input compact-input" type="number" min="0" step="1" value="0">
+            </div>
+          </div>
+
+          <p id="samsarRuleInfo" class="muted spaced">PLACEHOLDER: Samsar payout rule info.</p>
+          <div class="metric-actions">
+            <button id="samsarApplyResultBtn" class="primary-btn" type="button">Apply Result</button>
+          </div>
+          <p id="samsarRoundResult" class="muted spaced">PLACEHOLDER: Round result appears here.</p>
+        </article>
+
+        <article class="placeholder-card">
+          <h3>Round Shortcuts</h3>
+          <div class="quick-action-grid">
+            <button class="pill-btn" type="button" data-samsar-round="1">Round 1</button>
+            <button class="pill-btn" type="button" data-samsar-round="2">Round 2</button>
+            <button class="pill-btn" type="button" data-samsar-round="3">Round 3</button>
+            <button class="pill-btn" type="button" data-samsar-round="4">Round 4</button>
+            <button class="pill-btn" type="button" data-samsar-round="5">Round 5</button>
+            <button class="pill-btn" type="button" data-samsar-round="6">Round 6</button>
+          </div>
+        </article>
+      </section>
+
+      <section class="panel page-section" data-section="manual-match">
+        <div class="section-title-row">
+          <h2>Manual Match Dashboard</h2>
+          <p class="muted">Guess the Right Order / Beer Pong standard + Shot Fake bet-only.</p>
         </div>
-      </div>
+
+        <article class="placeholder-card">
+          <h3>Round Controller</h3>
+          <div class="players-control-grid">
+            <div>
+              <label class="field-label" for="manualGameSelect">Game</label>
+              <select id="manualGameSelect" class="text-input">
+                <option value="guess-right-order">Guess the Right Order</option>
+                <option value="beer-pong">Beer Pong</option>
+                <option value="shot-fake">Shot Fake</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="manualRoundInput">Round number</label>
+              <input id="manualRoundInput" class="text-input compact-input" type="number" min="1" step="1" value="1">
+            </div>
+          </div>
+          <p id="manualBetRuleInfo" class="muted spaced">PLACEHOLDER: Max bet info.</p>
+        </article>
+
+        <article class="placeholder-card">
+          <h3>Active Players (Team vs Team)</h3>
+          <p class="muted">Select active players for both teams. Max 6 each. Bench/Unavailable and Lock are enforced.</p>
+          <div class="two-col">
+            <div>
+              <h4 class="field-label">Team 1 Active</h4>
+              <div id="manualActiveTeamAList" class="manual-active-list"></div>
+            </div>
+            <div>
+              <h4 class="field-label">Team 2 Active</h4>
+              <div id="manualActiveTeamBList" class="manual-active-list"></div>
+            </div>
+          </div>
+        </article>
+
+        <article class="placeholder-card">
+          <h3>Main Result Input</h3>
+          <div class="players-control-grid">
+            <div>
+              <label class="field-label" for="manualScoreTeamAInput">Team 1 score</label>
+              <input id="manualScoreTeamAInput" class="text-input compact-input" type="number" min="0" step="1" value="0">
+            </div>
+            <div>
+              <label class="field-label" for="manualScoreTeamBInput">Team 2 score</label>
+              <input id="manualScoreTeamBInput" class="text-input compact-input" type="number" min="0" step="1" value="0">
+            </div>
+            <div>
+              <label class="field-label" for="manualBetTeamAInput">Team 1 bet</label>
+              <input id="manualBetTeamAInput" class="text-input compact-input" type="number" min="10" step="10" value="100">
+            </div>
+            <div>
+              <label class="field-label" for="manualBetTeamBInput">Team 2 bet</label>
+              <input id="manualBetTeamBInput" class="text-input compact-input" type="number" min="10" step="10" value="100">
+            </div>
+          </div>
+        </article>
+
+        <article id="shotFakePanel" class="placeholder-card">
+          <h3>Shot Fake Side Bets + Special Rule</h3>
+          <p class="muted">Bet-only mode. Special rule: each losing player pays <code>x * active opponents</code>. Configure side bets below.</p>
+
+          <div class="players-control-grid">
+            <div>
+              <label class="field-label" for="shotFakeMultiplierInput">x multiplier</label>
+              <input id="shotFakeMultiplierInput" class="text-input compact-input" type="number" min="0" step="1" value="10">
+            </div>
+            <div>
+              <label class="field-label" for="shotFakeManualAdjustTeamAInput">Manual adjust Team 1</label>
+              <input id="shotFakeManualAdjustTeamAInput" class="text-input compact-input" type="number" step="10" value="0">
+            </div>
+            <div>
+              <label class="field-label" for="shotFakeManualAdjustTeamBInput">Manual adjust Team 2</label>
+              <input id="shotFakeManualAdjustTeamBInput" class="text-input compact-input" type="number" step="10" value="0">
+            </div>
+          </div>
+
+          <div class="metric-actions spaced">
+            <button id="shotFakeAddSideBetBtn" class="secondary-btn" type="button">Add side bet</button>
+          </div>
+
+          <div id="shotFakeSideBetsList" class="shot-fake-sidebets-list"></div>
+          <p id="shotFakeRulePreview" class="muted spaced">PLACEHOLDER: Shot Fake preview.</p>
+        </article>
+
+        <article class="placeholder-card">
+          <h3>Round Apply</h3>
+          <p id="manualRoundResult" class="muted">PLACEHOLDER: Round result appears here.</p>
+          <div class="metric-actions spaced">
+            <button id="manualApplyResultBtn" class="primary-btn" type="button">Apply Result</button>
+          </div>
+        </article>
+
+        <div class="two-col">
+          <article class="placeholder-card">
+            <h3>Manual matchup board</h3>
+            <textarea id="manualMatchups" class="text-area" rows="10" data-bind="sections.manualMatchups"></textarea>
+          </article>
+          <article class="placeholder-card">
+            <h3>Decision log</h3>
+            <textarea id="manualLog" class="text-area" rows="10" data-bind="sections.manualLog"></textarea>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel page-section" data-section="curse-de-cai">
+        <div class="section-title-row">
+          <h2>Curse de cai</h2>
+          <p class="muted">Host race dashboard: manual moves, multi-bet payout x4, and auto winner detection.</p>
+        </div>
+
+        <article class="placeholder-card">
+          <h3>Race Control</h3>
+          <div class="players-control-grid">
+            <div>
+              <label class="field-label" for="curseRoundInput">Round number</label>
+              <input id="curseRoundInput" class="text-input compact-input" type="number" min="1" step="1" value="1">
+            </div>
+            <div>
+              <label class="field-label" for="curseMoveHorseSelect">Extracted symbol / horse</label>
+              <select id="curseMoveHorseSelect" class="text-input"></select>
+            </div>
+            <div>
+              <label class="field-label" for="curseMoveStepsInput">Steps</label>
+              <input id="curseMoveStepsInput" class="text-input compact-input" type="number" min="1" step="1" value="1">
+            </div>
+          </div>
+          <div class="metric-actions spaced">
+            <button id="curseMoveBtn" class="secondary-btn" type="button">Move Horse</button>
+            <button id="curseApplyPayoutBtn" class="primary-btn" type="button">Apply Race Payout</button>
+            <button id="curseResetRaceBtn" class="secondary-btn" type="button">Reset Race</button>
+          </div>
+          <p id="curseRuleInfo" class="muted spaced">PLACEHOLDER: Curse payout and bet rules.</p>
+          <p id="curseWinnerInfo" class="muted spaced">PLACEHOLDER: Winner appears here.</p>
+          <p id="curseRoundResult" class="muted spaced">PLACEHOLDER: Round result appears here.</p>
+        </article>
+
+        <article class="placeholder-card">
+          <h3>Players / Bettor Principal</h3>
+          <div class="two-col">
+            <div>
+              <h4 class="field-label">Team 1</h4>
+              <label class="field-label" for="curseBettorTeamASelect">Bettor principal</label>
+              <select id="curseBettorTeamASelect" class="text-input compact-input"></select>
+              <div id="curseActiveTeamAList" class="curse-active-list"></div>
+            </div>
+            <div>
+              <h4 class="field-label">Team 2</h4>
+              <label class="field-label" for="curseBettorTeamBSelect">Bettor principal</label>
+              <select id="curseBettorTeamBSelect" class="text-input compact-input"></select>
+              <div id="curseActiveTeamBList" class="curse-active-list"></div>
+            </div>
+          </div>
+        </article>
+
+        <article class="placeholder-card">
+          <h3>Visual Track</h3>
+          <div id="curseTrackBoard" class="curse-track-board"></div>
+        </article>
+
+        <article class="placeholder-card">
+          <h3>Multi-bet on Horses</h3>
+          <p id="curseTeamABetTotal" class="muted">PLACEHOLDER: Team 1 total bet.</p>
+          <p id="curseTeamBBetTotal" class="muted">PLACEHOLDER: Team 2 total bet.</p>
+          <div class="curse-bet-header">
+            <strong>Horse</strong>
+            <strong data-team-name="teamA">Team 1</strong>
+            <strong data-team-name="teamB">Team 2</strong>
+          </div>
+          <div id="curseBetBoard" class="curse-bet-board"></div>
+        </article>
+
+        <div class="two-col">
+          <article class="placeholder-card">
+            <h3>Host race notes</h3>
+            <textarea id="curseTrack" class="text-area" rows="8" data-bind="sections.curseTrack"></textarea>
+          </article>
+          <article class="placeholder-card">
+            <h3>Bet notes / scenarios</h3>
+            <textarea id="curseBets" class="text-area" rows="8" data-bind="sections.curseBets"></textarea>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel page-section" data-section="players-teams">
+        <div class="section-title-row">
+          <h2>Players / Teams</h2>
+          <p class="muted">Dynamic players, round selection, Joker assignment, and lock control.</p>
+        </div>
+        <article class="placeholder-card">
+          <h3>Round Selection Control</h3>
+          <div class="players-control-grid">
+            <p class="muted">Current game: <strong id="playersCurrentGameLabel">PLACEHOLDER</strong></p>
+            <p class="muted">Current round: <strong id="playersCurrentRoundLabel">1</strong></p>
+            <p class="muted">Active team A: <strong id="activeCountTeamA">0/6</strong></p>
+            <p class="muted">Active team B: <strong id="activeCountTeamB">0/6</strong></p>
+          </div>
+          <div class="players-control-grid">
+            <div>
+              <label class="field-label" for="jokerAssignmentSelect">Joker Player assignment</label>
+              <select id="jokerAssignmentSelect" class="text-input compact-input">
+                <option value="out">Out this round</option>
+                <option value="teamA">Team 1</option>
+                <option value="teamB">Team 2</option>
+              </select>
+            </div>
+            <div class="metric-actions">
+              <button id="lockRoundSelectionBtn" class="secondary-btn" type="button">Lock round selection</button>
+              <button id="clearActiveSelectionBtn" class="secondary-btn" type="button">Clear active players</button>
+            </div>
+          </div>
+          <p id="selectionLockStatus" class="muted">Selection unlocked.</p>
+        </article>
+
+        <div class="team-grid players-team-grid">
+          <article class="team-card">
+            <label class="field-label" for="teamANameInput">Team A name</label>
+            <input id="teamANameInput" class="text-input" data-bind="teams.teamA.name" maxlength="40">
+
+            <div class="add-player-row">
+              <input id="addPlayerTeamAInput" class="text-input" placeholder="PLACEHOLDER: New player name">
+              <button id="addPlayerTeamABtn" class="primary-btn" type="button">Add player</button>
+            </div>
+
+            <div id="teamAPlayersList" class="players-list"></div>
+          </article>
+
+          <article class="team-card">
+            <label class="field-label" for="teamBNameInput">Team B name</label>
+            <input id="teamBNameInput" class="text-input" data-bind="teams.teamB.name" maxlength="40">
+
+            <div class="add-player-row">
+              <input id="addPlayerTeamBInput" class="text-input" placeholder="PLACEHOLDER: New player name">
+              <button id="addPlayerTeamBBtn" class="primary-btn" type="button">Add player</button>
+            </div>
+
+            <div id="teamBPlayersList" class="players-list"></div>
+          </article>
+        </div>
+
+        <article class="placeholder-card">
+          <h3>Joker Player</h3>
+          <p class="muted">Joker Player fixed final title: <strong>F1 Gipsy King</strong></p>
+          <div class="players-control-grid">
+            <p class="muted">Rounds active: <strong id="jokerRoundsActive">0</strong></p>
+            <p class="muted">Rounds for Team 1: <strong id="jokerRoundsTeamA">0</strong></p>
+            <p class="muted">Rounds for Team 2: <strong id="jokerRoundsTeamB">0</strong></p>
+            <p class="muted">Rounds out: <strong id="jokerRoundsOut">0</strong></p>
+          </div>
+        </article>
+      </section>
+
+      <section class="panel page-section" data-section="awards-final-titles">
+        <div class="section-title-row">
+          <h2>Awards / Final Titles</h2>
+          <p class="muted">Automatic titles calculated from player stats + fixed Joker title.</p>
+        </div>
+        <article class="placeholder-card">
+          <div class="section-title-row">
+            <h3>Automatic Titles</h3>
+            <button id="refreshAwardsBtn" class="secondary-btn" type="button">Refresh Awards</button>
+          </div>
+          <p class="muted">Titles are calculated from rounds, bets, and money stats of active players.</p>
+
+          <h4 class="field-label spaced">General Titles</h4>
+          <div id="awardsGeneralTitlesBoard" class="awards-grid"></div>
+
+          <h4 class="field-label spaced">Game Titles</h4>
+          <div id="awardsGameTitlesBoard" class="awards-grid"></div>
+        </article>
+        <div class="two-col">
+          <article class="placeholder-card">
+            <h3>Awards categories</h3>
+            <textarea id="awardsCategories" class="text-area" rows="10" data-bind="sections.awardsCategories"></textarea>
+          </article>
+          <article class="placeholder-card">
+            <h3>Final titles script</h3>
+            <textarea id="finalTitles" class="text-area" rows="10" data-bind="sections.finalTitles"></textarea>
+          </article>
+        </div>
+        <article class="placeholder-card">
+          <h3>Fixed Final Title</h3>
+          <p class="muted">Joker Player final title: <strong>F1 Gipsy King</strong></p>
+          <p id="jokerFixedAwardLine" class="muted">Joker Player - F1 Gipsy King (fixed and guaranteed).</p>
+          <p id="jokerAwardSummary" class="muted">PLACEHOLDER: Joker stats snapshot appears here.</p>
+        </article>
+      </section>
+
+      <section class="panel page-section" data-section="end-screen">
+        <div class="section-title-row">
+          <h2>End Screen</h2>
+          <p class="muted">Final results board for TV or laptop display.</p>
+        </div>
+
+        <article class="placeholder-card end-screen-hero">
+          <p class="eyebrow">FINAL RESULTS</p>
+          <p id="endWinningTeamName" class="end-screen-winner">PLACEHOLDER: Winning team</p>
+          <p id="endWinningTeamReason" class="muted">PLACEHOLDER: Win reason</p>
+        </article>
+
+        <div class="end-team-grid">
+          <article id="endTeamACard" class="metric-box">
+            <p class="metric-label" data-team-name="teamA">Team 1</p>
+            <p id="endTeamAMoney" class="metric-value">$0</p>
+            <p id="endTeamAScore" class="muted">Score: 0</p>
+          </article>
+          <article id="endTeamBCard" class="metric-box">
+            <p class="metric-label" data-team-name="teamB">Team 2</p>
+            <p id="endTeamBMoney" class="metric-value">$0</p>
+            <p id="endTeamBScore" class="muted">Score: 0</p>
+          </article>
+        </div>
+
+        <article class="placeholder-card">
+          <h3>Awards / Final Titles</h3>
+          <h4 class="field-label spaced">General Titles</h4>
+          <div id="endAwardsGeneralBoard" class="awards-grid"></div>
+          <h4 class="field-label spaced">Game Titles</h4>
+          <div id="endAwardsGameBoard" class="awards-grid"></div>
+          <p id="endJokerTitleLine" class="muted spaced">Joker Player - F1 Gipsy King.</p>
+        </article>
+
+        <article class="placeholder-card">
+          <h3>Closing Script</h3>
+          <p id="endFinalTitlesScript" class="muted">PLACEHOLDER: Closing speech line appears here.</p>
+        </article>
+      </section>
+
+      <section class="panel page-section" data-section="settings">
+        <div class="section-title-row">
+          <h2>Settings</h2>
+          <p class="muted">Show identity, storage, and current gameplay rule snapshot.</p>
+        </div>
+        <div class="two-col">
+          <article class="placeholder-card">
+            <label class="field-label" for="showTitleInput">Show title</label>
+            <input id="showTitleInput" class="text-input" data-bind="settings.showTitle">
+
+            <label class="field-label spaced" for="hostNameInput">Host display name</label>
+            <input id="hostNameInput" class="text-input" data-bind="settings.hostName">
+
+            <label class="field-label spaced" for="currencySymbolInput">Currency symbol</label>
+            <input id="currencySymbolInput" class="text-input compact-input" maxlength="3" data-bind="settings.currencySymbol">
+          </article>
+
+          <article class="placeholder-card">
+            <h3>Storage details</h3>
+            <p class="muted">Storage key: <code>gameshow-host-dashboard-v3</code></p>
+            <p class="muted">All sections, teams, scores, money, timer, round selection, and player stats are saved automatically.</p>
+            <p class="muted">Use <strong>Reset session</strong> from the left panel to return to clean placeholders.</p>
+            <p id="settingsBetCapsLine" class="muted spaced"><strong>Bet caps:</strong> PLACEHOLDER</p>
+            <p id="settingsBonusesLine" class="muted">PLACEHOLDER</p>
+          </article>
+        </div>
+        <article class="placeholder-card">
+          <h3>Current Rules Snapshot</h3>
+          <p id="settingsTriviaRuleLine" class="muted">PLACEHOLDER</p>
+          <p id="settingsPretulRuleLine" class="muted">PLACEHOLDER</p>
+          <p id="settingsFilmRuleLine" class="muted">PLACEHOLDER</p>
+          <p id="settingsSamsarRuleLine" class="muted">PLACEHOLDER</p>
+          <p id="settingsShotFakeRuleLine" class="muted">PLACEHOLDER</p>
+          <p id="settingsCurseRuleLine" class="muted">PLACEHOLDER</p>
+          <p id="settingsSelectionRuleLine" class="muted">PLACEHOLDER</p>
+          <p id="settingsMultiBetRuleLine" class="muted">PLACEHOLDER</p>
+        </article>
+
+        <article class="placeholder-card">
+          <h3>Save Transfer</h3>
+          <p class="muted">Export/import full dashboard state in simple JSON format.</p>
+          <div class="metric-actions spaced">
+            <button id="exportSaveBtn" class="secondary-btn" type="button">Export Save</button>
+            <button id="importSaveBtn" class="secondary-btn" type="button">Import Save</button>
+            <input id="importSaveFileInput" type="file" accept=".json,application/json" hidden>
+          </div>
+          <textarea
+            id="saveTransferArea"
+            class="text-area save-transfer-area"
+            rows="8"
+            placeholder="Exported save JSON appears here. You can paste JSON and press Import Save."
+          ></textarea>
+          <p id="saveTransferStatus" class="muted spaced">No export/import action yet.</p>
+        </article>
+      </section>
     </section>
-
-    <footer class="status-row">
-      <span id="saveStatus">Not saved yet.</span>
-    </footer>
   </main>
 
   <script src="script.js"></script>
