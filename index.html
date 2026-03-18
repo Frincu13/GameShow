@@ -15,7 +15,7 @@
     <header class="show-header panel">
       <div class="show-header-main">
         <p class="eyebrow">GAME SHOW LIVE</p>
-        <h1 class="show-main-title" data-show-title>PLACEHOLDER: GameShow Season 1</h1>
+        <h1 class="show-main-title" data-show-title>GameShow Friday Night</h1>
       </div>
       <div class="show-screen-nav" aria-label="Show flow">
         <button class="show-screen-btn is-active" type="button" data-show-screen-target="show-home">Show Home</button>
@@ -49,12 +49,12 @@
 
       <div class="show-team-grid">
         <article class="show-team-card">
-          <p class="show-team-name" data-team-name="teamA">Team 1</p>
+          <p class="show-team-name" data-team-name="teamA">Lupii</p>
           <p class="show-team-money" data-team-money="teamA">$1,000</p>
           <p class="show-team-active" id="showActivePlayersTeamA">Active: none</p>
         </article>
         <article class="show-team-card">
-          <p class="show-team-name" data-team-name="teamB">Team 2</p>
+          <p class="show-team-name" data-team-name="teamB">Vulturii</p>
           <p class="show-team-money" data-team-money="teamB">$1,000</p>
           <p class="show-team-active" id="showActivePlayersTeamB">Active: none</p>
         </article>
@@ -67,7 +67,7 @@
 
       <article class="show-result-card">
         <h3>Latest Result</h3>
-        <p id="showLatestResult" class="show-latest-result">PLACEHOLDER: Nu exista rezultat aplicat inca.</p>
+        <p id="showLatestResult" class="show-latest-result">Niciun rezultat aplicat inca.</p>
       </article>
     </section>
 
@@ -79,7 +79,7 @@
         <button id="hostPanelCloseBtn" class="secondary-btn" type="button">Close</button>
       </div>
       <p class="eyebrow">HOST EMERGENCY PANEL</p>
-      <h1 data-show-title>PLACEHOLDER: GameShow Season 1</h1>
+      <h1 data-show-title>GameShow Friday Night</h1>
       <p class="muted">Emergency panel for admin override and recovery controls.</p>
 
       <article class="host-admin-card">
@@ -142,7 +142,7 @@
       <article class="host-admin-card">
         <h3>Result Override</h3>
         <label class="field-label" for="adminSummaryInput">Manual result summary</label>
-        <textarea id="adminSummaryInput" class="text-area" rows="3" placeholder="PLACEHOLDER: Manual override summary"></textarea>
+        <textarea id="adminSummaryInput" class="text-area" rows="3" placeholder="Scrie aici un rezultat manual"></textarea>
         <div class="metric-actions spaced">
           <button id="adminApplySummaryBtn" class="secondary-btn" type="button">Apply summary override</button>
         </div>
@@ -231,18 +231,18 @@
 
         <div class="quick-grid">
           <article class="metric-box">
-            <p class="metric-label" data-team-name="teamA">Team 1</p>
+            <p class="metric-label" data-team-name="teamA">Lupii</p>
             <p class="metric-value" data-team-money="teamA">$0</p>
             <p class="muted">Money echipa 1</p>
           </article>
           <article class="metric-box">
-            <p class="metric-label" data-team-name="teamB">Team 2</p>
+            <p class="metric-label" data-team-name="teamB">Vulturii</p>
             <p class="metric-value" data-team-money="teamB">$0</p>
             <p class="muted">Money echipa 2</p>
           </article>
           <article class="metric-box">
             <p class="metric-label">Jocul curent</p>
-            <p id="currentGameLabel" class="metric-value compact">PLACEHOLDER: Trivia de grup</p>
+            <p id="currentGameLabel" class="metric-value compact">Trivia de grup</p>
             <p class="muted">Current game stage</p>
           </article>
           <article class="metric-box">
@@ -252,7 +252,7 @@
           </article>
           <article class="metric-box">
             <p class="metric-label">Active host</p>
-            <p class="metric-value compact" data-host-name>PLACEHOLDER: Host Name</p>
+            <p class="metric-value compact" data-host-name>Alex</p>
             <p class="muted">From Settings</p>
           </article>
         </div>
@@ -275,7 +275,7 @@
 
         <article class="placeholder-card">
           <h3>Rezumat rapid</h3>
-          <p id="lastResultSummary" class="muted">PLACEHOLDER: Nu exista rezultat aplicat inca.</p>
+          <p id="lastResultSummary" class="muted">Niciun rezultat aplicat inca.</p>
         </article>
 
         <div class="round-grid">
@@ -356,8 +356,8 @@
 
         <article class="placeholder-card">
           <h3>Auto ranking</h3>
-          <p class="muted">Leader by score: <strong id="leaderByScore">PLACEHOLDER: waiting for score data</strong></p>
-          <p class="muted">Leader by money: <strong id="leaderByMoney">PLACEHOLDER: waiting for currency data</strong></p>
+          <p class="muted">Leader by score: <strong id="leaderByScore">se actualizeaza dupa prima runda</strong></p>
+          <p class="muted">Leader by money: <strong id="leaderByMoney">se actualizeaza dupa prima runda</strong></p>
         </article>
 
         <article class="placeholder-card">
@@ -389,7 +389,7 @@
             </div>
           </div>
 
-          <p id="betRuleInfo" class="muted spaced">PLACEHOLDER: Betting rule info.</p>
+          <p id="betRuleInfo" class="muted spaced">Alege echipa, jocul si suma pariata. Limita maxima se calculeaza automat.</p>
           <div class="metric-actions">
             <button id="betWinBtn" class="primary-btn" type="button">Apply Bet Win</button>
             <button id="betLoseBtn" class="danger-btn" type="button">Apply Bet Loss</button>
@@ -422,7 +422,7 @@
             <label class="field-label spaced" for="triviaFixedBonusInput">Fixed bonus on correct</label>
             <input id="triviaFixedBonusInput" class="text-input compact-input" type="number" min="0" step="10" value="100">
 
-            <p id="triviaBetRuleInfo" class="muted spaced">PLACEHOLDER: Trivia payout rule info.</p>
+            <p id="triviaBetRuleInfo" class="muted spaced">Trivia: raspuns corect = bonus fix + castigul bet-ului; raspuns gresit = pierdere bet.</p>
 
             <div class="metric-actions">
               <button id="triviaCorrectBtn" class="primary-btn" type="button">Correct Answer</button>
@@ -439,7 +439,7 @@
 
         <article class="placeholder-card">
           <h3>Active Players (Playing Team Only)</h3>
-          <p id="triviaActiveSelectionInfo" class="muted">PLACEHOLDER: Active selection summary.</p>
+          <p id="triviaActiveSelectionInfo" class="muted">Selecteaza manual jucatorii activi pentru runda curenta.</p>
           <p class="muted">Use Players / Teams to pick active players. Non-playing team is disabled for Trivia rounds.</p>
         </article>
 
@@ -490,13 +490,13 @@
             <label class="field-label spaced" for="pretulRealPriceInput">Real price</label>
             <input id="pretulRealPriceInput" class="text-input compact-input" type="number" step="1" min="0" value="0">
 
-            <p id="pretulRuleInfo" class="muted spaced">PLACEHOLDER: Pretul corect payout info.</p>
+            <p id="pretulRuleInfo" class="muted spaced">Castigatorul este detectat automat dupa distanta fata de pretul real.</p>
 
             <div class="metric-actions">
               <button id="pretulEvaluateBtn" class="primary-btn" type="button">Detect Winner & Apply Payout</button>
               <button id="pretulResetUsedBtn" class="secondary-btn" type="button">Reset Used Items</button>
             </div>
-            <p id="pretulRoundResult" class="muted spaced">PLACEHOLDER: Round result appears here.</p>
+            <p id="pretulRoundResult" class="muted spaced">Rezultatul rundei apare aici dupa Apply.</p>
           </article>
 
           <article class="placeholder-card">
@@ -555,20 +555,20 @@
             <label class="field-label spaced" for="filmBetAmountInput">Team bet</label>
             <input id="filmBetAmountInput" class="text-input compact-input" type="number" min="10" step="10" value="100">
 
-            <p id="filmRuleInfo" class="muted spaced">PLACEHOLDER: Film/Joc/Franciza/Fun Fact payout rule info.</p>
+            <p id="filmRuleInfo" class="muted spaced">Payout pe componente (1/1/3), iar bet-ul este activ doar la minim 2/3 corecte.</p>
 
             <div class="metric-actions">
               <button id="filmApplyRoundBtn" class="primary-btn" type="button">Apply Round Result</button>
               <button id="filmResetUsedBtn" class="secondary-btn" type="button">Reset Used Rounds</button>
             </div>
-            <p id="filmRoundResult" class="muted spaced">PLACEHOLDER: Round result appears here.</p>
+            <p id="filmRoundResult" class="muted spaced">Rezultatul rundei apare aici dupa Apply.</p>
           </article>
 
           <article class="placeholder-card">
             <h3>Round Image</h3>
             <figure class="film-image-wrap">
-              <img id="filmRoundImage" class="film-round-image" src="" alt="Round image placeholder">
-              <figcaption id="filmRoundImageCaption" class="muted">PLACEHOLDER: Round image caption.</figcaption>
+              <img id="filmRoundImage" class="film-round-image" src="" alt="Round image">
+              <figcaption id="filmRoundImageCaption" class="muted">Imaginea rundei active.</figcaption>
             </figure>
           </article>
         </div>
@@ -655,7 +655,7 @@
 
         <article class="placeholder-card">
           <h3>Active Players (Playing Team)</h3>
-          <p id="filmActiveSelectionInfo" class="muted">PLACEHOLDER: Active player selection summary.</p>
+          <p id="filmActiveSelectionInfo" class="muted">Doar jucatorii selectati ca activi primesc statistici pe runda.</p>
           <div id="filmActivePlayingTeamList" class="film-active-list"></div>
           <div class="metric-actions spaced">
             <button id="filmClearActiveBtn" class="secondary-btn" type="button">Clear active players (playing team)</button>
@@ -691,8 +691,8 @@
             <h3>Round Persona</h3>
             <p id="samsarRoundBadge" class="muted">Round 1 / 6</p>
           </div>
-          <p id="samsarPersonaTitle" class="metric-value compact">PLACEHOLDER: Persona title</p>
-          <p id="samsarPersonaRequirements" class="muted">PLACEHOLDER: Persona requirements for this round.</p>
+          <p id="samsarPersonaTitle" class="metric-value compact">Persona curenta</p>
+          <p id="samsarPersonaRequirements" class="muted">Cerintele rundei curente pentru negociere.</p>
         </article>
 
         <article class="placeholder-card">
@@ -716,11 +716,11 @@
             </div>
           </div>
 
-          <p id="samsarRuleInfo" class="muted spaced">PLACEHOLDER: Samsar payout rule info.</p>
+          <p id="samsarRuleInfo" class="muted spaced">Scor mai mare castiga runda; egal = draw; payout standard Samsar.</p>
           <div class="metric-actions">
             <button id="samsarApplyResultBtn" class="primary-btn" type="button">Apply Result</button>
           </div>
-          <p id="samsarRoundResult" class="muted spaced">PLACEHOLDER: Round result appears here.</p>
+          <p id="samsarRoundResult" class="muted spaced">Rezultatul rundei apare aici dupa Apply.</p>
         </article>
 
         <article class="placeholder-card">
@@ -758,7 +758,7 @@
               <input id="manualRoundInput" class="text-input compact-input" type="number" min="1" step="1" value="1">
             </div>
           </div>
-          <p id="manualBetRuleInfo" class="muted spaced">PLACEHOLDER: Max bet info.</p>
+          <p id="manualBetRuleInfo" class="muted spaced">Max bet se calculeaza automat in functie de joc si banii echipei.</p>
         </article>
 
         <article class="placeholder-card">
@@ -822,12 +822,12 @@
           </div>
 
           <div id="shotFakeSideBetsList" class="shot-fake-sidebets-list"></div>
-          <p id="shotFakeRulePreview" class="muted spaced">PLACEHOLDER: Shot Fake preview.</p>
+          <p id="shotFakeRulePreview" class="muted spaced">Previzualizarea transferului special si a side bet-urilor apare aici.</p>
         </article>
 
         <article class="placeholder-card">
           <h3>Round Apply</h3>
-          <p id="manualRoundResult" class="muted">PLACEHOLDER: Round result appears here.</p>
+          <p id="manualRoundResult" class="muted">Rezultatul rundei apare aici dupa Apply.</p>
           <div class="metric-actions spaced">
             <button id="manualApplyResultBtn" class="primary-btn" type="button">Apply Result</button>
           </div>
@@ -872,9 +872,9 @@
             <button id="curseApplyPayoutBtn" class="primary-btn" type="button">Apply Race Payout</button>
             <button id="curseResetRaceBtn" class="secondary-btn" type="button">Reset Race</button>
           </div>
-          <p id="curseRuleInfo" class="muted spaced">PLACEHOLDER: Curse payout and bet rules.</p>
-          <p id="curseWinnerInfo" class="muted spaced">PLACEHOLDER: Winner appears here.</p>
-          <p id="curseRoundResult" class="muted spaced">PLACEHOLDER: Round result appears here.</p>
+          <p id="curseRuleInfo" class="muted spaced">Bet-only mode, multi-bet permis, doar pariul pe calul castigator plateste x4.</p>
+          <p id="curseWinnerInfo" class="muted spaced">Castigatorul cursei apare aici.</p>
+          <p id="curseRoundResult" class="muted spaced">Rezultatul rundei apare aici dupa Apply.</p>
         </article>
 
         <article class="placeholder-card">
@@ -902,8 +902,8 @@
 
         <article class="placeholder-card">
           <h3>Multi-bet on Horses</h3>
-          <p id="curseTeamABetTotal" class="muted">PLACEHOLDER: Team 1 total bet.</p>
-          <p id="curseTeamBBetTotal" class="muted">PLACEHOLDER: Team 2 total bet.</p>
+          <p id="curseTeamABetTotal" class="muted">Total pariat Team 1: 0</p>
+          <p id="curseTeamBBetTotal" class="muted">Total pariat Team 2: 0</p>
           <div class="curse-bet-header">
             <strong>Horse</strong>
             <strong data-team-name="teamA">Team 1</strong>
@@ -932,7 +932,7 @@
         <article class="placeholder-card">
           <h3>Round Selection Control</h3>
           <div class="players-control-grid">
-            <p class="muted">Current game: <strong id="playersCurrentGameLabel">PLACEHOLDER</strong></p>
+            <p class="muted">Current game: <strong id="playersCurrentGameLabel">Trivia de grup</strong></p>
             <p class="muted">Current round: <strong id="playersCurrentRoundLabel">1</strong></p>
             <p class="muted">Active team A: <strong id="activeCountTeamA">0/6</strong></p>
             <p class="muted">Active team B: <strong id="activeCountTeamB">0/6</strong></p>
@@ -960,7 +960,7 @@
             <input id="teamANameInput" class="text-input" data-bind="teams.teamA.name" maxlength="40">
 
             <div class="add-player-row">
-              <input id="addPlayerTeamAInput" class="text-input" placeholder="PLACEHOLDER: New player name">
+              <input id="addPlayerTeamAInput" class="text-input" placeholder="Ex: Mihai Ionescu">
               <button id="addPlayerTeamABtn" class="primary-btn" type="button">Add player</button>
             </div>
 
@@ -972,7 +972,7 @@
             <input id="teamBNameInput" class="text-input" data-bind="teams.teamB.name" maxlength="40">
 
             <div class="add-player-row">
-              <input id="addPlayerTeamBInput" class="text-input" placeholder="PLACEHOLDER: New player name">
+              <input id="addPlayerTeamBInput" class="text-input" placeholder="Ex: Mihai Ionescu">
               <button id="addPlayerTeamBBtn" class="primary-btn" type="button">Add player</button>
             </div>
 
@@ -1024,7 +1024,7 @@
           <h3>Fixed Final Title</h3>
           <p class="muted">Joker Player final title: <strong>F1 Gipsy King</strong></p>
           <p id="jokerFixedAwardLine" class="muted">Joker Player - F1 Gipsy King (fixed and guaranteed).</p>
-          <p id="jokerAwardSummary" class="muted">PLACEHOLDER: Joker stats snapshot appears here.</p>
+          <p id="jokerAwardSummary" class="muted">Statistici Joker Player: runde active, W/L, money net.</p>
         </article>
       </section>
 
@@ -1036,18 +1036,18 @@
 
         <article class="placeholder-card end-screen-hero">
           <p class="eyebrow">FINAL RESULTS</p>
-          <p id="endWinningTeamName" class="end-screen-winner">PLACEHOLDER: Winning team</p>
-          <p id="endWinningTeamReason" class="muted">PLACEHOLDER: Win reason</p>
+          <p id="endWinningTeamName" class="end-screen-winner">Echipa castigatoare</p>
+          <p id="endWinningTeamReason" class="muted">Cea mai mare suma finala</p>
         </article>
 
         <div class="end-team-grid">
           <article id="endTeamACard" class="metric-box">
-            <p class="metric-label" data-team-name="teamA">Team 1</p>
+            <p class="metric-label" data-team-name="teamA">Lupii</p>
             <p id="endTeamAMoney" class="metric-value">$0</p>
             <p id="endTeamAScore" class="muted">Score: 0</p>
           </article>
           <article id="endTeamBCard" class="metric-box">
-            <p class="metric-label" data-team-name="teamB">Team 2</p>
+            <p class="metric-label" data-team-name="teamB">Vulturii</p>
             <p id="endTeamBMoney" class="metric-value">$0</p>
             <p id="endTeamBScore" class="muted">Score: 0</p>
           </article>
@@ -1064,7 +1064,7 @@
 
         <article class="placeholder-card">
           <h3>Closing Script</h3>
-          <p id="endFinalTitlesScript" class="muted">PLACEHOLDER: Closing speech line appears here.</p>
+          <p id="endFinalTitlesScript" class="muted">Felicitari tuturor! Ne vedem la urmatoarea editie GameShow.</p>
         </article>
       </section>
 
@@ -1089,21 +1089,21 @@
             <h3>Storage details</h3>
             <p class="muted">Storage key: <code>gameshow-host-dashboard-v3</code></p>
             <p class="muted">All sections, teams, scores, money, timer, round selection, and player stats are saved automatically.</p>
-            <p class="muted">Use <strong>Reset session</strong> from the left panel to return to clean placeholders.</p>
-            <p id="settingsBetCapsLine" class="muted spaced"><strong>Bet caps:</strong> PLACEHOLDER</p>
-            <p id="settingsBonusesLine" class="muted">PLACEHOLDER</p>
+            <p class="muted">Use <strong>Reset session</strong> from the left panel to return to the demo sample setup.</p>
+            <p id="settingsBetCapsLine" class="muted spaced"><strong>Bet caps:</strong> Trivia 10%, Guess Order 10%, Pretul corect 15%, Film/Joc 15%, Samsar 20%, Beer Pong 20%, Shot Fake 25%, Curse de cai 30%</p>
+            <p id="settingsBonusesLine" class="muted">Bonus fix: Trivia activ, Restul jocurilor conform regulilor curente; Shot Fake + Curse de cai sunt bet-only.</p>
           </article>
         </div>
         <article class="placeholder-card">
           <h3>Current Rules Snapshot</h3>
-          <p id="settingsTriviaRuleLine" class="muted">PLACEHOLDER</p>
-          <p id="settingsPretulRuleLine" class="muted">PLACEHOLDER</p>
-          <p id="settingsFilmRuleLine" class="muted">PLACEHOLDER</p>
-          <p id="settingsSamsarRuleLine" class="muted">PLACEHOLDER</p>
-          <p id="settingsShotFakeRuleLine" class="muted">PLACEHOLDER</p>
-          <p id="settingsCurseRuleLine" class="muted">PLACEHOLDER</p>
-          <p id="settingsSelectionRuleLine" class="muted">PLACEHOLDER</p>
-          <p id="settingsMultiBetRuleLine" class="muted">PLACEHOLDER</p>
+          <p id="settingsTriviaRuleLine" class="muted">Trivia: one-team-only, cealalta echipa nu pariaza.</p>
+          <p id="settingsPretulRuleLine" class="muted">Pretul corect: autodetect winner pe baza distantei fata de pretul real.</p>
+          <p id="settingsFilmRuleLine" class="muted">Film/Joc: scoring pe componente, bet activ doar la minim 2/3 corecte.</p>
+          <p id="settingsSamsarRuleLine" class="muted">Samsar: 6 runde, scor manual Team 1 vs Team 2, fara link-uri.</p>
+          <p id="settingsShotFakeRuleLine" class="muted">Shot Fake: bet-only, side bets multiple, regula x * active adversari.</p>
+          <p id="settingsCurseRuleLine" class="muted">Curse de cai: multi-bet, doar calul castigator plateste x4.</p>
+          <p id="settingsSelectionRuleLine" class="muted">Selectia de jucatori are lock/unlock, bench/unavailable si max 6 activi pe echipa.</p>
+          <p id="settingsMultiBetRuleLine" class="muted">Multi-bet este disponibil unde jocul permite (Shot Fake si Curse de cai).</p>
         </article>
 
         <article class="placeholder-card">
@@ -1129,3 +1129,4 @@
   <script src="script.js"></script>
 </body>
 </html>
+

@@ -19,7 +19,7 @@ Static host dashboard architecture for a game show with 2 teams.
 - export/import full save in JSON format
 - fullscreen toggle for TV/laptop host mode
 - final End Screen with winner, final money, and awards snapshot
-- placeholder data blocks for:
+- realistic demo data blocks (ready to edit) for:
   - Trivia de grup
   - Pretul corect
   - Film / Joc / Franciza / Fun Fact

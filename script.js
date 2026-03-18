@@ -50,57 +50,57 @@ const GAME_CONFIG = [
 
 const GAME_ORDER = GAME_CONFIG.map((game) => game.id);
 const MANUAL_MATCH_GAME_IDS = ["guess-right-order", "beer-pong", "shot-fake"];
-const DEFAULT_RESULT_SUMMARY = "PLACEHOLDER: Nu exista rezultat aplicat inca.";
+const DEFAULT_RESULT_SUMMARY = "Niciun rezultat aplicat inca.";
 const DEFAULT_TRIVIA_CATEGORIES = [
   {
     id: "trivia-cat-1",
-    title: "PLACEHOLDER: General Knowledge",
-    question: "PLACEHOLDER: Question text for category 1.",
-    answer: "PLACEHOLDER: Answer text for category 1."
+    title: "Geografie",
+    question: "Care este capitala Australiei?",
+    answer: "Canberra"
   },
   {
     id: "trivia-cat-2",
-    title: "PLACEHOLDER: History & Culture",
-    question: "PLACEHOLDER: Question text for category 2.",
-    answer: "PLACEHOLDER: Answer text for category 2."
+    title: "Istorie",
+    question: "In ce an a cazut Zidul Berlinului?",
+    answer: "1989"
   },
   {
     id: "trivia-cat-3",
-    title: "PLACEHOLDER: Movies & Series",
-    question: "PLACEHOLDER: Question text for category 3.",
-    answer: "PLACEHOLDER: Answer text for category 3."
+    title: "Filme si seriale",
+    question: "Cum se numeste continentul fictiv din Black Panther?",
+    answer: "Wakanda"
   },
   {
     id: "trivia-cat-4",
-    title: "PLACEHOLDER: Sports & Games",
-    question: "PLACEHOLDER: Question text for category 4.",
-    answer: "PLACEHOLDER: Answer text for category 4."
+    title: "Sport si jocuri",
+    question: "Cate piese are un jucator la inceputul unei partide de sah?",
+    answer: "16"
   }
 ];
 const DEFAULT_PRETUL_ITEMS = [
   {
     id: "pretul-item-1",
-    name: "PLACEHOLDER: Wireless gaming headset",
-    referencePrice: 320
+    name: "HyperX Cloud III (casti gaming)",
+    referencePrice: 120
   },
   {
     id: "pretul-item-2",
-    name: "PLACEHOLDER: Smart coffee machine",
-    referencePrice: 540
+    name: "Philips 2200 (espressor automat)",
+    referencePrice: 420
   },
   {
     id: "pretul-item-3",
-    name: "PLACEHOLDER: Mini projector",
-    referencePrice: 880
+    name: "Anker Nebula Capsule (mini proiector)",
+    referencePrice: 520
   },
   {
     id: "pretul-item-4",
-    name: "PLACEHOLDER: Fitness smartwatch",
-    referencePrice: 410
+    name: "Garmin Venu Sq 2 (smartwatch)",
+    referencePrice: 260
   }
 ];
 const FILM_FALLBACK_IMAGE =
-  "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 960 540'><defs><linearGradient id='g' x1='0' x2='1' y1='0' y2='1'><stop offset='0' stop-color='%23111a33'/><stop offset='1' stop-color='%2328386d'/></linearGradient></defs><rect width='960' height='540' fill='url(%23g)'/><text x='50%25' y='45%25' fill='%23f5f7ff' font-size='42' font-family='Arial' text-anchor='middle'>PLACEHOLDER IMAGE</text><text x='50%25' y='56%25' fill='%23d4dcff' font-size='24' font-family='Arial' text-anchor='middle'>Replace with your round visual</text></svg>";
+  "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 960 540'><defs><linearGradient id='g' x1='0' x2='1' y1='0' y2='1'><stop offset='0' stop-color='%23111a33'/><stop offset='1' stop-color='%2328386d'/></linearGradient></defs><rect width='960' height='540' fill='url(%23g)'/><text x='50%25' y='45%25' fill='%23f5f7ff' font-size='42' font-family='Arial' text-anchor='middle'>DEMO ROUND IMAGE</text><text x='50%25' y='56%25' fill='%23d4dcff' font-size='24' font-family='Arial' text-anchor='middle'>Replace with your real round visual</text></svg>";
 const FILM_COMPONENT_KEYS = ["character", "franchise", "funFact"];
 const FILM_COMPONENT_WEIGHTS = {
   character: 1,
@@ -110,123 +110,123 @@ const FILM_COMPONENT_WEIGHTS = {
 const DEFAULT_FILM_ITEMS = [
   {
     id: "film-item-1",
-    title: "PLACEHOLDER: Round 1 - Movie Character",
+    title: "Runda 1 - Film clasic",
     imageUrl: FILM_FALLBACK_IMAGE,
-    imageAlt: "PLACEHOLDER round image 1",
-    characterPrompt: "PLACEHOLDER: Character / Title reveal text for round 1.",
-    franchisePrompt: "PLACEHOLDER: Franchise reveal text for round 1.",
-    funFactPrompt: "PLACEHOLDER: Fun Fact reveal text for round 1."
+    imageAlt: "Imagine demo runda 1",
+    characterPrompt: "Hermione Granger",
+    franchisePrompt: "Harry Potter",
+    funFactPrompt: "Prima carte Harry Potter a fost publicata in 1997."
   },
   {
     id: "film-item-2",
-    title: "PLACEHOLDER: Round 2 - Game Character",
+    title: "Runda 2 - Joc video",
     imageUrl: FILM_FALLBACK_IMAGE,
-    imageAlt: "PLACEHOLDER round image 2",
-    characterPrompt: "PLACEHOLDER: Character / Title reveal text for round 2.",
-    franchisePrompt: "PLACEHOLDER: Franchise reveal text for round 2.",
-    funFactPrompt: "PLACEHOLDER: Fun Fact reveal text for round 2."
+    imageAlt: "Imagine demo runda 2",
+    characterPrompt: "Kratos",
+    franchisePrompt: "God of War",
+    funFactPrompt: "Seria God of War a debutat pe PlayStation 2 in 2005."
   },
   {
     id: "film-item-3",
-    title: "PLACEHOLDER: Round 3 - Franchise Scene",
+    title: "Runda 3 - Franciza blockbuster",
     imageUrl: FILM_FALLBACK_IMAGE,
-    imageAlt: "PLACEHOLDER round image 3",
-    characterPrompt: "PLACEHOLDER: Character / Title reveal text for round 3.",
-    franchisePrompt: "PLACEHOLDER: Franchise reveal text for round 3.",
-    funFactPrompt: "PLACEHOLDER: Fun Fact reveal text for round 3."
+    imageAlt: "Imagine demo runda 3",
+    characterPrompt: "Tony Stark / Iron Man",
+    franchisePrompt: "Marvel Cinematic Universe",
+    funFactPrompt: "Primul film MCU a fost Iron Man (2008)."
   }
 ];
 const DEFAULT_SAMSAR_ROUNDS = [
   {
     id: "samsar-round-1",
-    personaTitle: "PLACEHOLDER: Family Driver",
+    personaTitle: "Familie cu doi copii",
     personaRequirements:
-      "PLACEHOLDER: Needs low fuel consumption, cheap maintenance, and enough space for 2 kids."
+      "Buget maxim 16.000, minim 2018, portbagaj mare si consum redus pentru drumuri de weekend."
   },
   {
     id: "samsar-round-2",
-    personaTitle: "PLACEHOLDER: Weekend Explorer",
+    personaTitle: "Student in oras",
     personaRequirements:
-      "PLACEHOLDER: Wants comfort for long road trips, modern tech, and balanced budget."
+      "Buget maxim 7.000, intretinere ieftina, masina compacta si usor de parcat."
   },
   {
     id: "samsar-round-3",
-    personaTitle: "PLACEHOLDER: City Commuter",
+    personaTitle: "Commuter zilnic",
     personaRequirements:
-      "PLACEHOLDER: Prioritizes compact size, parking ease, and low monthly running costs."
+      "Face 70 km pe zi, vrea confort la drum lung, cutie automata si minim 130 CP."
   },
   {
     id: "samsar-round-4",
-    personaTitle: "PLACEHOLDER: Performance Fan",
+    personaTitle: "Fan performanta",
     personaRequirements:
-      "PLACEHOLDER: Wants strong acceleration, sporty look, and reliable daily use."
+      "Cauta masina sportiva sub 20.000, 0-100 sub 7 secunde si istoric service clar."
   },
   {
     id: "samsar-round-5",
-    personaTitle: "PLACEHOLDER: First-Time Buyer",
+    personaTitle: "Primul SUV",
     personaRequirements:
-      "PLACEHOLDER: Needs beginner-friendly option, safety features, and predictable ownership costs."
+      "Vrea SUV pentru familie, minim 2017, dotari de siguranta bune si costuri previzibile."
   },
   {
     id: "samsar-round-6",
-    personaTitle: "PLACEHOLDER: Premium Executive",
+    personaTitle: "Executive premium",
     personaRequirements:
-      "PLACEHOLDER: Expects premium comfort, prestige, and high-quality interior features."
+      "Buget 28.000, confort premium, interior de calitate si reputatie buna pe fiabilitate."
   }
 ];
 const DEFAULT_CURSE_HORSES = [
   {
     id: "horse-1",
-    name: "PLACEHOLDER: Storm Arrow",
+    name: "Storm Arrow",
     symbol: ">>",
     story:
-      "PLACEHOLDER: Storm Arrow starts slow and usually recovers in the second half of the race. " +
+      "Storm Arrow porneste mai lent, dar recupereaza puternic in a doua jumatate a cursei. " +
       "The horse is known for steady rhythm and late acceleration."
   },
   {
     id: "horse-2",
-    name: "PLACEHOLDER: Crimson Dust",
+    name: "Crimson Dust",
     symbol: "**",
     story:
-      "PLACEHOLDER: Crimson Dust is aggressive in the first turns and pushes hard early. " +
+      "Crimson Dust forteaza startul si castiga rapid teren in primele mutari. " +
       "The horse can lose momentum near the finish if timing is not controlled."
   },
   {
     id: "horse-3",
-    name: "PLACEHOLDER: Night Echo",
+    name: "Night Echo",
     symbol: "##",
     story:
-      "PLACEHOLDER: Night Echo adapts quickly to pressure and does best in tactical races. " +
+      "Night Echo raspunde bine la presiune si performeaza in curse tactice. " +
       "The horse is favored in rounds with many close lane collisions."
   },
   {
     id: "horse-4",
-    name: "PLACEHOLDER: Silver Bolt",
+    name: "Silver Bolt",
     symbol: "!!",
     story:
-      "PLACEHOLDER: Silver Bolt is a consistent all-rounder with balanced pace. " +
+      "Silver Bolt este cel mai constant cal din grup, cu ritm echilibrat. " +
       "This horse is reliable for conservative bet strategies."
   },
   {
     id: "horse-5",
-    name: "PLACEHOLDER: Iron Comet",
+    name: "Iron Comet",
     symbol: "$$",
     story:
-      "PLACEHOLDER: Iron Comet performs better as the lane opens up. " +
+      "Iron Comet devine periculos pe final cand pista este libera. " +
       "The horse is hard to stop once it reaches mid-track advantage."
   },
   {
     id: "horse-6",
-    name: "PLACEHOLDER: Wild Orbit",
+    name: "Wild Orbit",
     symbol: "@@",
     story:
-      "PLACEHOLDER: Wild Orbit is unpredictable and can swing between weak and dominant rounds. " +
+      "Wild Orbit este imprevizibil si poate avea atat runde slabe, cat si runde dominante. " +
       "Hosts usually keep this horse for high-variance moments."
   }
 ];
 const DEFAULT_MANUAL_SIDEBET = {
   id: "shot-side-1",
-  label: "PLACEHOLDER: Side bet",
+  label: "Duel 1v1",
   amount: 50,
   winner: "draw"
 };
@@ -234,25 +234,25 @@ const JOKER_PLAYER_ID = "joker-player";
 const PLAYER_STATS_SCHEMA_VERSION = 1;
 const SECTION_NOTES_DEFAULTS = {
   triviaRules:
-    "PLACEHOLDER:\n- One team plays each round (Team 1 or Team 2).\n- Only active team places the bet (max 10%, rounded to 10).\n- Correct answer: fixed bonus + bet win.\n- Wrong answer: lose bet.\n- Used category should be marked and disabled.",
+    "- O singura echipa joaca runda.\n- Doar echipa activa pariaza (max 10%, rotunjit la 10).\n- Corect: bonus fix + castig din bet.\n- Gresit: pierdere bet.\n- Categoriile folosite se marcheaza automat.",
   pretulRules:
-    "PLACEHOLDER:\n- Both teams submit answer + bet (max 15%, rounded to 10).\n- Enter real price each round.\n- Winner is auto-detected by closest distance.\n- Equal distance = tie.\n- Used item remains marked as used.",
+    "- Ambele echipe dau raspuns si pariu (max 15%, rotunjit la 10).\n- Introdu pretul real la finalul rundei.\n- Castigatorul este detectat automat dupa distanta fata de pretul real.\n- Distanta egala = tie, pariurile se returneaza.",
   filmJocRules:
-    "PLACEHOLDER:\n- One team plays each round.\n- Components: Character/Title x1, Franchise x1, Fun Fact x3.\n- Component payout is partial (not all-or-nothing).\n- Bet is active only with minimum 2/3 correct.\n- Under 2/3 correct, the bet is lost.",
+    "- O singura echipa joaca runda.\n- Componente: Character/Title x1, Franchise x1, Fun Fact x3.\n- Payout partial pe componente, nu all-or-nothing.\n- Bet-ul se activeaza doar la minim 2/3 corecte.",
   samsarRules:
-    "PLACEHOLDER:\n- Keep 6 rounds with persona/requirements text.\n- No link fields; score-only flow.\n- Select one active player per team.\n- Higher score wins, equal score is draw.\n- Standard Samsar payout applies with game cap rules.",
+    "- Joc in 6 runde, fiecare cu persona si cerinte clare.\n- Fiecare echipa trimite un jucator activ.\n- Scor mai mare castiga, scor egal = draw.\n- Payout standard Samsar cu limita de bet a jocului.",
   manualMatchups:
-    "PLACEHOLDER:\nGuess the Right Order - team vs team, standard payout, draw allowed.\nBeer Pong - team vs team, standard payout, draw allowed.\nShot Fake - bet-only mode, draw allowed, side bets + x * active opponents rule.",
+    "Guess the Right Order - team vs team, payout standard, draw permis.\nBeer Pong - team vs team, payout standard, draw permis.\nShot Fake - bet-only, draw permis, side bets + regula x * jucatori activi adversi.",
   curseBets:
-    "PLACEHOLDER:\n- Bet-only mode (no fixed bonus).\n- Multi-bet allowed on multiple horses.\n- Only winning-horse bet pays x4.\n- All losing-horse bets are lost.\n- Team cap remains 30%, rounded to 10."
+    "- Bet-only mode, fara bonus fix.\n- Multi-bet permis pe mai multi cai.\n- Doar pariul pe calul castigator plateste x4.\n- Restul pariurilor se pierd.\n- Limita de echipa ramane 30%, rotunjit la 10."
 };
 const LEGACY_SECTION_NOTES = {
-  triviaRules: "PLACEHOLDER: Define answer timeout, bonus points, tie-break rule, and challenge policy.",
-  pretulRules: "PLACEHOLDER: Explain bidding order, max bids, and exact/closest-win behavior.",
-  filmJocRules: "PLACEHOLDER: Define clue reveal flow and points for correct/incorrect answers.",
-  samsarRules: "PLACEHOLDER: Negotiation limits, veto rules, and final deal validation process.",
-  manualMatchups: "PLACEHOLDER:\nGuess the Right Order setup\nBeer Pong setup\nShot Fake setup",
-  curseBets: "PLACEHOLDER: Bet options, multipliers, and payout timing notes."
+  triviaRules: "Seteaza timeout, modul de challenge si regula de tie-break.",
+  pretulRules: "Defineste ordinea raspunsurilor, limitele si regula de departajare.",
+  filmJocRules: "Defineste ordinea reveal-urilor si punctajul pe componente.",
+  samsarRules: "Defineste regulile de evaluare si validare a castigului pe runda.",
+  manualMatchups: "Configurari rapide pentru Guess the Right Order, Beer Pong si Shot Fake.",
+  curseBets: "Noteaza optiunile de pariere, multiplicatorii si momentul payout-ului."
 };
 
 const DEFAULT_STATE = {
@@ -263,27 +263,31 @@ const DEFAULT_STATE = {
     adminAdvancedOpen: false
   },
   settings: {
-    showTitle: "PLACEHOLDER: GameShow Season 1",
-    hostName: "PLACEHOLDER: Host Name",
+    showTitle: "GameShow Friday Night",
+    hostName: "Alex",
     currencySymbol: "$"
   },
   teams: {
     teamA: {
-      name: "Team 1",
+      name: "Lupii",
       score: 0,
       money: TEAM_START_MONEY,
       players: [
-        { id: "teamA-p1", name: "PLACEHOLDER: Team A Player 1", status: "available" },
-        { id: "teamA-p2", name: "PLACEHOLDER: Team A Player 2", status: "available" }
+        { id: "teamA-p1", name: "Andrei", status: "available" },
+        { id: "teamA-p2", name: "Mara", status: "available" },
+        { id: "teamA-p3", name: "Stefan", status: "available" },
+        { id: "teamA-p4", name: "Bianca", status: "available" }
       ]
     },
     teamB: {
-      name: "Team 2",
+      name: "Vulturii",
       score: 0,
       money: TEAM_START_MONEY,
       players: [
-        { id: "teamB-p1", name: "PLACEHOLDER: Team B Player 1", status: "available" },
-        { id: "teamB-p2", name: "PLACEHOLDER: Team B Player 2", status: "available" }
+        { id: "teamB-p1", name: "Vlad", status: "available" },
+        { id: "teamB-p2", name: "Ioana", status: "available" },
+        { id: "teamB-p3", name: "Radu", status: "available" },
+        { id: "teamB-p4", name: "Daria", status: "available" }
       ]
     }
   },
@@ -340,37 +344,37 @@ const DEFAULT_STATE = {
   },
   sections: {
     homeRunOfShow:
-      "PLACEHOLDER: Opening credits -> host intro -> explain format -> start first round.",
+      "20:00 Intro + prezentare echipe\n20:10 Trivia\n20:30 Pretul Corect\n20:50 Pauza scurta\n21:00 Jocuri rapide + final",
     homeEmergencyPlan:
-      "PLACEHOLDER: If technical issue appears, run a backup mini-round for 3 minutes.",
+      "Daca apare o problema tehnica: ruleaza o runda rapida de trivia pe telefon si continua scorul manual.",
     triviaQuestionBank:
-      "PLACEHOLDER:\nQ1: ...\nQ2: ...\nQ3: ...\nUse this block as the primary trivia queue.",
+      "Q1: Capitala Australiei? (Canberra)\nQ2: In ce an a cazut Zidul Berlinului? (1989)\nQ3: Cate piese are un jucator la inceput in sah? (16)\nQ4: Cine l-a interpretat pe Iron Man? (Robert Downey Jr.)",
     triviaRules:
       SECTION_NOTES_DEFAULTS.triviaRules,
     pretulItems:
-      "PLACEHOLDER:\nItem: ... | Hidden price: ...\nItem: ... | Hidden price: ...",
+      "HyperX Cloud III | Pret real: 120\nPhilips 2200 Espressor | Pret real: 420\nAnker Nebula Capsule | Pret real: 520\nGarmin Venu Sq 2 | Pret real: 260",
     pretulRules:
       SECTION_NOTES_DEFAULTS.pretulRules,
     filmJocBoard:
-      "PLACEHOLDER:\nMovie clue: ...\nGame clue: ...\nFranchise clue: ...\nFun fact clue: ...",
+      "R1: Hermione Granger | Harry Potter | Carte lansata in 1997\nR2: Kratos | God of War | Debut PS2 in 2005\nR3: Tony Stark | MCU | Primul film MCU: Iron Man (2008)",
     filmJocRules:
       SECTION_NOTES_DEFAULTS.filmJocRules,
     samsarInventory:
-      "PLACEHOLDER:\nDeal card A: ...\nDeal card B: ...\nSpecial event card: ...",
+      "Card A: Hatchback economic\nCard B: SUV familie\nCard C: Sedan premium\nCard special: Bonus daca alegi masina sub buget",
     samsarRules:
       SECTION_NOTES_DEFAULTS.samsarRules,
     manualMatchups:
       SECTION_NOTES_DEFAULTS.manualMatchups,
     manualLog:
-      "PLACEHOLDER: Track manual rulings, disputes, and final adjustments.",
+      "Log arbitraj: noteaza deciziile manuale, contestatiile si ajustarile finale de scor.",
     curseTrack:
-      "PLACEHOLDER:\nLane 1 horse: ...\nLane 2 horse: ...\nLane boosts/events: ...",
+      "Pista: 12 pasi pana la finish\nEveniment optional: la pasul 6 se poate aplica boost +1 pentru un cal ales manual",
     curseBets:
       SECTION_NOTES_DEFAULTS.curseBets,
     awardsCategories:
-      "PLACEHOLDER:\nBest Team Strategy\nBest Comeback\nMost Valuable Player",
+      "MVP\nHigh Roller\nComeback Hero\nBest Team Strategy\nBest Samsar",
     finalTitles:
-      "PLACEHOLDER: Closing speech, sponsor mentions, and final winner title line."
+      "Multumim tuturor pentru seara de GameShow! Echipa castigatoare ridica trofeul, iar Joker Player primeste titlul F1 Gipsy King."
   },
   updatedAt: null
 };
@@ -616,7 +620,315 @@ function clampNumber(value, min, max) {
 }
 
 function sanitizeString(value, fallback) {
-  return typeof value === "string" ? value : fallback;
+  if (typeof value !== "string") {
+    return fallback;
+  }
+  if (!/PLACEHOLDER/i.test(value)) {
+    return value;
+  }
+  const cleaned = value.replace(/PLACEHOLDER\s*:?\s*/gi, "").replace(/\s{2,}/g, " ").trim();
+  return cleaned || fallback;
+}
+
+function normalizeTextToken(value) {
+  return String(value ?? "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function matchesAnyLegacyPattern(value, patterns) {
+  const token = normalizeTextToken(value);
+  if (!token) {
+    return false;
+  }
+  return patterns.some((pattern) => pattern.test(token));
+}
+
+function isLegacyGenericShowTitle(value) {
+  return matchesAnyLegacyPattern(value, [/^gameshow$/, /^gameshow season \d+$/, /^season \d+$/, /^show title$/]);
+}
+
+function isLegacyGenericHostName(value) {
+  return matchesAnyLegacyPattern(value, [/^host$/, /^host name$/, /^nume host$/, /^active host$/]);
+}
+
+function isLegacyGenericTeamName(value, teamKey) {
+  if (matchesAnyLegacyPattern(value, [/^team [ab]$/, /^team [12]$/, /^echipa [ab]$/, /^echipa [12]$/])) {
+    return true;
+  }
+  if (teamKey === "teamA") {
+    return matchesAnyLegacyPattern(value, [/^team a$/, /^team 1$/, /^echipa a$/, /^echipa 1$/]);
+  }
+  return matchesAnyLegacyPattern(value, [/^team b$/, /^team 2$/, /^echipa b$/, /^echipa 2$/]);
+}
+
+function isLegacyGenericPlayerName(value, teamKey) {
+  if (
+    matchesAnyLegacyPattern(value, [
+      /^player \d+$/,
+      /^jucator \d+$/,
+      /^participant \d+$/,
+      /^membru \d+$/,
+      /^player team [ab] \d+$/,
+      /^jucator echipa [ab] \d+$/
+    ])
+  ) {
+    return true;
+  }
+  if (teamKey === "teamA") {
+    return matchesAnyLegacyPattern(value, [/^team a player \d+$/, /^team 1 player \d+$/, /^echipa a jucator \d+$/, /^echipa 1 jucator \d+$/]);
+  }
+  return matchesAnyLegacyPattern(value, [/^team b player \d+$/, /^team 2 player \d+$/, /^echipa b jucator \d+$/, /^echipa 2 jucator \d+$/]);
+}
+
+function shouldUseDemoRoster(players, teamKey) {
+  if (!Array.isArray(players) || players.length === 0) {
+    return true;
+  }
+  return players.length <= 12 && players.every((player) => isLegacyGenericPlayerName(player?.name, teamKey));
+}
+
+function shouldUseDemoTriviaData(categories) {
+  if (!Array.isArray(categories) || categories.length === 0) {
+    return true;
+  }
+  return categories.every((category) => {
+    const title = normalizeTextToken(category?.title);
+    const question = normalizeTextToken(category?.question);
+    const answer = normalizeTextToken(category?.answer);
+    const genericTitle =
+      /^categoria \d+$/.test(title) ||
+      /^category \d+$/.test(title) ||
+      title.includes("placeholder");
+    const genericQuestion =
+      !question ||
+      question.includes("placeholder") ||
+      question === "intrebare demo pentru aceasta categorie." ||
+      /^question text for category \d+\.?$/.test(question);
+    const genericAnswer =
+      !answer ||
+      answer.includes("placeholder") ||
+      answer === "raspuns demo pentru aceasta categorie." ||
+      /^answer text for category \d+\.?$/.test(answer);
+    return genericTitle || (genericQuestion && genericAnswer);
+  });
+}
+
+function shouldUseDemoPretulItems(items) {
+  if (!Array.isArray(items) || items.length === 0) {
+    return true;
+  }
+  return items.every((item) => {
+    const name = normalizeTextToken(item?.name);
+    const genericName =
+      /^item \d+$/.test(name) || /^produs \d+$/.test(name) || /^product \d+$/.test(name) || name.includes("placeholder");
+    return genericName;
+  });
+}
+
+function isGenericFilmPrompt(value) {
+  const token = normalizeTextToken(value);
+  return (
+    !token ||
+    token.includes("placeholder") ||
+    token === "text reveal character/title." ||
+    token === "text reveal franchise." ||
+    token === "text reveal fun fact." ||
+    /^character \/ title reveal text for round \d+\.?$/.test(token) ||
+    /^franchise reveal text for round \d+\.?$/.test(token) ||
+    /^fun fact reveal text for round \d+\.?$/.test(token)
+  );
+}
+
+function shouldUseDemoFilmItems(items) {
+  if (!Array.isArray(items) || items.length === 0) {
+    return true;
+  }
+  return items.every((item) => {
+    const title = normalizeTextToken(item?.title);
+    const genericTitle =
+      /^runda \d+$/.test(title) ||
+      /^round \d+$/.test(title) ||
+      /^round \d+ - movie character$/.test(title) ||
+      /^round \d+ - game character$/.test(title) ||
+      /^round \d+ - franchise scene$/.test(title) ||
+      title.includes("placeholder");
+    return (
+      genericTitle ||
+      (isGenericFilmPrompt(item?.characterPrompt) &&
+        isGenericFilmPrompt(item?.franchisePrompt) &&
+        isGenericFilmPrompt(item?.funFactPrompt))
+    );
+  });
+}
+
+function shouldUseDemoSamsarRounds(roundsData) {
+  if (!Array.isArray(roundsData) || roundsData.length === 0) {
+    return true;
+  }
+  return roundsData.every((round) => {
+    const title = normalizeTextToken(round?.personaTitle);
+    const requirements = normalizeTextToken(round?.personaRequirements);
+    const genericTitle = /^runda \d+$/.test(title) || /^round \d+$/.test(title) || title.includes("persona");
+    const genericRequirements = !requirements || requirements.includes("placeholder") || requirements.includes("cerinte");
+    return genericTitle && genericRequirements;
+  });
+}
+
+function shouldUseDemoHorseSet(horses) {
+  if (!Array.isArray(horses) || horses.length < 4) {
+    return true;
+  }
+  return horses.every((horse) => {
+    const name = normalizeTextToken(horse?.name);
+    const story = normalizeTextToken(horse?.story);
+    const genericName = /^horse \d+$/.test(name) || /^cal \d+$/.test(name) || name.includes("placeholder");
+    return genericName || story.includes("placeholder");
+  });
+}
+
+function applyMeaningfulContentMigration(clean) {
+  const defaults = cloneDefaultState();
+
+  if (isLegacyGenericShowTitle(clean.settings.showTitle)) {
+    clean.settings.showTitle = defaults.settings.showTitle;
+  }
+  if (isLegacyGenericHostName(clean.settings.hostName)) {
+    clean.settings.hostName = defaults.settings.hostName;
+  }
+
+  if (isLegacyGenericTeamName(clean.teams.teamA.name, "teamA")) {
+    clean.teams.teamA.name = defaults.teams.teamA.name;
+  }
+  if (isLegacyGenericTeamName(clean.teams.teamB.name, "teamB")) {
+    clean.teams.teamB.name = defaults.teams.teamB.name;
+  }
+
+  if (shouldUseDemoRoster(clean.teams.teamA.players, "teamA")) {
+    clean.teams.teamA.players = defaults.teams.teamA.players.map((player) => ({ ...player }));
+  }
+  if (shouldUseDemoRoster(clean.teams.teamB.players, "teamB")) {
+    clean.teams.teamB.players = defaults.teams.teamB.players.map((player) => ({ ...player }));
+  }
+
+  if (shouldUseDemoTriviaData(clean.trivia.categories)) {
+    clean.trivia.categories = defaults.trivia.categories.map((category) => ({ ...category }));
+  }
+  if (shouldUseDemoPretulItems(clean.pretul.items)) {
+    clean.pretul.items = defaults.pretul.items.map((item) => ({ ...item }));
+  }
+  if (shouldUseDemoFilmItems(clean.filmGame.items)) {
+    clean.filmGame.items = defaults.filmGame.items.map((item) => ({ ...item }));
+  }
+  if (shouldUseDemoSamsarRounds(clean.samsarGame.roundsData)) {
+    clean.samsarGame.roundsData = defaults.samsarGame.roundsData.map((round) => ({ ...round }));
+  }
+  if (shouldUseDemoHorseSet(clean.curseRace.horses)) {
+    clean.curseRace.horses = defaults.curseRace.horses.map((horse) => ({ ...horse }));
+  }
+
+  if (normalizeTextToken(clean.progress.lastResultSummary).includes("placeholder")) {
+    clean.progress.lastResultSummary = DEFAULT_RESULT_SUMMARY;
+  }
+
+  for (const sectionKey of Object.keys(defaults.sections)) {
+    const normalized = normalizeTextToken(clean.sections[sectionKey]);
+    if (!normalized || normalized.includes("placeholder")) {
+      clean.sections[sectionKey] = defaults.sections[sectionKey];
+    }
+  }
+}
+
+function reconcileStateAfterMigration(clean) {
+  const teamAIds = new Set(clean.teams.teamA.players.map((player) => player.id));
+  const teamBIds = new Set(clean.teams.teamB.players.map((player) => player.id));
+
+  clean.roundSelection.activeByTeam.teamA = clean.roundSelection.activeByTeam.teamA
+    .filter((playerId) => teamAIds.has(playerId))
+    .slice(0, MAX_ACTIVE_PER_TEAM);
+  clean.roundSelection.activeByTeam.teamB = clean.roundSelection.activeByTeam.teamB
+    .filter((playerId) => teamBIds.has(playerId))
+    .slice(0, MAX_ACTIVE_PER_TEAM);
+
+  if (clean.roundSelection.jokerAssignment === "teamA" && clean.roundSelection.activeByTeam.teamA.length >= MAX_ACTIVE_PER_TEAM) {
+    clean.roundSelection.jokerAssignment = "out";
+  }
+  if (clean.roundSelection.jokerAssignment === "teamB" && clean.roundSelection.activeByTeam.teamB.length >= MAX_ACTIVE_PER_TEAM) {
+    clean.roundSelection.jokerAssignment = "out";
+  }
+
+  for (const snapshot of Object.values(clean.roundSelection.history)) {
+    snapshot.activeByTeam.teamA = snapshot.activeByTeam.teamA
+      .filter((playerId) => teamAIds.has(playerId))
+      .slice(0, MAX_ACTIVE_PER_TEAM);
+    snapshot.activeByTeam.teamB = snapshot.activeByTeam.teamB
+      .filter((playerId) => teamBIds.has(playerId))
+      .slice(0, MAX_ACTIVE_PER_TEAM);
+    if (
+      snapshot.jokerAssignment === "teamA" &&
+      snapshot.activeByTeam.teamA.length >= MAX_ACTIVE_PER_TEAM
+    ) {
+      snapshot.jokerAssignment = "out";
+    }
+    if (
+      snapshot.jokerAssignment === "teamB" &&
+      snapshot.activeByTeam.teamB.length >= MAX_ACTIVE_PER_TEAM
+    ) {
+      snapshot.jokerAssignment = "out";
+    }
+  }
+
+  const triviaCategoryIds = new Set(clean.trivia.categories.map((category) => category.id));
+  for (const [roundKey, rawRound] of Object.entries(clean.trivia.rounds)) {
+    const safeRound = sanitizeTriviaRoundState(rawRound);
+    safeRound.usedCategoryIds = safeRound.usedCategoryIds.filter((id) => triviaCategoryIds.has(id));
+    if (!triviaCategoryIds.has(safeRound.selectedCategoryId)) {
+      safeRound.selectedCategoryId = clean.trivia.categories[0]?.id || "";
+    }
+    clean.trivia.rounds[roundKey] = safeRound;
+  }
+
+  const pretulItemIds = new Set(clean.pretul.items.map((item) => item.id));
+  for (const [roundKey, rawRound] of Object.entries(clean.pretul.rounds)) {
+    const safeRound = sanitizePretulRoundState(rawRound);
+    safeRound.usedItemIds = safeRound.usedItemIds.filter((id) => pretulItemIds.has(id));
+    if (!pretulItemIds.has(safeRound.selectedItemId)) {
+      safeRound.selectedItemId = clean.pretul.items[0]?.id || "";
+    }
+    clean.pretul.rounds[roundKey] = safeRound;
+  }
+
+  const filmItemIds = new Set(clean.filmGame.items.map((item) => item.id));
+  for (const [roundKey, rawRound] of Object.entries(clean.filmGame.rounds)) {
+    const safeRound = sanitizeFilmRoundState(rawRound);
+    safeRound.usedItemIds = safeRound.usedItemIds.filter((id) => filmItemIds.has(id));
+    if (!filmItemIds.has(safeRound.selectedItemId)) {
+      safeRound.selectedItemId = clean.filmGame.items[0]?.id || "";
+    }
+    clean.filmGame.rounds[roundKey] = safeRound;
+  }
+
+  for (const rawRound of Object.values(clean.samsarGame.rounds)) {
+    if (!teamAIds.has(rawRound.activePlayerTeamAId)) {
+      rawRound.activePlayerTeamAId = "";
+    }
+    if (!teamBIds.has(rawRound.activePlayerTeamBId)) {
+      rawRound.activePlayerTeamBId = "";
+    }
+  }
+
+  const horseIds = clean.curseRace.horses.map((horse) => horse.id);
+  for (const [roundKey, rawRound] of Object.entries(clean.curseRace.rounds)) {
+    const safeRound = sanitizeCurseRoundState(rawRound, horseIds);
+    if (!teamAIds.has(safeRound.bets.teamA.bettorId)) {
+      safeRound.bets.teamA.bettorId = "";
+    }
+    if (!teamBIds.has(safeRound.bets.teamB.bettorId)) {
+      safeRound.bets.teamB.bettorId = "";
+    }
+    clean.curseRace.rounds[roundKey] = safeRound;
+  }
 }
 
 function escapeHtml(value) {
@@ -810,9 +1122,9 @@ function sanitizeTriviaCategories(rawCategories) {
 
     sanitized.push({
       id,
-      title: title || `PLACEHOLDER: Category ${sanitized.length + 1}`,
-      question: question || "PLACEHOLDER: Question text.",
-      answer: answer || "PLACEHOLDER: Answer text."
+      title: title || `Categoria ${sanitized.length + 1}`,
+      question: question || "Intrebare demo pentru aceasta categorie.",
+      answer: answer || "Raspuns demo pentru aceasta categorie."
     });
   }
 
@@ -975,16 +1287,16 @@ function sanitizeFilmItems(rawItems) {
       id,
       title,
       imageUrl: sanitizeString(rawItem?.imageUrl, FILM_FALLBACK_IMAGE).trim() || FILM_FALLBACK_IMAGE,
-      imageAlt: sanitizeString(rawItem?.imageAlt, "PLACEHOLDER round image").trim() || "PLACEHOLDER round image",
+      imageAlt: sanitizeString(rawItem?.imageAlt, "Imagine demo runda").trim() || "Imagine demo runda",
       characterPrompt:
-        sanitizeString(rawItem?.characterPrompt, "PLACEHOLDER: Character / Title reveal text.").trim() ||
-        "PLACEHOLDER: Character / Title reveal text.",
+        sanitizeString(rawItem?.characterPrompt, "Text reveal Character/Title.").trim() ||
+        "Text reveal Character/Title.",
       franchisePrompt:
-        sanitizeString(rawItem?.franchisePrompt, "PLACEHOLDER: Franchise reveal text.").trim() ||
-        "PLACEHOLDER: Franchise reveal text.",
+        sanitizeString(rawItem?.franchisePrompt, "Text reveal Franchise.").trim() ||
+        "Text reveal Franchise.",
       funFactPrompt:
-        sanitizeString(rawItem?.funFactPrompt, "PLACEHOLDER: Fun Fact reveal text.").trim() ||
-        "PLACEHOLDER: Fun Fact reveal text."
+        sanitizeString(rawItem?.funFactPrompt, "Text reveal Fun Fact.").trim() ||
+        "Text reveal Fun Fact."
     });
   }
 
@@ -1154,7 +1466,7 @@ function sanitizeShotFakeSideBet(rawSideBet, index = 0) {
   const safeId = sanitizeString(rawSideBet?.id, "").trim() || `shot-side-${index + 1}`;
   return {
     id: safeId,
-    label: safeLabel || `PLACEHOLDER: Side bet ${index + 1}`,
+    label: safeLabel || `Side bet ${index + 1}`,
     amount: safeAmount,
     winner: safeWinner
   };
@@ -1403,8 +1715,8 @@ function sanitizeState(rawState) {
   clean.settings.currencySymbol =
     sanitizeString(source.settings?.currencySymbol, clean.settings.currencySymbol).trim().slice(0, 3) || "$";
 
-  clean.teams.teamA.name = sanitizeString(source.teams?.teamA?.name, clean.teams.teamA.name).trim() || "Team 1";
-  clean.teams.teamB.name = sanitizeString(source.teams?.teamB?.name, clean.teams.teamB.name).trim() || "Team 2";
+  clean.teams.teamA.name = sanitizeString(source.teams?.teamA?.name, clean.teams.teamA.name).trim() || clean.teams.teamA.name;
+  clean.teams.teamB.name = sanitizeString(source.teams?.teamB?.name, clean.teams.teamB.name).trim() || clean.teams.teamB.name;
   clean.teams.teamA.score = Math.max(0, sanitizeNumber(source.teams?.teamA?.score, 0));
   clean.teams.teamB.score = Math.max(0, sanitizeNumber(source.teams?.teamB?.score, 0));
   clean.teams.teamA.money = Math.max(0, sanitizeNumber(source.teams?.teamA?.money, TEAM_START_MONEY));
@@ -1531,6 +1843,9 @@ function sanitizeState(rawState) {
       clean.sections[sectionKey] = SECTION_NOTES_DEFAULTS[sectionKey];
     }
   }
+
+  applyMeaningfulContentMigration(clean);
+  reconcileStateAfterMigration(clean);
 
   clean.updatedAt = source.updatedAt || null;
   return clean;
@@ -2140,7 +2455,7 @@ function renderEndScreen() {
       jokerStats.netMoney
     )}.`;
   elements.endFinalTitlesScript.textContent =
-    (state.sections.finalTitles || "").trim() || "PLACEHOLDER: Closing speech, sponsor mentions, and final winner title line.";
+    (state.sections.finalTitles || "").trim() || "Multumim pentru participare! Felicitari echipei castigatoare!";
 }
 
 function formatTimer(totalSeconds) {
@@ -2577,7 +2892,7 @@ function getGameIntroRules(gameId) {
   }
   if (gameId === "cel-mai-bun-samsar") {
     return [
-      "Team 1 and Team 2 each send one active player.",
+      "Each team sends one active player in every round.",
       "Higher manual score wins the round; tie is draw.",
       "Standard Samsar payout is applied with cap rules."
     ];
@@ -2610,7 +2925,7 @@ function getGameIntroRules(gameId) {
       "Only the winning horse bet pays x4; all others lose."
     ];
   }
-  return ["PLACEHOLDER: Add game intro rules."];
+  return ["Regulile acestui joc pot fi completate din Settings."];
 }
 
 function renderShowStageControls() {
@@ -2776,7 +3091,7 @@ function buildLiveRoundContent(gameId) {
       <div class="show-round-card">
         <p class="show-info-label">Category</p>
         <p class="show-round-title">${escapeHtml(category?.title || "No category selected")}</p>
-        <p class="show-round-copy">${escapeHtml(category?.question || "PLACEHOLDER: Question appears here.")}</p>
+        <p class="show-round-copy">${escapeHtml(category?.question || "Intrebarea curenta va fi afisata aici.")}</p>
       </div>
       <div class="show-overlay-grid two-col">
         <article class="show-control-card">
@@ -2970,8 +3285,8 @@ function buildLiveRoundContent(gameId) {
     const roundNumber = getSamsarRoundNumber();
     const roundState = getOrCreateSamsarRoundState(roundNumber);
     const template = state.samsarGame.roundsData[roundNumber - 1] || {
-      personaTitle: "PLACEHOLDER: Persona",
-      personaRequirements: "PLACEHOLDER: Requirements"
+      personaTitle: "Persona demo",
+      personaRequirements: "Cerintele pentru aceasta persona apar aici."
     };
     const playerA = state.teams.teamA.players.find((player) => player.id === roundState.activePlayerTeamAId);
     const playerB = state.teams.teamB.players.find((player) => player.id === roundState.activePlayerTeamBId);
@@ -3282,7 +3597,7 @@ function buildLiveRoundContent(gameId) {
   return `
     ${stageControls}
     ${jokerControl}
-    <p class="show-round-copy">PLACEHOLDER: Round content for ${escapeHtml(getGameLabel(gameId))}.</p>
+    <p class="show-round-copy">Continutul rundei pentru ${escapeHtml(getGameLabel(gameId))} apare aici.</p>
     ${renderShowActionFooter()}
   `;
 }
@@ -3468,7 +3783,7 @@ function buildShowScreenContent(screenId) {
     `;
   }
 
-  return `<p class="show-round-copy">PLACEHOLDER: Screen content will be provided here.</p>`;
+  return `<p class="show-round-copy">Continutul acestui ecran va fi afisat aici.</p>`;
 }
 
 function renderHostPanelState() {
@@ -4134,8 +4449,8 @@ function renderLeaders() {
 
 function renderTeams() {
   const names = {
-    teamA: state.teams.teamA.name || "Team 1",
-    teamB: state.teams.teamB.name || "Team 2"
+    teamA: state.teams.teamA.name || DEFAULT_STATE.teams.teamA.name,
+    teamB: state.teams.teamB.name || DEFAULT_STATE.teams.teamB.name
   };
 
   elements.teamNameTargets.forEach((node) => {
@@ -4287,7 +4602,7 @@ function renderSettingsRulesSnapshot() {
   elements.settingsFilmRuleLine.textContent =
     "Film/Joc/Franciza/Fun Fact: one-team-only, component weights 1/1/3, partial payout per component, and bet is active only at minimum 2/3 correct.";
   elements.settingsSamsarRuleLine.textContent =
-    "Cel mai bun samsar: 6 rounds, persona placeholders, no link fields, one active player selector per team, higher score wins, equal score draw.";
+    "Cel mai bun samsar: 6 rounds cu persona/cerinte editabile, no link fields, one active player selector per team, higher score wins, equal score draw.";
   elements.settingsShotFakeRuleLine.textContent =
     "Shot Fake: bet-only team-vs-team mode with no fixed bonus, draw allowed, multiple side bets, and special x * active opponents transfer.";
   elements.settingsCurseRuleLine.textContent =
@@ -4488,7 +4803,7 @@ function renderPretulControls() {
   elements.pretulBetTeamBInput.value = String(roundState.betTeamB);
   elements.pretulRealPriceInput.value = String(roundState.realPrice);
   elements.pretulRoundResult.textContent =
-    roundState.lastResult || "PLACEHOLDER: Round result appears here.";
+    roundState.lastResult || "Rezultatul rundei va aparea aici.";
   elements.pretulRuleInfo.textContent =
     `Auto winner = closest answer to real price. Tie when distances are equal. ` +
     `Bet cap is 15%, rounded to ${BET_ROUNDING_STEP}. ` +
@@ -4606,7 +4921,7 @@ function applyPretulRoundResult() {
 
   const selectedItemId = roundState.selectedItemId;
   if (!selectedItemId) {
-    roundState.lastResult = "No available item left. Reset used items or add new placeholders.";
+    roundState.lastResult = "No available item left. Reset used items or add new round items.";
     renderPretulControls();
     setLastResultSummary(roundState.lastResult);
     saveState("Pretul evaluate blocked: no item.");
@@ -4801,9 +5116,9 @@ function renderFilmControls() {
 
   const selectedItem = state.filmGame.items.find((item) => item.id === roundState.selectedItemId);
   elements.filmRoundImage.src = selectedItem?.imageUrl || FILM_FALLBACK_IMAGE;
-  elements.filmRoundImage.alt = selectedItem?.imageAlt || "PLACEHOLDER round image";
+  elements.filmRoundImage.alt = selectedItem?.imageAlt || "Imagine runda";
   elements.filmRoundImageCaption.textContent =
-    selectedItem?.title || "No available round item. Reset used rounds or add new placeholders.";
+    selectedItem?.title || "No available round item. Reset used rounds or add new round items.";
 
   elements.filmCharacterContent.textContent =
     selectedItem && roundState.revealed.character
@@ -4838,7 +5153,7 @@ function renderFilmControls() {
       breakdown.componentPayout
     )}. Bet preview: ${betDeltaLabel}. Net preview: ${totalDeltaLabel}. ` +
     `Bet cap is 15%, rounded to ${BET_ROUNDING_STEP}. Max now for ${playingTeam.name}: ${formatMoney(maxBet)}.`;
-  elements.filmRoundResult.textContent = roundState.lastResult || "PLACEHOLDER: Round result appears here.";
+  elements.filmRoundResult.textContent = roundState.lastResult || "Rezultatul rundei va aparea aici.";
 
   const activeCount = countActiveWithJoker(playingTeamKey);
   elements.filmActiveSelectionInfo.textContent =
@@ -5030,7 +5345,7 @@ function applyFilmRoundResult() {
   const roundState = getOrCreateFilmRoundState();
   const selectedItem = state.filmGame.items.find((item) => item.id === roundState.selectedItemId);
   if (!selectedItem) {
-    roundState.lastResult = "No available round item. Reset used rounds or add new placeholders.";
+    roundState.lastResult = "No available round item. Reset used rounds or add new round items.";
     renderFilmControls();
     setLastResultSummary(roundState.lastResult);
     saveState("Film round blocked: no item.");
@@ -5131,8 +5446,8 @@ function renderSamsarControls() {
 
   const roundNumber = getSamsarRoundNumber();
   const roundTemplate = state.samsarGame.roundsData[roundNumber - 1] || {
-    personaTitle: "PLACEHOLDER: Persona title",
-    personaRequirements: "PLACEHOLDER: Persona requirements"
+    personaTitle: "Persona curenta",
+    personaRequirements: "Cerintele curente vor fi afisate aici."
   };
   const roundState = getOrCreateSamsarRoundState(roundNumber);
 
@@ -5178,7 +5493,7 @@ function renderSamsarControls() {
       SAMSAR_STANDARD_BET
     )}, capped at 20% per team. ` +
     `${state.teams.teamA.name} stake now: ${formatMoney(stakeA)} | ${state.teams.teamB.name} stake now: ${formatMoney(stakeB)}.`;
-  elements.samsarRoundResult.textContent = roundState.lastResult || "PLACEHOLDER: Round result appears here.";
+  elements.samsarRoundResult.textContent = roundState.lastResult || "Rezultatul rundei va aparea aici.";
 
   if (elements.samsarRoundButtons) {
     elements.samsarRoundButtons.forEach((button) => {
@@ -5568,7 +5883,7 @@ function renderManualMatchControls() {
       )}. ` +
       "Draw is allowed. Standard payout applies.";
   }
-  elements.manualRoundResult.textContent = roundState.lastResult || "PLACEHOLDER: Round result appears here.";
+  elements.manualRoundResult.textContent = roundState.lastResult || "Rezultatul rundei va aparea aici.";
 
   renderManualActiveList("teamA", elements.manualActiveTeamAList);
   renderManualActiveList("teamB", elements.manualActiveTeamBList);
@@ -5683,7 +5998,7 @@ function addShotFakeSideBet() {
   const roundState = getOrCreateManualMatchRoundState(gameId, state.progress.currentRound);
   roundState.shotFake.sideBets.push({
     id: makeSideBetId(),
-    label: "PLACEHOLDER: Side bet",
+    label: "Side bet nou",
     amount: 50,
     winner: "draw"
   });
@@ -6065,7 +6380,7 @@ function renderCurseControls() {
   elements.curseWinnerInfo.textContent = winnerHorse
     ? `Winner detected: ${winnerHorse.symbol} ${winnerHorse.name}.`
     : "No winner yet. Move horses using extracted symbol.";
-  elements.curseRoundResult.textContent = roundState.lastResult || "PLACEHOLDER: Race result appears here.";
+  elements.curseRoundResult.textContent = roundState.lastResult || "Rezultatul cursei va aparea aici.";
 
   renderCurseTrackBoard(roundState);
   renderCurseBetBoard(roundState);
@@ -7213,7 +7528,7 @@ function updateRoundDuration() {
 }
 
 function resetSession() {
-  const accepted = window.confirm("Reset all dashboard data and restore placeholders?");
+  const accepted = window.confirm("Reset all dashboard data and restore demo sample content?");
   if (!accepted) {
     return;
   }
@@ -7226,7 +7541,7 @@ function resetSession() {
   if (elements.saveTransferArea) {
     elements.saveTransferArea.value = "";
   }
-  saveState("Session reset to placeholders.");
+  saveState("Session reset to demo sample content.");
 }
 
 function handleBoundInput(field) {
@@ -7237,9 +7552,9 @@ function handleBoundInput(field) {
 
   let value = field.value;
   if (path === "teams.teamA.name") {
-    value = value.trim() || "Team 1";
+    value = value.trim() || DEFAULT_STATE.teams.teamA.name;
   } else if (path === "teams.teamB.name") {
-    value = value.trim() || "Team 2";
+    value = value.trim() || DEFAULT_STATE.teams.teamB.name;
   } else if (path === "settings.showTitle") {
     value = value.trim() || DEFAULT_STATE.settings.showTitle;
   } else if (path === "settings.hostName") {
