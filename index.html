@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GameShow Host Dashboard</title>
+  <title>GameShow Live Overlay</title>
   <link rel="icon" href="data:,">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,10 +18,11 @@
         <h1 class="show-main-title" data-show-title>PLACEHOLDER: GameShow Season 1</h1>
       </div>
       <div class="show-screen-nav" aria-label="Show flow">
-        <button class="show-screen-btn is-active" type="button" data-show-screen-target="home-intro">Home / Show Intro</button>
+        <button class="show-screen-btn is-active" type="button" data-show-screen-target="show-home">Show Home</button>
+        <button class="show-screen-btn" type="button" data-show-screen-target="game-select">Game Select</button>
         <button class="show-screen-btn" type="button" data-show-screen-target="game-intro">Game Intro</button>
         <button class="show-screen-btn" type="button" data-show-screen-target="live-round">Live Round</button>
-        <button class="show-screen-btn" type="button" data-show-screen-target="result-reveal">Result Reveal</button>
+        <button class="show-screen-btn" type="button" data-show-screen-target="reveal-result">Reveal / Result</button>
         <button class="show-screen-btn" type="button" data-show-screen-target="leaderboard">Leaderboard</button>
         <button class="show-screen-btn" type="button" data-show-screen-target="end-screen">End Screen</button>
       </div>
@@ -60,7 +61,7 @@
       </div>
 
       <article class="show-main-card">
-        <h2 id="showScreenTitle">Home / Show Intro</h2>
+        <h2 id="showScreenTitle">Show Home</h2>
         <div id="showScreenContent" class="show-screen-content"></div>
       </article>
 
@@ -77,11 +78,89 @@
         <p class="eyebrow">HOST CONTROLS</p>
         <button id="hostPanelCloseBtn" class="secondary-btn" type="button">Close</button>
       </div>
-      <p class="eyebrow">HOST DASHBOARD</p>
+      <p class="eyebrow">HOST EMERGENCY PANEL</p>
       <h1 data-show-title>PLACEHOLDER: GameShow Season 1</h1>
-      <p class="muted">Architecture-first static control app with local autosave.</p>
+      <p class="muted">Emergency panel for admin override and recovery controls.</p>
 
-      <nav class="nav-list" aria-label="Dashboard sections">
+      <article class="host-admin-card">
+        <h3>Admin Quick Actions</h3>
+        <div class="quick-action-grid">
+          <button id="adminUndoBtn" class="secondary-btn" type="button">Undo last action</button>
+          <button id="adminUnlockSelectionBtn" class="secondary-btn" type="button">Unlock selection</button>
+          <button id="adminForceRevealBtn" class="secondary-btn" type="button">Force reveal</button>
+          <button id="adminNextRoundBtn" class="secondary-btn" type="button">+1 round</button>
+          <button id="adminNextGameBtn" class="secondary-btn" type="button">Next game</button>
+        </div>
+      </article>
+
+      <article class="host-admin-card">
+        <h3>Money Override</h3>
+        <div class="players-control-grid">
+          <div>
+            <label class="field-label" for="adminMoneyTeamAInput">Team 1 money</label>
+            <input id="adminMoneyTeamAInput" class="text-input compact-input" type="number" min="0" step="10">
+          </div>
+          <div>
+            <label class="field-label" for="adminMoneyTeamBInput">Team 2 money</label>
+            <input id="adminMoneyTeamBInput" class="text-input compact-input" type="number" min="0" step="10">
+          </div>
+        </div>
+        <div class="metric-actions spaced">
+          <button id="adminApplyMoneyBtn" class="secondary-btn" type="button">Apply money override</button>
+          <button id="adminResetMoneyBtn" class="secondary-btn" type="button">Reset money</button>
+        </div>
+      </article>
+
+      <article class="host-admin-card">
+        <h3>State Override</h3>
+        <div class="players-control-grid">
+          <div>
+            <label class="field-label" for="adminGameSelect">Game</label>
+            <select id="adminGameSelect" class="text-input">
+              <option value="trivia">Trivia de grup</option>
+              <option value="guess-right-order">Guess the Right Order</option>
+              <option value="pretul-corect">Pretul corect</option>
+              <option value="film-joc-franciza-fun-fact">Film / Joc / Franciza / Fun Fact</option>
+              <option value="cel-mai-bun-samsar">Cel mai bun samsar</option>
+              <option value="beer-pong">Beer Pong</option>
+              <option value="shot-fake">Shot Fake</option>
+              <option value="curse-de-cai">Curse de cai</option>
+            </select>
+          </div>
+          <div>
+            <label class="field-label" for="adminRoundInput">Round</label>
+            <input id="adminRoundInput" class="text-input compact-input" type="number" min="1" step="1">
+          </div>
+        </div>
+        <div class="metric-actions spaced">
+          <button id="adminApplyStateBtn" class="secondary-btn" type="button">Apply game/round</button>
+          <button id="adminResetGameBtn" class="secondary-btn" type="button">Reset current game</button>
+          <button id="adminFullResetBtn" class="danger-btn" type="button">Full reset</button>
+        </div>
+      </article>
+
+      <article class="host-admin-card">
+        <h3>Result Override</h3>
+        <label class="field-label" for="adminSummaryInput">Manual result summary</label>
+        <textarea id="adminSummaryInput" class="text-area" rows="3" placeholder="PLACEHOLDER: Manual override summary"></textarea>
+        <div class="metric-actions spaced">
+          <button id="adminApplySummaryBtn" class="secondary-btn" type="button">Apply summary override</button>
+        </div>
+      </article>
+
+      <article class="host-admin-card">
+        <h3>Save / Screen</h3>
+        <div class="quick-action-grid">
+          <button id="adminExportSaveBtn" class="secondary-btn" type="button">Export save</button>
+          <button id="adminImportSaveBtn" class="secondary-btn" type="button">Import save</button>
+          <button id="fullscreenToggleBtn" class="secondary-btn" type="button">Fullscreen</button>
+          <button id="saveNowBtn" class="secondary-btn" type="button">Save now</button>
+        </div>
+      </article>
+
+      <button id="hostAdminAdvancedBtn" class="pill-btn host-advanced-toggle" type="button">Open god mode panels</button>
+
+      <nav class="nav-list host-advanced-only" aria-label="Dashboard sections">
         <button class="nav-btn is-active" type="button" data-section-target="home">Home / Control Center</button>
         <button class="nav-btn" type="button" data-section-target="leaderboard">Leaderboard / Currency</button>
         <button class="nav-btn" type="button" data-section-target="trivia">Trivia de grup</button>
@@ -95,13 +174,10 @@
         <button class="nav-btn" type="button" data-section-target="end-screen">End Screen</button>
         <button class="nav-btn" type="button" data-section-target="settings">Settings</button>
       </nav>
-
-      <div class="header-actions">
-        <button id="fullscreenToggleBtn" class="secondary-btn" type="button">Fullscreen</button>
-        <button id="saveNowBtn" class="secondary-btn" type="button">Save now</button>
+      <div class="header-actions host-advanced-only">
         <button id="resetAllBtn" class="danger-btn" type="button">Reset session</button>
       </div>
-      <p id="saveStatus" class="muted status-inline">Not saved yet.</p>
+      <p id="saveStatus" class="muted status-inline host-advanced-only">Not saved yet.</p>
     </aside>
 
     <section id="hostWorkspace" class="content-stack host-workspace">

@@ -23,10 +23,11 @@ const SECTION_IDS = [
 ];
 
 const SHOW_SCREEN_IDS = [
-  "home-intro",
+  "show-home",
+  "game-select",
   "game-intro",
   "live-round",
-  "result-reveal",
+  "reveal-result",
   "leaderboard",
   "end-screen"
 ];
@@ -257,8 +258,9 @@ const LEGACY_SECTION_NOTES = {
 const DEFAULT_STATE = {
   activeSection: "home",
   showUi: {
-    activeScreen: "home-intro",
-    hostPanelOpen: false
+    activeScreen: "show-home",
+    hostPanelOpen: false,
+    adminAdvancedOpen: false
   },
   settings: {
     showTitle: "PLACEHOLDER: GameShow Season 1",
@@ -393,6 +395,25 @@ const elements = {
   hostPanelOverlay: document.getElementById("hostPanelOverlay"),
   hostDrawer: document.getElementById("hostDrawer"),
   hostWorkspace: document.getElementById("hostWorkspace"),
+  hostAdminAdvancedBtn: document.getElementById("hostAdminAdvancedBtn"),
+  adminUndoBtn: document.getElementById("adminUndoBtn"),
+  adminUnlockSelectionBtn: document.getElementById("adminUnlockSelectionBtn"),
+  adminForceRevealBtn: document.getElementById("adminForceRevealBtn"),
+  adminNextRoundBtn: document.getElementById("adminNextRoundBtn"),
+  adminNextGameBtn: document.getElementById("adminNextGameBtn"),
+  adminMoneyTeamAInput: document.getElementById("adminMoneyTeamAInput"),
+  adminMoneyTeamBInput: document.getElementById("adminMoneyTeamBInput"),
+  adminApplyMoneyBtn: document.getElementById("adminApplyMoneyBtn"),
+  adminResetMoneyBtn: document.getElementById("adminResetMoneyBtn"),
+  adminGameSelect: document.getElementById("adminGameSelect"),
+  adminRoundInput: document.getElementById("adminRoundInput"),
+  adminApplyStateBtn: document.getElementById("adminApplyStateBtn"),
+  adminResetGameBtn: document.getElementById("adminResetGameBtn"),
+  adminFullResetBtn: document.getElementById("adminFullResetBtn"),
+  adminSummaryInput: document.getElementById("adminSummaryInput"),
+  adminApplySummaryBtn: document.getElementById("adminApplySummaryBtn"),
+  adminExportSaveBtn: document.getElementById("adminExportSaveBtn"),
+  adminImportSaveBtn: document.getElementById("adminImportSaveBtn"),
   showStageGameLabel: document.getElementById("showStageGameLabel"),
   showStageRoundLabel: document.getElementById("showStageRoundLabel"),
   showStageTimer: document.getElementById("showStageTimer"),
@@ -1373,6 +1394,7 @@ function sanitizeState(rawState) {
     clean.showUi.activeScreen = source.showUi.activeScreen;
   }
   clean.showUi.hostPanelOpen = Boolean(source.showUi?.hostPanelOpen);
+  clean.showUi.adminAdvancedOpen = Boolean(source.showUi?.adminAdvancedOpen);
 
   clean.settings.showTitle =
     sanitizeString(source.settings?.showTitle, clean.settings.showTitle).trim() || clean.settings.showTitle;
@@ -2473,18 +2495,19 @@ function countActiveWithJoker(teamKey) {
 
 function getShowScreenTitle(screenId = state.showUi?.activeScreen) {
   const labels = {
-    "home-intro": "Home / Show Intro",
+    "show-home": "Show Home",
+    "game-select": "Game Select",
     "game-intro": "Game Intro",
     "live-round": "Live Round",
-    "result-reveal": "Result Reveal",
+    "reveal-result": "Reveal / Result",
     leaderboard: "Leaderboard",
     "end-screen": "End Screen"
   };
-  return labels[screenId] || labels["home-intro"];
+  return labels[screenId] || labels["show-home"];
 }
 
 function getSectionForShowScreen(screenId) {
-  if (screenId === "home-intro") {
+  if (screenId === "show-home" || screenId === "game-select") {
     return "home";
   }
   if (screenId === "leaderboard") {
@@ -2493,7 +2516,7 @@ function getSectionForShowScreen(screenId) {
   if (screenId === "end-screen") {
     return "end-screen";
   }
-  if (["game-intro", "live-round", "result-reveal"].includes(screenId)) {
+  if (["game-intro", "live-round", "reveal-result"].includes(screenId)) {
     return getGameSection(state.progress.currentGame);
   }
   return "home";
@@ -2590,14 +2613,156 @@ function getGameIntroRules(gameId) {
   return ["PLACEHOLDER: Add game intro rules."];
 }
 
+function renderShowStageControls() {
+  const lockLabel = state.roundSelection.locked ? "Unlock selection" : "Lock selection";
+  const triviaTeam = state.progress.currentGame === "trivia" ? getCurrentTriviaTeam() : "";
+  const filmTeam = state.progress.currentGame === "film-joc-franciza-fun-fact" ? getCurrentFilmTeam() : "";
+  const activeGameTeam = triviaTeam || filmTeam;
+  const infoLabel = activeGameTeam
+    ? `One-team mode: ${state.teams[activeGameTeam].name}`
+    : "Team-vs-team mode";
+
+  return `
+    <div class="show-control-strip">
+      <div class="show-control-cell">
+        <label class="show-info-label" for="showCurrentRoundInput">Round</label>
+        <input id="showCurrentRoundInput" class="text-input compact-input" type="number" min="1" step="1" value="${state.progress.currentRound}" data-show-current-round>
+      </div>
+      <div class="show-control-cell">
+        <label class="show-info-label" for="showTimerDurationInput">Timer (seconds)</label>
+        <input
+          id="showTimerDurationInput"
+          class="text-input compact-input"
+          type="number"
+          min="10"
+          max="600"
+          step="5"
+          value="${state.timer.duration}"
+          data-show-timer-duration
+        >
+      </div>
+      <div class="show-control-buttons">
+        <button class="pill-btn" type="button" data-show-action="timer-start">Start</button>
+        <button class="pill-btn" type="button" data-show-action="timer-pause">Pause</button>
+        <button class="pill-btn" type="button" data-show-action="timer-reset">Reset</button>
+        <button class="pill-btn" type="button" data-show-action="toggle-round-lock">${lockLabel}</button>
+      </div>
+      <p class="show-control-note">${escapeHtml(infoLabel)}</p>
+    </div>
+  `;
+}
+
+function renderShowJokerControl() {
+  return `
+    <div class="show-joker-row">
+      <label class="show-info-label" for="showJokerAssignmentSelect">Joker Player</label>
+      <select id="showJokerAssignmentSelect" class="text-input compact-input" data-show-joker-assignment>
+        <option value="out" ${state.roundSelection.jokerAssignment === "out" ? "selected" : ""}>Out this round</option>
+        <option value="teamA" ${state.roundSelection.jokerAssignment === "teamA" ? "selected" : ""}>Join ${escapeHtml(
+          state.teams.teamA.name
+        )}</option>
+        <option value="teamB" ${state.roundSelection.jokerAssignment === "teamB" ? "selected" : ""}>Join ${escapeHtml(
+          state.teams.teamB.name
+        )}</option>
+      </select>
+    </div>
+  `;
+}
+
+function renderShowPlayerSelectionBlock(teamKey, options = {}) {
+  const team = state.teams[teamKey];
+  const activeIds = new Set(state.roundSelection.activeByTeam[teamKey]);
+  const activeCount = countActiveWithJoker(teamKey);
+  const isLocked = state.roundSelection.locked;
+  const allowStatus = options.allowStatus === true;
+  const clearAction = options.clearAction || "clear-team-active";
+
+  return `
+    <article class="show-player-card">
+      <div class="show-player-head">
+        <p class="show-info-label">${escapeHtml(team.name)} active</p>
+        <p class="show-info-sub">${activeCount}/${MAX_ACTIVE_PER_TEAM}</p>
+      </div>
+      <div class="show-player-actions">
+        <button
+          class="pill-btn"
+          type="button"
+          data-show-action="${clearAction}"
+          data-team="${teamKey}"
+          ${isLocked ? "disabled" : ""}
+        >
+          Deselect all
+        </button>
+      </div>
+      <div class="show-player-list">
+        ${team.players
+          .map((player) => {
+            const isActive = activeIds.has(player.id);
+            const disabledToggle = isLocked || player.status !== "available" ? "disabled" : "";
+            const statusOptions = ["available", "bench", "unavailable"]
+              .map((status) => `<option value="${status}" ${player.status === status ? "selected" : ""}>${status}</option>`)
+              .join("");
+            return `
+              <label class="show-player-item ${isActive ? "is-active" : ""}">
+                <input
+                  type="checkbox"
+                  data-show-player-toggle
+                  data-team="${teamKey}"
+                  data-player-id="${player.id}"
+                  ${isActive ? "checked" : ""}
+                  ${disabledToggle}
+                >
+                <span>${escapeHtml(player.name)}</span>
+                <small>${player.status}</small>
+                ${
+                  allowStatus
+                    ? `<select class="text-input show-player-status" data-show-player-status data-team="${teamKey}" data-player-id="${player.id}" ${
+                        isLocked ? "disabled" : ""
+                      }>${statusOptions}</select>`
+                    : ""
+                }
+              </label>
+            `;
+          })
+          .join("")}
+      </div>
+    </article>
+  `;
+}
+
+function renderShowActionFooter() {
+  return `
+    <div class="show-action-footer">
+      <button class="primary-btn" type="button" data-show-action="go-reveal">Reveal / Result</button>
+      <button class="secondary-btn" type="button" data-show-action="next-round">Next round</button>
+      <button class="secondary-btn" type="button" data-show-action="next-game">Next game</button>
+    </div>
+  `;
+}
+
 function buildLiveRoundContent(gameId) {
+  const stageControls = renderShowStageControls();
+  const jokerControl = renderShowJokerControl();
+
   if (gameId === "trivia") {
     const roundState = getOrCreateTriviaRoundState();
     const category = state.trivia.categories.find((entry) => entry.id === roundState.selectedCategoryId);
     const playingTeam = state.teams[roundState.teamKey];
     const usedCount = roundState.usedCategoryIds.length;
     const totalCount = state.trivia.categories.length;
+    const maxBet = getMaxBetAmount(playingTeam.money, "trivia");
+    const categoryOptions = state.trivia.categories
+      .map((entry) => {
+        const isUsed = roundState.usedCategoryIds.includes(entry.id);
+        return `<option value="${entry.id}" ${roundState.selectedCategoryId === entry.id ? "selected" : ""} ${
+          isUsed ? "disabled" : ""
+        }>${escapeHtml(entry.title)}${isUsed ? " (USED)" : ""}</option>`;
+      })
+      .join("");
+
     return `
+      ${stageControls}
+      ${jokerControl}
       <div class="show-info-grid">
         <div class="show-info-card">
           <p class="show-info-label">Team In Play</p>
@@ -2613,13 +2778,58 @@ function buildLiveRoundContent(gameId) {
         <p class="show-round-title">${escapeHtml(category?.title || "No category selected")}</p>
         <p class="show-round-copy">${escapeHtml(category?.question || "PLACEHOLDER: Question appears here.")}</p>
       </div>
+      <div class="show-overlay-grid two-col">
+        <article class="show-control-card">
+          <h3>Round Controls</h3>
+          <label class="show-info-label" for="showTriviaTeamSelect">Playing team</label>
+          <select id="showTriviaTeamSelect" class="text-input" data-show-trivia-team>
+            <option value="teamA" ${roundState.teamKey === "teamA" ? "selected" : ""}>${escapeHtml(state.teams.teamA.name)}</option>
+            <option value="teamB" ${roundState.teamKey === "teamB" ? "selected" : ""}>${escapeHtml(state.teams.teamB.name)}</option>
+          </select>
+
+          <label class="show-info-label spaced" for="showTriviaCategorySelect">Category</label>
+          <select id="showTriviaCategorySelect" class="text-input" data-show-trivia-category>${categoryOptions}</select>
+
+          <label class="show-info-label spaced" for="showTriviaBetInput">Bet (max ${formatMoney(maxBet)})</label>
+          <input id="showTriviaBetInput" class="text-input compact-input" type="number" min="0" step="10" value="${
+            getOrCreateTriviaRoundState().teamKey === roundState.teamKey ? normalizeBetAmount(elements.triviaBetAmountInput?.value || 100) : 100
+          }" data-show-trivia-bet>
+
+          <label class="show-info-label spaced" for="showTriviaBonusInput">Fixed bonus</label>
+          <input id="showTriviaBonusInput" class="text-input compact-input" type="number" min="0" step="10" value="${Math.max(
+            0,
+            Math.round(sanitizeNumber(state.trivia.fixedBonus, 100))
+          )}" data-show-trivia-bonus>
+
+          <div class="show-action-footer">
+            <button class="primary-btn" type="button" data-show-action="trivia-correct">Correct</button>
+            <button class="danger-btn" type="button" data-show-action="trivia-wrong">Wrong</button>
+            <button class="secondary-btn" type="button" data-show-action="trivia-reset-used">Reset used</button>
+          </div>
+        </article>
+        ${renderShowPlayerSelectionBlock(roundState.teamKey, { allowStatus: true })}
+      </div>
+      ${renderShowActionFooter()}
     `;
   }
 
   if (gameId === "pretul-corect") {
     const roundState = getOrCreatePretulRoundState();
     const item = state.pretul.items.find((entry) => entry.id === roundState.selectedItemId);
+    const itemOptions = state.pretul.items
+      .map((entry) => {
+        const isUsed = roundState.usedItemIds.includes(entry.id);
+        return `<option value="${entry.id}" ${roundState.selectedItemId === entry.id ? "selected" : ""} ${
+          isUsed ? "disabled" : ""
+        }>${escapeHtml(entry.name)}${isUsed ? " (USED)" : ""}</option>`;
+      })
+      .join("");
+    const maxBetA = getMaxBetAmount(state.teams.teamA.money, "pretul-corect");
+    const maxBetB = getMaxBetAmount(state.teams.teamB.money, "pretul-corect");
+
     return `
+      ${stageControls}
+      ${jokerControl}
       <div class="show-round-card">
         <p class="show-info-label">Item In Round</p>
         <p class="show-round-title">${escapeHtml(item?.name || "No item selected")}</p>
@@ -2635,6 +2845,46 @@ function buildLiveRoundContent(gameId) {
         </div>
       </div>
       <p class="show-round-copy">Real price is set in host controls and revealed during result screen.</p>
+      <div class="show-overlay-grid two-col">
+        <article class="show-control-card">
+          <h3>Round Controls</h3>
+          <label class="show-info-label" for="showPretulItem">Current item</label>
+          <select id="showPretulItem" class="text-input" data-show-pretul-item>${itemOptions}</select>
+          <div class="show-mini-grid">
+            <div>
+              <label class="show-info-label" for="showPretulAnswerA">${escapeHtml(state.teams.teamA.name)} answer</label>
+              <input id="showPretulAnswerA" class="text-input compact-input" type="number" min="0" step="1" value="${roundState.answerTeamA}" data-show-pretul-answer-teama>
+            </div>
+            <div>
+              <label class="show-info-label" for="showPretulBetA">${escapeHtml(state.teams.teamA.name)} bet (max ${formatMoney(
+                maxBetA
+              )})</label>
+              <input id="showPretulBetA" class="text-input compact-input" type="number" min="0" step="10" value="${roundState.betTeamA}" data-show-pretul-bet-teama>
+            </div>
+            <div>
+              <label class="show-info-label" for="showPretulAnswerB">${escapeHtml(state.teams.teamB.name)} answer</label>
+              <input id="showPretulAnswerB" class="text-input compact-input" type="number" min="0" step="1" value="${roundState.answerTeamB}" data-show-pretul-answer-teamb>
+            </div>
+            <div>
+              <label class="show-info-label" for="showPretulBetB">${escapeHtml(state.teams.teamB.name)} bet (max ${formatMoney(
+                maxBetB
+              )})</label>
+              <input id="showPretulBetB" class="text-input compact-input" type="number" min="0" step="10" value="${roundState.betTeamB}" data-show-pretul-bet-teamb>
+            </div>
+          </div>
+          <label class="show-info-label spaced" for="showPretulRealPrice">Real price</label>
+          <input id="showPretulRealPrice" class="text-input compact-input" type="number" min="0" step="1" value="${roundState.realPrice}" data-show-pretul-real-price>
+          <div class="show-action-footer">
+            <button class="primary-btn" type="button" data-show-action="pretul-evaluate">Detect winner & apply</button>
+            <button class="secondary-btn" type="button" data-show-action="pretul-reset-used">Reset used items</button>
+          </div>
+        </article>
+        <div class="show-control-card">
+          ${renderShowPlayerSelectionBlock("teamA", { allowStatus: true })}
+          ${renderShowPlayerSelectionBlock("teamB", { allowStatus: true })}
+        </div>
+      </div>
+      ${renderShowActionFooter()}
     `;
   }
 
@@ -2642,6 +2892,15 @@ function buildLiveRoundContent(gameId) {
     const roundState = getOrCreateFilmRoundState();
     const item = state.filmGame.items.find((entry) => entry.id === roundState.selectedItemId);
     const breakdown = getFilmRoundBreakdown(roundState, roundState.betAmount);
+    const maxBet = getMaxBetAmount(state.teams[roundState.teamKey].money, "film-joc-franciza-fun-fact");
+    const itemOptions = state.filmGame.items
+      .map((entry) => {
+        const isUsed = roundState.usedItemIds.includes(entry.id);
+        return `<option value="${entry.id}" ${roundState.selectedItemId === entry.id ? "selected" : ""} ${
+          isUsed ? "disabled" : ""
+        }>${escapeHtml(entry.title)}${isUsed ? " (USED)" : ""}</option>`;
+      })
+      .join("");
     const formatComponent = (key, label) => {
       const revealed = roundState.revealed[key] ? "Revealed" : "Hidden";
       const outcome = roundState.outcomes[key] === "correct" ? "Correct" : roundState.outcomes[key] === "wrong" ? "Wrong" : "Pending";
@@ -2654,6 +2913,8 @@ function buildLiveRoundContent(gameId) {
       `;
     };
     return `
+      ${stageControls}
+      ${jokerControl}
       <div class="show-round-card">
         <p class="show-info-label">Round Card</p>
         <p class="show-round-title">${escapeHtml(item?.title || "No round item selected")}</p>
@@ -2664,6 +2925,44 @@ function buildLiveRoundContent(gameId) {
         ${formatComponent("franchise", "Franchise")}
         ${formatComponent("funFact", "Fun Fact")}
       </div>
+      <div class="show-overlay-grid two-col">
+        <article class="show-control-card">
+          <h3>Round Controls</h3>
+          <label class="show-info-label" for="showFilmTeam">Playing team</label>
+          <select id="showFilmTeam" class="text-input" data-show-film-team>
+            <option value="teamA" ${roundState.teamKey === "teamA" ? "selected" : ""}>${escapeHtml(state.teams.teamA.name)}</option>
+            <option value="teamB" ${roundState.teamKey === "teamB" ? "selected" : ""}>${escapeHtml(state.teams.teamB.name)}</option>
+          </select>
+
+          <label class="show-info-label spaced" for="showFilmItem">Round item</label>
+          <select id="showFilmItem" class="text-input" data-show-film-item>${itemOptions}</select>
+
+          <label class="show-info-label spaced" for="showFilmBet">Bet (max ${formatMoney(maxBet)})</label>
+          <input id="showFilmBet" class="text-input compact-input" type="number" min="0" step="10" value="${roundState.betAmount}" data-show-film-bet>
+
+          <div class="show-mini-grid">
+            <button class="pill-btn" type="button" data-show-film-reveal="character">Reveal Character/Title</button>
+            <button class="pill-btn" type="button" data-show-film-reveal="franchise">Reveal Franchise</button>
+            <button class="pill-btn" type="button" data-show-film-reveal="funFact">Reveal Fun Fact</button>
+          </div>
+
+          <div class="show-mini-grid">
+            <button class="pill-btn" type="button" data-show-film-outcome="character:correct">Character Correct</button>
+            <button class="pill-btn" type="button" data-show-film-outcome="character:wrong">Character Wrong</button>
+            <button class="pill-btn" type="button" data-show-film-outcome="franchise:correct">Franchise Correct</button>
+            <button class="pill-btn" type="button" data-show-film-outcome="franchise:wrong">Franchise Wrong</button>
+            <button class="pill-btn" type="button" data-show-film-outcome="funFact:correct">Fun Fact Correct</button>
+            <button class="pill-btn" type="button" data-show-film-outcome="funFact:wrong">Fun Fact Wrong</button>
+          </div>
+
+          <div class="show-action-footer">
+            <button class="primary-btn" type="button" data-show-action="film-apply">Apply round result</button>
+            <button class="secondary-btn" type="button" data-show-action="film-reset-used">Reset used rounds</button>
+          </div>
+        </article>
+        ${renderShowPlayerSelectionBlock(roundState.teamKey, { allowStatus: true })}
+      </div>
+      ${renderShowActionFooter()}
     `;
   }
 
@@ -2676,7 +2975,34 @@ function buildLiveRoundContent(gameId) {
     };
     const playerA = state.teams.teamA.players.find((player) => player.id === roundState.activePlayerTeamAId);
     const playerB = state.teams.teamB.players.find((player) => player.id === roundState.activePlayerTeamBId);
+    const optionsA = ['<option value="">Select active</option>']
+      .concat(
+        state.teams.teamA.players
+          .filter((player) => player.status === "available")
+          .map(
+            (player) =>
+              `<option value="${player.id}" ${roundState.activePlayerTeamAId === player.id ? "selected" : ""}>${escapeHtml(
+                player.name
+              )}</option>`
+          )
+      )
+      .join("");
+    const optionsB = ['<option value="">Select active</option>']
+      .concat(
+        state.teams.teamB.players
+          .filter((player) => player.status === "available")
+          .map(
+            (player) =>
+              `<option value="${player.id}" ${roundState.activePlayerTeamBId === player.id ? "selected" : ""}>${escapeHtml(
+                player.name
+              )}</option>`
+          )
+      )
+      .join("");
+
     return `
+      ${stageControls}
+      ${jokerControl}
       <div class="show-round-card">
         <p class="show-info-label">Persona</p>
         <p class="show-round-title">${escapeHtml(template.personaTitle)}</p>
@@ -2694,6 +3020,30 @@ function buildLiveRoundContent(gameId) {
           <p class="show-info-sub">Score: ${roundState.scoreTeamB}</p>
         </div>
       </div>
+      <div class="show-overlay-grid two-col">
+        <article class="show-control-card">
+          <h3>Samsar Controls</h3>
+          <label class="show-info-label" for="showSamsarPlayerA">${escapeHtml(state.teams.teamA.name)} active player</label>
+          <select id="showSamsarPlayerA" class="text-input" data-show-samsar-player-teama>${optionsA}</select>
+          <label class="show-info-label spaced" for="showSamsarPlayerB">${escapeHtml(state.teams.teamB.name)} active player</label>
+          <select id="showSamsarPlayerB" class="text-input" data-show-samsar-player-teamb>${optionsB}</select>
+          <div class="show-mini-grid">
+            <div>
+              <label class="show-info-label" for="showSamsarScoreA">Score Team 1</label>
+              <input id="showSamsarScoreA" class="text-input compact-input" type="number" min="0" step="1" value="${roundState.scoreTeamA}" data-show-samsar-score-teama>
+            </div>
+            <div>
+              <label class="show-info-label" for="showSamsarScoreB">Score Team 2</label>
+              <input id="showSamsarScoreB" class="text-input compact-input" type="number" min="0" step="1" value="${roundState.scoreTeamB}" data-show-samsar-score-teamb>
+            </div>
+          </div>
+          <div class="show-action-footer">
+            <button class="primary-btn" type="button" data-show-action="samsar-apply">Apply result</button>
+            <button class="secondary-btn" type="button" data-show-action="go-reveal">Go reveal</button>
+          </div>
+        </article>
+      </div>
+      ${renderShowActionFooter()}
     `;
   }
 
@@ -2701,28 +3051,133 @@ function buildLiveRoundContent(gameId) {
     const manualGameId = getCurrentManualMatchGame();
     const roundState = getOrCreateManualMatchRoundState(manualGameId, state.progress.currentRound);
     const settlement = calculateManualMatchSettlement(manualGameId, roundState);
+    const maxBetA = getMaxBetAmount(state.teams.teamA.money, manualGameId);
+    const maxBetB = getMaxBetAmount(state.teams.teamB.money, manualGameId);
     const winnerLabel =
       settlement.winner === "teamA"
         ? state.teams.teamA.name
         : settlement.winner === "teamB"
           ? state.teams.teamB.name
           : "Draw";
+    const capLine = `Bet cap: ${escapeHtml(state.teams.teamA.name)} ${formatMoney(maxBetA)} | ${escapeHtml(
+      state.teams.teamB.name
+    )} ${formatMoney(maxBetB)}`;
     const shotFakeLine =
       manualGameId === "shot-fake"
         ? `<p class="show-round-copy">Shot Fake transfer preview: ${formatMoney(settlement.specialTransfer)} (x${roundState.shotFake.multiplier}, active ${settlement.activeCountA} vs ${settlement.activeCountB}).</p>`
         : "";
+    const sideBetsBlock =
+      manualGameId === "shot-fake"
+        ? `
+          <div class="show-sidebets">
+            <div class="show-player-head">
+              <p class="show-info-label">Side bets</p>
+              <button class="pill-btn" type="button" data-show-action="manual-sidebet-add">Add side bet</button>
+            </div>
+            ${roundState.shotFake.sideBets
+              .map((sideBet) => {
+                return `
+                  <div class="show-sidebet-row" data-show-shot-sidebet-id="${sideBet.id}">
+                    <input class="text-input" data-show-shot-sidebet-label value="${escapeHtml(sideBet.label)}">
+                    <input class="text-input compact-input" data-show-shot-sidebet-amount type="number" min="0" step="10" value="${sideBet.amount}">
+                    <select class="text-input compact-input" data-show-shot-sidebet-winner>
+                      <option value="draw" ${sideBet.winner === "draw" ? "selected" : ""}>Draw</option>
+                      <option value="teamA" ${sideBet.winner === "teamA" ? "selected" : ""}>Team 1</option>
+                      <option value="teamB" ${sideBet.winner === "teamB" ? "selected" : ""}>Team 2</option>
+                    </select>
+                    <button class="pill-btn" type="button" data-show-action="manual-sidebet-remove" data-sidebet-id="${sideBet.id}">Remove</button>
+                  </div>
+                `;
+              })
+              .join("")}
+          </div>
+        `
+        : "";
     return `
+      ${stageControls}
+      ${jokerControl}
       <div class="show-round-card">
         <p class="show-info-label">${escapeHtml(getGameLabel(manualGameId))}</p>
         <p class="show-round-title">${escapeHtml(state.teams.teamA.name)} ${roundState.scoreTeamA} - ${roundState.scoreTeamB} ${escapeHtml(state.teams.teamB.name)}</p>
         <p class="show-round-copy">Winner preview: ${escapeHtml(winnerLabel)} | Bets: ${formatMoney(settlement.effectiveBetA)} / ${formatMoney(settlement.effectiveBetB)}</p>
+        <p class="show-round-copy">${capLine}</p>
         ${shotFakeLine}
       </div>
+      <div class="show-overlay-grid two-col">
+        <article class="show-control-card">
+          <h3>Manual Match Controls</h3>
+          <label class="show-info-label" for="showManualGame">Game</label>
+          <select id="showManualGame" class="text-input" data-show-manual-game>
+            <option value="guess-right-order" ${manualGameId === "guess-right-order" ? "selected" : ""}>Guess the Right Order</option>
+            <option value="beer-pong" ${manualGameId === "beer-pong" ? "selected" : ""}>Beer Pong</option>
+            <option value="shot-fake" ${manualGameId === "shot-fake" ? "selected" : ""}>Shot Fake</option>
+          </select>
+          <label class="show-info-label spaced" for="showManualRound">Round</label>
+          <input id="showManualRound" class="text-input compact-input" type="number" min="1" step="1" value="${state.progress.currentRound}" data-show-manual-round>
+          <div class="show-mini-grid">
+            <div>
+              <label class="show-info-label" for="showManualScoreA">${escapeHtml(state.teams.teamA.name)} score</label>
+              <input id="showManualScoreA" class="text-input compact-input" type="number" min="0" step="1" value="${roundState.scoreTeamA}" data-show-manual-score-teama>
+            </div>
+            <div>
+              <label class="show-info-label" for="showManualScoreB">${escapeHtml(state.teams.teamB.name)} score</label>
+              <input id="showManualScoreB" class="text-input compact-input" type="number" min="0" step="1" value="${roundState.scoreTeamB}" data-show-manual-score-teamb>
+            </div>
+            <div>
+              <label class="show-info-label" for="showManualBetA">${escapeHtml(state.teams.teamA.name)} bet (max ${formatMoney(
+                maxBetA
+              )})</label>
+              <input id="showManualBetA" class="text-input compact-input" type="number" min="0" step="10" max="${maxBetA}" value="${roundState.betTeamA}" data-show-manual-bet-teama>
+            </div>
+            <div>
+              <label class="show-info-label" for="showManualBetB">${escapeHtml(state.teams.teamB.name)} bet (max ${formatMoney(
+                maxBetB
+              )})</label>
+              <input id="showManualBetB" class="text-input compact-input" type="number" min="0" step="10" max="${maxBetB}" value="${roundState.betTeamB}" data-show-manual-bet-teamb>
+            </div>
+          </div>
+          ${
+            manualGameId === "shot-fake"
+              ? `
+            <div class="show-mini-grid">
+              <div>
+                <label class="show-info-label" for="showShotFakeMultiplier">Multiplier x</label>
+                <input id="showShotFakeMultiplier" class="text-input compact-input" type="number" min="0" step="1" value="${roundState.shotFake.multiplier}" data-show-shot-multiplier>
+              </div>
+              <div>
+                <label class="show-info-label" for="showShotAdjustA">Manual adjust Team 1</label>
+                <input id="showShotAdjustA" class="text-input compact-input" type="number" step="10" value="${roundState.shotFake.manualAdjustTeamA}" data-show-shot-adjust-teama>
+              </div>
+              <div>
+                <label class="show-info-label" for="showShotAdjustB">Manual adjust Team 2</label>
+                <input id="showShotAdjustB" class="text-input compact-input" type="number" step="10" value="${roundState.shotFake.manualAdjustTeamB}" data-show-shot-adjust-teamb>
+              </div>
+            </div>
+            ${sideBetsBlock}
+          `
+              : ""
+          }
+          <div class="show-action-footer">
+            <button class="primary-btn" type="button" data-show-action="manual-apply">Apply result</button>
+          </div>
+        </article>
+        <div class="show-control-card">
+          ${renderShowPlayerSelectionBlock("teamA", { allowStatus: true })}
+          ${renderShowPlayerSelectionBlock("teamB", { allowStatus: true })}
+        </div>
+      </div>
+      ${renderShowActionFooter()}
     `;
   }
 
   if (gameId === "curse-de-cai") {
     const roundState = getOrCreateCurseRoundState(state.progress.currentRound);
+    const maxBetA = getMaxBetAmount(state.teams.teamA.money, "curse-de-cai");
+    const maxBetB = getMaxBetAmount(state.teams.teamB.money, "curse-de-cai");
+    const totalBetA = getCurseTeamBetTotal(roundState, "teamA");
+    const totalBetB = getCurseTeamBetTotal(roundState, "teamB");
+    const overCapA = totalBetA > maxBetA;
+    const overCapB = totalBetB > maxBetB;
     const horsePositions = state.curseRace.horses.map((horse) => ({
       horse,
       position: Math.max(0, Math.round(sanitizeNumber(roundState.positions?.[horse.id], 0)))
@@ -2730,7 +3185,23 @@ function buildLiveRoundContent(gameId) {
     horsePositions.sort((left, right) => right.position - left.position);
     const leader = horsePositions[0];
     const winnerHorse = state.curseRace.horses.find((horse) => horse.id === roundState.winnerHorseId);
+    const horseOptions = state.curseRace.horses
+      .map(
+        (horse) =>
+          `<option value="${horse.id}" ${roundState.moveHorseId === horse.id ? "selected" : ""}>${escapeHtml(horse.symbol)} ${escapeHtml(
+            horse.name
+          )}</option>`
+      )
+      .join("");
+    const bettorOptionsA = getCurseBettorOptions("teamA")
+      .map((option) => `<option value="${option.id}" ${roundState.bets.teamA.bettorId === option.id ? "selected" : ""}>${escapeHtml(option.label)}</option>`)
+      .join("");
+    const bettorOptionsB = getCurseBettorOptions("teamB")
+      .map((option) => `<option value="${option.id}" ${roundState.bets.teamB.bettorId === option.id ? "selected" : ""}>${escapeHtml(option.label)}</option>`)
+      .join("");
     return `
+      ${stageControls}
+      ${jokerControl}
       <div class="show-round-card">
         <p class="show-info-label">Race Status</p>
         <p class="show-round-title">${winnerHorse ? `Winner: ${winnerHorse.symbol} ${winnerHorse.name}` : "Race in progress"}</p>
@@ -2739,17 +3210,81 @@ function buildLiveRoundContent(gameId) {
       <div class="show-info-grid">
         <div class="show-info-card">
           <p class="show-info-label">${escapeHtml(state.teams.teamA.name)} bet total</p>
-          <p class="show-info-value">${formatMoney(getCurseTeamBetTotal(roundState, "teamA"))}</p>
+          <p class="show-info-value">${formatMoney(totalBetA)}</p>
+          <p class="show-info-sub ${overCapA ? "is-error" : ""}">Max ${formatMoney(maxBetA)}</p>
         </div>
         <div class="show-info-card">
           <p class="show-info-label">${escapeHtml(state.teams.teamB.name)} bet total</p>
-          <p class="show-info-value">${formatMoney(getCurseTeamBetTotal(roundState, "teamB"))}</p>
+          <p class="show-info-value">${formatMoney(totalBetB)}</p>
+          <p class="show-info-sub ${overCapB ? "is-error" : ""}">Max ${formatMoney(maxBetB)}</p>
         </div>
       </div>
+      <div class="show-overlay-grid two-col">
+        <article class="show-control-card">
+          <h3>Race Controls</h3>
+          <label class="show-info-label" for="showCurseRound">Round</label>
+          <input id="showCurseRound" class="text-input compact-input" type="number" min="1" step="1" value="${state.progress.currentRound}" data-show-curse-round>
+          <div class="show-mini-grid">
+            <div>
+              <label class="show-info-label" for="showCurseHorse">Horse</label>
+              <select id="showCurseHorse" class="text-input compact-input" data-show-curse-move-horse>${horseOptions}</select>
+            </div>
+            <div>
+              <label class="show-info-label" for="showCurseSteps">Steps</label>
+              <input id="showCurseSteps" class="text-input compact-input" type="number" min="1" step="1" value="${roundState.moveSteps}" data-show-curse-move-steps>
+            </div>
+          </div>
+          <div class="show-action-footer">
+            <button class="secondary-btn" type="button" data-show-action="curse-move">Move horse</button>
+            <button class="primary-btn" type="button" data-show-action="curse-apply">Apply payout</button>
+            <button class="secondary-btn" type="button" data-show-action="curse-reset">Reset race</button>
+          </div>
+
+          <label class="show-info-label spaced" for="showCurseBettorA">${escapeHtml(state.teams.teamA.name)} bettor</label>
+          <select id="showCurseBettorA" class="text-input compact-input" data-show-curse-bettor-teama>
+            <option value="">No bettor principal</option>${bettorOptionsA}
+          </select>
+          <label class="show-info-label spaced" for="showCurseBettorB">${escapeHtml(state.teams.teamB.name)} bettor</label>
+          <select id="showCurseBettorB" class="text-input compact-input" data-show-curse-bettor-teamb>
+            <option value="">No bettor principal</option>${bettorOptionsB}
+          </select>
+        </article>
+        <article class="show-control-card">
+          <h3>Horse Bets</h3>
+          <p class="show-control-note">Bet cap: ${escapeHtml(state.teams.teamA.name)} ${formatMoney(maxBetA)} | ${escapeHtml(
+            state.teams.teamB.name
+          )} ${formatMoney(maxBetB)}</p>
+          <div class="show-bet-list">
+            ${state.curseRace.horses
+              .map((horse) => {
+                const betA = normalizeOptionalBetAmount(roundState.bets.teamA.horseBets[horse.id]);
+                const betB = normalizeOptionalBetAmount(roundState.bets.teamB.horseBets[horse.id]);
+                return `
+                  <div class="show-bet-row">
+                    <p class="show-info-sub">${escapeHtml(horse.symbol)} ${escapeHtml(horse.name)}</p>
+                    <input class="text-input compact-input" type="number" min="0" step="10" max="${maxBetA}" value="${betA}" data-show-curse-bet data-team="teamA" data-horse-id="${horse.id}">
+                    <input class="text-input compact-input" type="number" min="0" step="10" max="${maxBetB}" value="${betB}" data-show-curse-bet data-team="teamB" data-horse-id="${horse.id}">
+                  </div>
+                `;
+              })
+              .join("")}
+          </div>
+        </article>
+      </div>
+      <div class="show-overlay-grid two-col">
+        ${renderShowPlayerSelectionBlock("teamA", { allowStatus: true })}
+        ${renderShowPlayerSelectionBlock("teamB", { allowStatus: true })}
+      </div>
+      ${renderShowActionFooter()}
     `;
   }
 
-  return `<p class="show-round-copy">PLACEHOLDER: Round content for ${escapeHtml(getGameLabel(gameId))}.</p>`;
+  return `
+    ${stageControls}
+    ${jokerControl}
+    <p class="show-round-copy">PLACEHOLDER: Round content for ${escapeHtml(getGameLabel(gameId))}.</p>
+    ${renderShowActionFooter()}
+  `;
 }
 
 function buildShowScreenContent(screenId) {
@@ -2757,7 +3292,7 @@ function buildShowScreenContent(screenId) {
   const gameLabel = getGameLabel(gameId);
   const summary = state.progress.lastResultSummary || DEFAULT_RESULT_SUMMARY;
 
-  if (screenId === "home-intro") {
+  if (screenId === "show-home") {
     return `
       <div class="show-round-card">
         <p class="show-info-label">Tonight</p>
@@ -2776,6 +3311,44 @@ function buildShowScreenContent(screenId) {
           <p class="show-info-sub">Score: ${state.teams.teamB.score}</p>
         </div>
       </div>
+      <div class="show-action-footer">
+        <button class="primary-btn" type="button" data-show-action="go-game-select">Game select</button>
+        <button class="secondary-btn" type="button" data-show-action="go-game-intro">Game intro</button>
+        <button class="secondary-btn" type="button" data-show-action="go-live-round">Live round</button>
+      </div>
+    `;
+  }
+
+  if (screenId === "game-select") {
+    const gameCards = GAME_CONFIG.map((game) => {
+      const isCurrent = game.id === state.progress.currentGame;
+      const currentClass = isCurrent ? "show-leader-row is-leading" : "show-leader-row";
+      return `
+        <button class="${currentClass}" type="button" data-show-select-game="${game.id}">
+          <p class="show-info-label">${escapeHtml(game.label)}</p>
+          <p class="show-info-sub">Max bet: ${game.maxBetPercent}%</p>
+        </button>
+      `;
+    }).join("");
+
+    return `
+      <div class="show-control-card">
+        <h3>Game Select</h3>
+        <label class="show-info-label" for="showGameSelectDropdown">Current game</label>
+        <select id="showGameSelectDropdown" class="text-input" data-show-current-game>
+          ${GAME_CONFIG.map(
+            (game) =>
+              `<option value="${game.id}" ${game.id === state.progress.currentGame ? "selected" : ""}>${escapeHtml(game.label)}</option>`
+          ).join("")}
+        </select>
+        <label class="show-info-label spaced" for="showRoundPickerInput">Current round</label>
+        <input id="showRoundPickerInput" class="text-input compact-input" type="number" min="1" step="1" value="${state.progress.currentRound}" data-show-current-round>
+      </div>
+      <div class="show-leaderboard">${gameCards}</div>
+      <div class="show-action-footer">
+        <button class="primary-btn" type="button" data-show-action="go-game-intro">Continue to Game Intro</button>
+        <button class="secondary-btn" type="button" data-show-action="go-live-round">Skip to Live Round</button>
+      </div>
     `;
   }
 
@@ -2791,6 +3364,10 @@ function buildShowScreenContent(screenId) {
         <p class="show-round-copy">Max bet cap: ${maxBet}% (rounded to ${BET_ROUNDING_STEP}).</p>
       </div>
       <ul class="show-rule-list">${rules}</ul>
+      <div class="show-action-footer">
+        <button class="primary-btn" type="button" data-show-action="go-live-round">Start live round</button>
+        <button class="secondary-btn" type="button" data-show-action="go-game-select">Change game</button>
+      </div>
     `;
   }
 
@@ -2798,7 +3375,7 @@ function buildShowScreenContent(screenId) {
     return buildLiveRoundContent(gameId);
   }
 
-  if (screenId === "result-reveal") {
+  if (screenId === "reveal-result") {
     const gameResult = getCurrentRoundResultForShow(gameId);
     const detailText =
       gameResult && gameResult !== summary
@@ -2809,6 +3386,12 @@ function buildShowScreenContent(screenId) {
         <p class="show-info-label">Latest Outcome</p>
         <p class="show-round-title">${escapeHtml(summary)}</p>
         <p class="show-round-copy">${escapeHtml(detailText)}</p>
+      </div>
+      <div class="show-action-footer">
+        <button class="primary-btn" type="button" data-show-action="next-round">Next round</button>
+        <button class="secondary-btn" type="button" data-show-action="next-game">Next game</button>
+        <button class="secondary-btn" type="button" data-show-action="go-leaderboard">Open leaderboard</button>
+        <button class="secondary-btn" type="button" data-show-action="go-live-round">Back to live round</button>
       </div>
     `;
   }
@@ -2848,6 +3431,10 @@ function buildShowScreenContent(screenId) {
           })
           .join("")}
       </div>
+      <div class="show-action-footer">
+        <button class="secondary-btn" type="button" data-show-action="go-live-round">Return to live round</button>
+        <button class="primary-btn" type="button" data-show-action="go-end-screen">Open end screen</button>
+      </div>
     `;
   }
 
@@ -2875,6 +3462,9 @@ function buildShowScreenContent(screenId) {
           .join("")}
       </div>
       <p class="show-round-copy">Joker Player: F1 Gipsy King (fixed title).</p>
+      <div class="show-action-footer">
+        <button class="secondary-btn" type="button" data-show-action="go-show-home">Back to show home</button>
+      </div>
     `;
   }
 
@@ -2883,7 +3473,9 @@ function buildShowScreenContent(screenId) {
 
 function renderHostPanelState() {
   const isOpen = Boolean(state.showUi?.hostPanelOpen);
+  const isAdvanced = Boolean(state.showUi?.adminAdvancedOpen);
   document.body.classList.toggle("host-panel-open", isOpen);
+  document.body.classList.toggle("host-advanced-open", isOpen && isAdvanced);
 
   if (elements.hostPanelOverlay) {
     elements.hostPanelOverlay.setAttribute("aria-hidden", isOpen ? "false" : "true");
@@ -2892,10 +3484,28 @@ function renderHostPanelState() {
     elements.hostDrawer.setAttribute("aria-hidden", isOpen ? "false" : "true");
   }
   if (elements.hostWorkspace) {
-    elements.hostWorkspace.setAttribute("aria-hidden", isOpen ? "false" : "true");
+    elements.hostWorkspace.setAttribute("aria-hidden", isOpen && isAdvanced ? "false" : "true");
   }
   if (elements.hostPanelToggleBtn) {
     elements.hostPanelToggleBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+  }
+  if (elements.hostAdminAdvancedBtn) {
+    elements.hostAdminAdvancedBtn.textContent = isAdvanced ? "Hide god mode panels" : "Open god mode panels";
+  }
+}
+
+function renderHostAdminPanel() {
+  if (elements.adminMoneyTeamAInput) {
+    elements.adminMoneyTeamAInput.value = String(Math.max(0, Math.round(sanitizeNumber(state.teams.teamA.money, 0))));
+  }
+  if (elements.adminMoneyTeamBInput) {
+    elements.adminMoneyTeamBInput.value = String(Math.max(0, Math.round(sanitizeNumber(state.teams.teamB.money, 0))));
+  }
+  if (elements.adminGameSelect) {
+    elements.adminGameSelect.value = state.progress.currentGame;
+  }
+  if (elements.adminRoundInput) {
+    elements.adminRoundInput.value = String(state.progress.currentRound);
   }
 }
 
@@ -2937,6 +3547,7 @@ function renderShowUi() {
     elements.showScreenContent.innerHTML = buildShowScreenContent(activeScreen);
   }
 
+  renderHostAdminPanel();
   renderHostPanelState();
 }
 
@@ -2946,9 +3557,24 @@ function setHostPanelOpen(nextOpen, options = {}) {
     state.showUi = { ...DEFAULT_STATE.showUi };
   }
   state.showUi.hostPanelOpen = Boolean(nextOpen);
+  if (!state.showUi.hostPanelOpen) {
+    state.showUi.adminAdvancedOpen = false;
+  }
   renderHostPanelState();
   if (persist) {
     saveState(state.showUi.hostPanelOpen ? "Host controls opened." : "Host controls closed.");
+  }
+}
+
+function setHostAdvancedOpen(nextOpen, options = {}) {
+  const persist = options.persist !== false;
+  if (!state.showUi || typeof state.showUi !== "object") {
+    state.showUi = { ...DEFAULT_STATE.showUi };
+  }
+  state.showUi.adminAdvancedOpen = Boolean(nextOpen);
+  renderHostPanelState();
+  if (persist) {
+    saveState(state.showUi.adminAdvancedOpen ? "God mode panels opened." : "God mode panels hidden.");
   }
 }
 
@@ -2974,6 +3600,484 @@ function setShowScreen(screenId, options = {}) {
   renderShowUi();
   if (persist) {
     saveState(`Show screen: ${getShowScreenTitle(screenId)}.`);
+  }
+}
+
+function setTeamMoneyAbsolute(teamKey, rawAmount) {
+  if (!["teamA", "teamB"].includes(teamKey)) {
+    return;
+  }
+  const normalized = Math.max(0, Math.round(sanitizeNumber(rawAmount, state.teams[teamKey].money)));
+  state.teams[teamKey].money = normalized;
+}
+
+function clearActiveTeamFromOverlay(teamKey) {
+  if (!["teamA", "teamB"].includes(teamKey)) {
+    return;
+  }
+  if (state.roundSelection.locked) {
+    setLastResultSummary("Round selection is locked. Unlock to clear active players.");
+    saveState("Overlay clear active blocked while locked.");
+    return;
+  }
+  state.roundSelection.activeByTeam[teamKey] = [];
+  if (state.roundSelection.jokerAssignment === teamKey) {
+    state.roundSelection.jokerAssignment = "out";
+  }
+  saveCurrentRoundSnapshot();
+  renderRoundSelection();
+  renderShowUi();
+  saveState(`Cleared active players for ${state.teams[teamKey].name}.`);
+}
+
+function syncPretulOverlayIntoState() {
+  const root = elements.showScreenContent;
+  if (!root) {
+    return;
+  }
+  const roundState = getOrCreatePretulRoundState();
+  const readNumber = (selector, fallback = 0) => {
+    const node = root.querySelector(selector);
+    return Math.round(sanitizeNumber(node?.value, fallback));
+  };
+  const readBet = (selector, fallback = 0) => normalizeBetAmount(readNumber(selector, fallback));
+  const selectedItemId = root.querySelector("[data-show-pretul-item]")?.value || roundState.selectedItemId;
+  if (state.pretul.items.some((item) => item.id === selectedItemId) && !roundState.usedItemIds.includes(selectedItemId)) {
+    roundState.selectedItemId = selectedItemId;
+  }
+  roundState.answerTeamA = Math.max(0, readNumber("[data-show-pretul-answer-teama]", roundState.answerTeamA));
+  roundState.answerTeamB = Math.max(0, readNumber("[data-show-pretul-answer-teamb]", roundState.answerTeamB));
+  roundState.realPrice = Math.max(0, readNumber("[data-show-pretul-real-price]", roundState.realPrice));
+  roundState.betTeamA = Math.max(0, readBet("[data-show-pretul-bet-teama]", roundState.betTeamA));
+  roundState.betTeamB = Math.max(0, readBet("[data-show-pretul-bet-teamb]", roundState.betTeamB));
+
+  if (elements.pretulItemSelect) {
+    elements.pretulItemSelect.value = roundState.selectedItemId;
+  }
+  if (elements.pretulAnswerTeamAInput) {
+    elements.pretulAnswerTeamAInput.value = String(roundState.answerTeamA);
+  }
+  if (elements.pretulAnswerTeamBInput) {
+    elements.pretulAnswerTeamBInput.value = String(roundState.answerTeamB);
+  }
+  if (elements.pretulRealPriceInput) {
+    elements.pretulRealPriceInput.value = String(roundState.realPrice);
+  }
+  if (elements.pretulBetTeamAInput) {
+    elements.pretulBetTeamAInput.value = String(roundState.betTeamA);
+  }
+  if (elements.pretulBetTeamBInput) {
+    elements.pretulBetTeamBInput.value = String(roundState.betTeamB);
+  }
+}
+
+function syncSamsarOverlayIntoHostInputs() {
+  const roundState = getOrCreateSamsarRoundState(getSamsarRoundNumber());
+  if (elements.samsarScoreTeamAInput) {
+    elements.samsarScoreTeamAInput.value = String(roundState.scoreTeamA);
+  }
+  if (elements.samsarScoreTeamBInput) {
+    elements.samsarScoreTeamBInput.value = String(roundState.scoreTeamB);
+  }
+}
+
+function syncManualOverlayIntoHostInputs() {
+  const gameId = getCurrentManualMatchGame();
+  const roundState = getOrCreateManualMatchRoundState(gameId, state.progress.currentRound);
+  if (elements.manualScoreTeamAInput) {
+    elements.manualScoreTeamAInput.value = String(roundState.scoreTeamA);
+  }
+  if (elements.manualScoreTeamBInput) {
+    elements.manualScoreTeamBInput.value = String(roundState.scoreTeamB);
+  }
+  if (elements.manualBetTeamAInput) {
+    elements.manualBetTeamAInput.value = String(roundState.betTeamA);
+  }
+  if (elements.manualBetTeamBInput) {
+    elements.manualBetTeamBInput.value = String(roundState.betTeamB);
+  }
+  if (elements.shotFakeMultiplierInput) {
+    elements.shotFakeMultiplierInput.value = String(roundState.shotFake.multiplier);
+  }
+  if (elements.shotFakeManualAdjustTeamAInput) {
+    elements.shotFakeManualAdjustTeamAInput.value = String(roundState.shotFake.manualAdjustTeamA);
+  }
+  if (elements.shotFakeManualAdjustTeamBInput) {
+    elements.shotFakeManualAdjustTeamBInput.value = String(roundState.shotFake.manualAdjustTeamB);
+  }
+}
+
+function tryForceRevealForCurrentGame() {
+  const gameId = state.progress.currentGame;
+  if (gameId === "film-joc-franciza-fun-fact") {
+    const roundState = getOrCreateFilmRoundState();
+    roundState.revealed.character = true;
+    roundState.revealed.franchise = true;
+    roundState.revealed.funFact = true;
+    renderFilmControls();
+    renderShowUi();
+    saveState("Force reveal used for Film/Joc round.");
+    return;
+  }
+  setLastResultSummary("Force reveal is currently available for Film/Joc rounds.");
+  renderShowUi();
+  saveState("Force reveal not applicable in current game.");
+}
+
+function handleShowOverlayAction(action, trigger) {
+  if (!action) {
+    return;
+  }
+
+  if (action === "go-show-home") {
+    setShowScreen("show-home");
+    return;
+  }
+  if (action === "go-game-select") {
+    setShowScreen("game-select");
+    return;
+  }
+  if (action === "go-game-intro") {
+    setShowScreen("game-intro");
+    return;
+  }
+  if (action === "go-live-round") {
+    setShowScreen("live-round");
+    return;
+  }
+  if (action === "go-reveal") {
+    setShowScreen("reveal-result");
+    return;
+  }
+  if (action === "go-leaderboard") {
+    setShowScreen("leaderboard");
+    return;
+  }
+  if (action === "go-end-screen") {
+    setShowScreen("end-screen");
+    return;
+  }
+  if (action === "timer-start") {
+    startTimer();
+    return;
+  }
+  if (action === "timer-pause") {
+    pauseTimer();
+    return;
+  }
+  if (action === "timer-reset") {
+    resetTimer();
+    return;
+  }
+  if (action === "toggle-round-lock") {
+    toggleRoundSelectionLock();
+    return;
+  }
+  if (action === "next-round") {
+    setCurrentRound(state.progress.currentRound + 1);
+    setShowScreen("game-intro", { persist: false });
+    saveState("Next round opened.");
+    return;
+  }
+  if (action === "next-game") {
+    nextGame();
+    return;
+  }
+  if (action === "clear-team-active") {
+    const teamKey = trigger?.getAttribute("data-team");
+    clearActiveTeamFromOverlay(teamKey);
+    return;
+  }
+  if (action === "trivia-correct") {
+    applyTriviaRoundResult(true);
+    setShowScreen("reveal-result", { persist: false });
+    return;
+  }
+  if (action === "trivia-wrong") {
+    applyTriviaRoundResult(false);
+    setShowScreen("reveal-result", { persist: false });
+    return;
+  }
+  if (action === "trivia-reset-used") {
+    resetTriviaUsedCategories();
+    return;
+  }
+  if (action === "pretul-evaluate") {
+    syncPretulOverlayIntoState();
+    applyPretulRoundResult();
+    setShowScreen("reveal-result", { persist: false });
+    return;
+  }
+  if (action === "pretul-reset-used") {
+    resetPretulUsedItems();
+    return;
+  }
+  if (action === "film-apply") {
+    applyFilmRoundResult();
+    setShowScreen("reveal-result", { persist: false });
+    return;
+  }
+  if (action === "film-reset-used") {
+    resetFilmUsedItems();
+    return;
+  }
+  if (action === "samsar-apply") {
+    syncSamsarOverlayIntoHostInputs();
+    applySamsarRoundResult();
+    setShowScreen("reveal-result", { persist: false });
+    return;
+  }
+  if (action === "manual-apply") {
+    syncManualOverlayIntoHostInputs();
+    applyManualMatchRoundResult();
+    setShowScreen("reveal-result", { persist: false });
+    return;
+  }
+  if (action === "manual-sidebet-add") {
+    addShotFakeSideBet();
+    return;
+  }
+  if (action === "manual-sidebet-remove") {
+    const sideBetId = trigger?.getAttribute("data-sidebet-id");
+    if (sideBetId) {
+      removeShotFakeSideBet(sideBetId);
+    }
+    return;
+  }
+  if (action === "curse-move") {
+    moveCurseHorseBySymbol();
+    return;
+  }
+  if (action === "curse-apply") {
+    applyCurseRacePayout();
+    setShowScreen("reveal-result", { persist: false });
+    return;
+  }
+  if (action === "curse-reset") {
+    resetCurseRace();
+    return;
+  }
+}
+
+function handleShowOverlayChange(target) {
+  if (!target) {
+    return;
+  }
+
+  if (target.matches("[data-show-current-game]")) {
+    setCurrentGame(target.value, { keepRound: true, navigateToSection: false });
+    setShowScreen("game-intro", { persist: false });
+    return;
+  }
+  if (target.matches("[data-show-current-round]")) {
+    setCurrentRound(target.value);
+    return;
+  }
+  if (target.matches("[data-show-timer-duration]")) {
+    if (elements.roundDuration) {
+      elements.roundDuration.value = String(target.value);
+    }
+    updateRoundDuration();
+    return;
+  }
+  if (target.matches("[data-show-joker-assignment]")) {
+    setJokerAssignment(target.value);
+    return;
+  }
+  if (target.matches("[data-show-player-toggle]")) {
+    const teamKey = target.getAttribute("data-team");
+    const playerId = target.getAttribute("data-player-id");
+    togglePlayerActive(teamKey, playerId, target.checked);
+    return;
+  }
+  if (target.matches("[data-show-player-status]")) {
+    const teamKey = target.getAttribute("data-team");
+    const playerId = target.getAttribute("data-player-id");
+    updatePlayerStatus(teamKey, playerId, target.value);
+    return;
+  }
+  if (target.matches("[data-show-trivia-team]")) {
+    setTriviaPlayingTeam(target.value);
+    return;
+  }
+  if (target.matches("[data-show-trivia-category]")) {
+    setTriviaSelectedCategory(target.value);
+    return;
+  }
+  if (target.matches("[data-show-trivia-bet]")) {
+    if (elements.triviaBetAmountInput) {
+      elements.triviaBetAmountInput.value = String(target.value);
+    }
+    renderTriviaControls();
+    saveState("Trivia bet adjusted from overlay.");
+    return;
+  }
+  if (target.matches("[data-show-trivia-bonus]")) {
+    state.trivia.fixedBonus = Math.max(0, Math.round(sanitizeNumber(target.value, state.trivia.fixedBonus)));
+    if (elements.triviaFixedBonusInput) {
+      elements.triviaFixedBonusInput.value = String(state.trivia.fixedBonus);
+    }
+    renderTriviaControls();
+    saveState("Trivia bonus adjusted from overlay.");
+    return;
+  }
+  if (target.matches("[data-show-pretul-item]")) {
+    setPretulSelectedItem(target.value);
+    return;
+  }
+  if (
+    target.matches("[data-show-pretul-answer-teama]") ||
+    target.matches("[data-show-pretul-answer-teamb]") ||
+    target.matches("[data-show-pretul-bet-teama]") ||
+    target.matches("[data-show-pretul-bet-teamb]") ||
+    target.matches("[data-show-pretul-real-price]")
+  ) {
+    syncPretulOverlayIntoState();
+    renderPretulControls();
+    saveState("Pretul controls updated from overlay.");
+    return;
+  }
+  if (target.matches("[data-show-film-team]")) {
+    setFilmPlayingTeam(target.value);
+    return;
+  }
+  if (target.matches("[data-show-film-item]")) {
+    setFilmSelectedItem(target.value);
+    return;
+  }
+  if (target.matches("[data-show-film-bet]")) {
+    setFilmBetAmount(target.value);
+    return;
+  }
+  if (target.matches("[data-show-samsar-player-teama]")) {
+    setSamsarActivePlayer("teamA", target.value);
+    return;
+  }
+  if (target.matches("[data-show-samsar-player-teamb]")) {
+    setSamsarActivePlayer("teamB", target.value);
+    return;
+  }
+  if (target.matches("[data-show-samsar-score-teama]")) {
+    setSamsarScore("teamA", target.value);
+    return;
+  }
+  if (target.matches("[data-show-samsar-score-teamb]")) {
+    setSamsarScore("teamB", target.value);
+    return;
+  }
+  if (target.matches("[data-show-manual-game]")) {
+    setManualMatchGame(target.value);
+    return;
+  }
+  if (target.matches("[data-show-manual-round]")) {
+    setManualMatchRound(target.value);
+    return;
+  }
+  if (target.matches("[data-show-manual-score-teama]")) {
+    setManualRoundScore("teamA", target.value);
+    return;
+  }
+  if (target.matches("[data-show-manual-score-teamb]")) {
+    setManualRoundScore("teamB", target.value);
+    return;
+  }
+  if (target.matches("[data-show-manual-bet-teama]")) {
+    setManualRoundBet("teamA", target.value);
+    return;
+  }
+  if (target.matches("[data-show-manual-bet-teamb]")) {
+    setManualRoundBet("teamB", target.value);
+    return;
+  }
+  if (target.matches("[data-show-shot-multiplier]")) {
+    setShotFakeMultiplier(target.value);
+    return;
+  }
+  if (target.matches("[data-show-shot-adjust-teama]")) {
+    setShotFakeManualAdjust("teamA", target.value);
+    return;
+  }
+  if (target.matches("[data-show-shot-adjust-teamb]")) {
+    setShotFakeManualAdjust("teamB", target.value);
+    return;
+  }
+  if (target.matches("[data-show-shot-sidebet-label]") || target.matches("[data-show-shot-sidebet-amount]") || target.matches("[data-show-shot-sidebet-winner]")) {
+    const sideBetRow = target.closest("[data-show-shot-sidebet-id]");
+    const sideBetId = sideBetRow?.getAttribute("data-show-shot-sidebet-id");
+    if (!sideBetId) {
+      return;
+    }
+    if (target.matches("[data-show-shot-sidebet-label]")) {
+      updateShotFakeSideBet(sideBetId, "label", target.value);
+    } else if (target.matches("[data-show-shot-sidebet-amount]")) {
+      updateShotFakeSideBet(sideBetId, "amount", target.value);
+    } else if (target.matches("[data-show-shot-sidebet-winner]")) {
+      updateShotFakeSideBet(sideBetId, "winner", target.value);
+    }
+    return;
+  }
+  if (target.matches("[data-show-curse-round]")) {
+    setCurseRound(target.value);
+    return;
+  }
+  if (target.matches("[data-show-curse-move-horse]")) {
+    setCurseMoveHorse(target.value);
+    return;
+  }
+  if (target.matches("[data-show-curse-move-steps]")) {
+    setCurseMoveSteps(target.value);
+    return;
+  }
+  if (target.matches("[data-show-curse-bet]")) {
+    const teamKey = target.getAttribute("data-team");
+    const horseId = target.getAttribute("data-horse-id");
+    setCurseBetAmount(teamKey, horseId, target.value);
+    return;
+  }
+  if (target.matches("[data-show-curse-bettor-teama]")) {
+    setCurseBettor("teamA", target.value);
+    return;
+  }
+  if (target.matches("[data-show-curse-bettor-teamb]")) {
+    setCurseBettor("teamB", target.value);
+    return;
+  }
+}
+
+function handleShowOverlayClick(event) {
+  const selectGameButton = event.target.closest("[data-show-select-game]");
+  if (selectGameButton) {
+    const gameId = selectGameButton.getAttribute("data-show-select-game");
+    if (GAME_ORDER.includes(gameId)) {
+      setCurrentGame(gameId, { keepRound: true, navigateToSection: false });
+      setShowScreen("game-intro", { persist: false });
+      saveState(`Game selected from overlay: ${getGameLabel(gameId)}.`);
+    }
+    return;
+  }
+
+  const revealButton = event.target.closest("[data-show-film-reveal]");
+  if (revealButton) {
+    const componentKey = revealButton.getAttribute("data-show-film-reveal");
+    toggleFilmReveal(componentKey);
+    return;
+  }
+
+  const outcomeButton = event.target.closest("[data-show-film-outcome]");
+  if (outcomeButton) {
+    const value = outcomeButton.getAttribute("data-show-film-outcome") || "";
+    const [componentKey, outcome] = value.split(":");
+    if (!FILM_COMPONENT_KEYS.includes(componentKey)) {
+      return;
+    }
+    setFilmComponentOutcome(componentKey, outcome === "correct" ? "correct" : "wrong");
+    return;
+  }
+
+  const actionButton = event.target.closest("[data-show-action]");
+  if (actionButton) {
+    const action = actionButton.getAttribute("data-show-action");
+    handleShowOverlayAction(action, actionButton);
   }
 }
 
@@ -5701,7 +6805,7 @@ function resetCurrentGame() {
 
   switchRoundContext(currentGameId, 1, { navigateToSection: false });
   setActiveSection("home", { persist: false });
-  state.showUi.activeScreen = "home-intro";
+  state.showUi.activeScreen = "show-home";
   setLastResultSummary(`Game progress reset for ${getGameLabel(currentGameId)}. Round set to 1.`);
   renderAll();
   saveState("Game progress reset.");
@@ -6218,6 +7322,19 @@ function bindEvents() {
       setHostPanelOpen(false);
     });
   }
+  if (elements.hostAdminAdvancedBtn) {
+    elements.hostAdminAdvancedBtn.addEventListener("click", () => {
+      setHostAdvancedOpen(!state.showUi?.adminAdvancedOpen);
+    });
+  }
+  if (elements.showScreenContent) {
+    elements.showScreenContent.addEventListener("click", (event) => {
+      handleShowOverlayClick(event);
+    });
+    elements.showScreenContent.addEventListener("change", (event) => {
+      handleShowOverlayChange(event.target);
+    });
+  }
 
   elements.navButtons.forEach((button) => {
     button.addEventListener("click", () => {
@@ -6237,7 +7354,7 @@ function bindEvents() {
       } else if (sectionId === "end-screen") {
         state.showUi.activeScreen = "end-screen";
       } else if (sectionId === "home") {
-        state.showUi.activeScreen = "home-intro";
+        state.showUi.activeScreen = "show-home";
       }
       setLastResultSummary(`Opened ${button.textContent?.trim() || sectionId}.`);
       renderShowUi();
@@ -6307,6 +7424,93 @@ function bindEvents() {
   if (elements.fullscreenToggleBtn) {
     elements.fullscreenToggleBtn.addEventListener("click", () => {
       toggleFullscreenMode();
+    });
+  }
+  if (elements.adminUndoBtn) {
+    elements.adminUndoBtn.addEventListener("click", () => {
+      undoLastAppliedResult();
+    });
+  }
+  if (elements.adminUnlockSelectionBtn) {
+    elements.adminUnlockSelectionBtn.addEventListener("click", () => {
+      if (state.roundSelection.locked) {
+        toggleRoundSelectionLock();
+      } else {
+        setLastResultSummary("Round selection is already unlocked.");
+        saveState("Selection already unlocked.");
+      }
+    });
+  }
+  if (elements.adminForceRevealBtn) {
+    elements.adminForceRevealBtn.addEventListener("click", () => {
+      tryForceRevealForCurrentGame();
+    });
+  }
+  if (elements.adminNextRoundBtn) {
+    elements.adminNextRoundBtn.addEventListener("click", () => {
+      setCurrentRound(state.progress.currentRound + 1);
+      setShowScreen("game-intro", { persist: false });
+    });
+  }
+  if (elements.adminNextGameBtn) {
+    elements.adminNextGameBtn.addEventListener("click", () => {
+      nextGame();
+    });
+  }
+  if (elements.adminApplyMoneyBtn) {
+    elements.adminApplyMoneyBtn.addEventListener("click", () => {
+      setTeamMoneyAbsolute("teamA", elements.adminMoneyTeamAInput?.value);
+      setTeamMoneyAbsolute("teamB", elements.adminMoneyTeamBInput?.value);
+      renderAll();
+      setLastResultSummary("Money override applied from admin panel.");
+      saveState("Admin money override applied.");
+    });
+  }
+  if (elements.adminResetMoneyBtn) {
+    elements.adminResetMoneyBtn.addEventListener("click", () => {
+      resetMoney();
+    });
+  }
+  if (elements.adminApplyStateBtn) {
+    elements.adminApplyStateBtn.addEventListener("click", () => {
+      const gameId = elements.adminGameSelect?.value || state.progress.currentGame;
+      const roundNumber = elements.adminRoundInput?.value || state.progress.currentRound;
+      setCurrentGame(gameId, { keepRound: true, navigateToSection: false });
+      setCurrentRound(roundNumber);
+      setShowScreen("game-intro", { persist: false });
+      saveState("Admin game/round override applied.");
+    });
+  }
+  if (elements.adminResetGameBtn) {
+    elements.adminResetGameBtn.addEventListener("click", () => {
+      resetCurrentGame();
+    });
+  }
+  if (elements.adminFullResetBtn) {
+    elements.adminFullResetBtn.addEventListener("click", () => {
+      resetSession();
+    });
+  }
+  if (elements.adminApplySummaryBtn) {
+    elements.adminApplySummaryBtn.addEventListener("click", () => {
+      const summaryText = String(elements.adminSummaryInput?.value || "").trim();
+      if (!summaryText) {
+        setLastResultSummary("Summary override requires text.");
+        saveState("Summary override blocked.");
+        return;
+      }
+      setLastResultSummary(summaryText);
+      saveState("Summary override applied.");
+    });
+  }
+  if (elements.adminExportSaveBtn) {
+    elements.adminExportSaveBtn.addEventListener("click", () => {
+      exportSaveData();
+    });
+  }
+  if (elements.adminImportSaveBtn) {
+    elements.adminImportSaveBtn.addEventListener("click", () => {
+      handleImportSaveAction();
     });
   }
   document.addEventListener("fullscreenchange", renderFullscreenToggleLabel);
@@ -6856,6 +8060,7 @@ function bindEvents() {
 function init() {
   state = sanitizeState(state);
   state.showUi.hostPanelOpen = false;
+  state.showUi.adminAdvancedOpen = false;
   if (state.activeSection === "manual-match" && !isManualMatchGame(state.progress.currentGame)) {
     switchRoundContext(getCurrentManualMatchGame(), state.progress.currentRound, { navigateToSection: false });
   } else if (state.activeSection === "curse-de-cai" && state.progress.currentGame !== "curse-de-cai") {
