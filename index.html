@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GameShow Arena</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="stage-glow"></div>
+  <main class="wrap">
+    <header class="hero">
+      <p class="kicker">LIVE TONIGHT</p>
+      <h1>GameShow Arena</h1>
+      <p class="subtitle">Pick a challenge, race the clock, and keep score like a real studio show.</p>
+    </header>
+
+    <section class="challenge-panel">
+      <div class="challenge-head">
+        <h2>Round Challenge</h2>
+        <button id="nextChallenge" type="button">Next Challenge</button>
+      </div>
+      <p id="challengeText">Press "Next Challenge" to start the first round.</p>
+      <div class="timer-row">
+        <span>Round Timer</span>
+        <strong id="timer">30s</strong>
+      </div>
+    </section>
+
+    <section class="scoreboard">
+      <h2>Scoreboard</h2>
+      <div class="teams">
+        <article class="team-card" data-team="Team Red">
+          <h3>Team Red</h3>
+          <p class="score" id="score-team-red">0</p>
+          <div class="actions">
+            <button data-score-target="team-red" data-delta="10" type="button">+10</button>
+            <button data-score-target="team-red" data-delta="-5" type="button">-5</button>
+          </div>
+        </article>
+        <article class="team-card" data-team="Team Blue">
+          <h3>Team Blue</h3>
+          <p class="score" id="score-team-blue">0</p>
+          <div class="actions">
+            <button data-score-target="team-blue" data-delta="10" type="button">+10</button>
+            <button data-score-target="team-blue" data-delta="-5" type="button">-5</button>
+          </div>
+        </article>
+        <article class="team-card" data-team="Team Gold">
+          <h3>Team Gold</h3>
+          <p class="score" id="score-team-gold">0</p>
+          <div class="actions">
+            <button data-score-target="team-gold" data-delta="10" type="button">+10</button>
+            <button data-score-target="team-gold" data-delta="-5" type="button">-5</button>
+          </div>
+        </article>
+      </div>
+      <button id="resetScores" class="reset-btn" type="button">Reset Scores</button>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
