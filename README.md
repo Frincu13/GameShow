@@ -1,14 +1,24 @@
 # GameShow
 
-Static one-page game show web app with:
-- random round challenges
-- 30-second countdown timer
-- score controls for 3 teams
+Static host dashboard for a game show with 2 teams.
 
-## Run
+## Features
 
-Open `index.html` in a browser.
+- 2-team dashboard (`Team 1`, `Team 2`)
+- score and money controls for both teams
+- separate game sections (`Game 1`, `Game 2`, `Final`)
+- round timer controls (start, pause, reset, duration)
+- host notes + per-game notes
+- autosave to `localStorage` (state is restored on refresh)
 
-## Git
+## Run Local
 
-This folder is a standalone git repository.
+Open `index.html` directly in your browser.
+
+No backend and no build step required.
+
+## LocalStorage
+
+Data is saved under:
+
+`gameshow-host-dashboard-v1`
