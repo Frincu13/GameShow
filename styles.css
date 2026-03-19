@@ -517,6 +517,10 @@ button:hover {
   display: block;
 }
 
+.is-hidden {
+  display: none !important;
+}
+
 .section-title-row {
   display: flex;
   align-items: baseline;
@@ -1380,6 +1384,10 @@ textarea:disabled {
   margin-top: 10px;
 }
 
+.show-host-drawer:not([open]) .show-host-drawer-content {
+  display: none;
+}
+
 .show-trivia-topic-grid {
   display: grid;
   gap: 10px;
@@ -1459,6 +1467,11 @@ textarea:disabled {
 .show-advanced-round summary {
   cursor: pointer;
   font-weight: 700;
+}
+
+.show-hint-details:not([open]) > *:not(summary),
+.show-advanced-round:not([open]) > *:not(summary) {
+  display: none;
 }
 
 .show-advanced-round-body {

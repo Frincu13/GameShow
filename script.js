@@ -696,6 +696,7 @@ const elements = {
   showActivePlayersTeamB: document.getElementById("showActivePlayersTeamB"),
   showScreenTitle: document.getElementById("showScreenTitle"),
   showScreenContent: document.getElementById("showScreenContent"),
+  showResultCard: document.getElementById("showResultCard"),
   showLatestResult: document.getElementById("showLatestResult"),
   roundDuration: document.getElementById("roundDuration"),
   timerDisplay: document.getElementById("timerDisplay"),
@@ -3476,7 +3477,18 @@ function getGameIntroRules(gameId) {
   return ["Regulile acestui joc pot fi completate din Settings."];
 }
 
-function renderShowStageControls() {
+function shouldShowLiveStageControls(gameId, liveStep) {
+  if (gameId === "trivia") {
+    return liveStep === "question-screen" || liveStep === "answer-screen";
+  }
+  return true;
+}
+
+function renderShowStageControls(gameId, liveStep) {
+  if (!shouldShowLiveStageControls(gameId, liveStep)) {
+    return "";
+  }
+
   const lockLabel = state.roundSelection.locked ? "Unlock selection" : "Lock selection";
   const triviaTeam = state.progress.currentGame === "trivia" ? getCurrentTriviaTeam() : "";
   const filmTeam = state.progress.currentGame === "film-joc-franciza-fun-fact" ? getCurrentFilmTeam() : "";
@@ -3484,43 +3496,16 @@ function renderShowStageControls() {
   const infoLabel = activeGameTeam
     ? `One-team mode: ${state.teams[activeGameTeam].name}`
     : "Team-vs-team mode";
-  const gameOptions = GAME_CONFIG.map(
-    (game) =>
-      `<option value="${game.id}" ${state.progress.currentGame === game.id ? "selected" : ""}>${escapeHtml(game.label)}</option>`
-  ).join("");
 
   return `
     <div class="show-control-strip">
-      <div class="show-control-cell">
-        <label class="show-info-label" for="showCurrentGameSelect">Game</label>
-        <select id="showCurrentGameSelect" class="text-input" data-show-current-game>
-          ${gameOptions}
-        </select>
-      </div>
-      <div class="show-control-cell">
-        <label class="show-info-label" for="showCurrentRoundInput">Round</label>
-        <input id="showCurrentRoundInput" class="text-input compact-input" type="number" min="1" step="1" value="${state.progress.currentRound}" data-show-current-round>
-      </div>
-      <div class="show-control-cell">
-        <label class="show-info-label" for="showTimerDurationInput">Timer (seconds)</label>
-        <input
-          id="showTimerDurationInput"
-          class="text-input compact-input"
-          type="number"
-          min="10"
-          max="600"
-          step="5"
-          value="${state.timer.duration}"
-          data-show-timer-duration
-        >
-      </div>
+      <p class="show-control-note">${escapeHtml(infoLabel)}</p>
       <div class="show-control-buttons">
         <button class="pill-btn" type="button" data-show-action="timer-start">Start</button>
         <button class="pill-btn" type="button" data-show-action="timer-pause">Pause</button>
         <button class="pill-btn" type="button" data-show-action="timer-reset">Reset</button>
         <button class="pill-btn" type="button" data-show-action="toggle-round-lock">${lockLabel}</button>
       </div>
-      <p class="show-control-note">${escapeHtml(infoLabel)}</p>
     </div>
   `;
 }
@@ -4262,44 +4247,9 @@ function renderFlowStateCapabilities(gameId, liveStep) {
 }
 
 function buildLiveRoundExperienceContent(gameId, liveStep) {
-  let gameNote = "Mini-game flow is active.";
-  if (gameId === "trivia") {
-    const roundState = getOrCreateTriviaRoundState();
-    const usedCount = roundState.usedCategoryIds.length;
-    gameNote = `One-team turn mode. Used topics: ${usedCount}/${state.trivia.categories.length}. Turn auto-switches after each result.`;
-  } else if (gameId === "pretul-corect") {
-    gameNote = "Two-team mode. Winner is auto-detected by closest distance to real price.";
-  } else if (gameId === "film-joc-franciza-fun-fact") {
-    const roundState = getOrCreateFilmRoundState();
-    const breakdown = getFilmRoundBreakdown(roundState, roundState.betAmount);
-    gameNote = `Component scoring mode. Current score ${breakdown.totalPoints}/${breakdown.maxPoints}, bet active at min 2/3.`;
-  } else if (gameId === "cel-mai-bun-samsar") {
-    const totalRounds = Math.max(1, state.samsarGame.roundsData?.length || 6);
-    gameNote = `Round-based duel mode. Current round ${getSamsarRoundNumber()}/${totalRounds}.`;
-  } else if (gameId === "guess-right-order") {
-    gameNote = "Manual team-vs-team mode. Draw is allowed.";
-  } else if (gameId === "beer-pong") {
-    gameNote = "Manual team-vs-team mode with standard payout and draw support.";
-  } else if (gameId === "shot-fake") {
-    const roundState = getOrCreateManualMatchRoundState("shot-fake", state.progress.currentRound);
-    gameNote = `Bet-only mode. Side bets: ${roundState.shotFake.sideBets.length}, multiplier x${roundState.shotFake.multiplier}.`;
-  } else if (gameId === "curse-de-cai") {
-    const roundState = getOrCreateCurseRoundState(state.progress.currentRound);
-    const winnerHorse = state.curseRace.horses.find((horse) => horse.id === roundState.winnerHorseId);
-    gameNote = winnerHorse
-      ? `Race settled. Winner ${winnerHorse.symbol} ${winnerHorse.name}, payout x${state.curseRace.payoutMultiplier}.`
-      : `Race live mode. Winning horse payout is x${state.curseRace.payoutMultiplier}.`;
-  }
-
   return `
     <section class="show-game-experience show-game-${escapeHtml(gameId)}">
-      <article class="show-round-card">
-        <p class="show-info-label">${escapeHtml(getGameLabel(gameId))} / ${escapeHtml(getLiveStepLabel(gameId, liveStep))}</p>
-        <p class="show-round-copy">${escapeHtml(gameNote)}</p>
-      </article>
-      ${renderFlowStateCapabilities(gameId, liveStep)}
       ${buildLiveRoundFocusContent(gameId, liveStep)}
-      ${renderGameFlowBlueprint(gameId, liveStep)}
     </section>
   `;
 }
@@ -4335,7 +4285,7 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
             }" ${isUsed ? "disabled" : ""}>
               <p class="show-info-label">${isUsed ? "USED" : "TOPIC"}</p>
               <p class="show-round-title">${escapeHtml(entry.title)}</p>
-              <p class="show-round-copy">${escapeHtml(entry.question)}</p>
+              <p class="show-round-copy">${isUsed ? "Played already" : "Select topic"}</p>
             </button>
           `;
         })
@@ -4343,8 +4293,8 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
       return `
         <div class="show-round-card">
           <p class="show-info-label">Topic Select</p>
-          <p class="show-round-title">${escapeHtml(playingTeam.name)} is now in play</p>
-          <p class="show-round-copy">Only active team can choose one topic card. Used topics are disabled.</p>
+          <p class="show-round-title">Turn: ${escapeHtml(playingTeam.name)}</p>
+          <p class="show-round-copy">Choose one topic card to start the round.</p>
         </div>
         <div class="show-trivia-topic-grid">${topicTiles}</div>
       `;
@@ -4719,10 +4669,21 @@ function buildLiveRoundQuickActions(gameId, liveStep) {
 }
 
 function buildLiveRoundHostDrawer(gameId) {
+  const liveStep = getLiveRoundStep(gameId);
+  const latestResult = state.progress.lastResultSummary || DEFAULT_RESULT_SUMMARY;
   return `
     <details class="show-host-drawer">
-      <summary>Advanced host controls for this round</summary>
+      <summary>Host / Debug panel</summary>
       <div class="show-host-drawer-content">
+        <article class="show-control-card">
+          <h3>Debug Snapshot</h3>
+          <p class="show-control-note">Current step: ${escapeHtml(getLiveStepLabel(gameId, liveStep))}</p>
+          <p class="show-control-note">Latest result: ${escapeHtml(latestResult)}</p>
+        </article>
+        ${renderShowJokerControl()}
+        ${renderLiveRoundFlowRail(gameId, liveStep)}
+        ${renderFlowStateCapabilities(gameId, liveStep)}
+        ${renderGameFlowBlueprint(gameId, liveStep)}
         ${buildLegacyLiveRoundContent(gameId, { minimal: true })}
       </div>
     </details>
@@ -4732,9 +4693,7 @@ function buildLiveRoundHostDrawer(gameId) {
 function buildLiveRoundContent(gameId) {
   const liveStep = getLiveRoundStep(gameId);
   return `
-    ${renderShowStageControls()}
-    ${renderShowJokerControl()}
-    ${renderLiveRoundFlowRail(gameId, liveStep)}
+    ${renderShowStageControls(gameId, liveStep)}
     ${buildLiveRoundExperienceContent(gameId, liveStep)}
     ${buildLiveRoundHostDrawer(gameId)}
     ${buildLiveRoundQuickActions(gameId, liveStep)}
@@ -5196,6 +5155,10 @@ function renderShowUi() {
   }
   if (elements.showLatestResult) {
     elements.showLatestResult.textContent = state.progress.lastResultSummary || DEFAULT_RESULT_SUMMARY;
+  }
+  if (elements.showResultCard) {
+    const showResultCard = activeScreen === "reveal-result";
+    elements.showResultCard.classList.toggle("is-hidden", !showResultCard);
   }
   if (elements.showScreenTitle) {
     elements.showScreenTitle.textContent = getShowScreenTitle(activeScreen);
