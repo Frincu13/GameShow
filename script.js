@@ -2270,20 +2270,47 @@ function ensurePlayerStatsEntry(playerId, context = {}) {
   return existing;
 }
 
+function findPlayerRecordById(playerId) {
+  if (typeof playerId !== "string" || !playerId) {
+    return null;
+  }
+  if (playerId === JOKER_PLAYER_ID) {
+    return {
+      teamKey: "",
+      player: {
+        id: JOKER_PLAYER_ID,
+        name: "Joker Player",
+        status: "available"
+      },
+      isJoker: true
+    };
+  }
+  for (const teamKey of ["teamA", "teamB"]) {
+    const player = state.teams[teamKey].players.find((entry) => entry.id === playerId);
+    if (player) {
+      return {
+        teamKey,
+        player,
+        isJoker: false
+      };
+    }
+  }
+  return null;
+}
+
 function getActiveParticipantsForTeam(teamKey) {
   const participants = [];
   const seen = new Set();
-  const teamPlayersById = new Map(state.teams[teamKey].players.map((player) => [player.id, player]));
 
   for (const playerId of state.roundSelection.activeByTeam[teamKey]) {
-    const player = teamPlayersById.get(playerId);
-    if (!player || seen.has(player.id)) {
+    const record = findPlayerRecordById(playerId);
+    if (!record?.player || seen.has(playerId) || record.player.status !== "available") {
       continue;
     }
-    seen.add(player.id);
+    seen.add(playerId);
     participants.push({
-      id: player.id,
-      displayName: player.name,
+      id: record.player.id,
+      displayName: record.player.name,
       teamKey,
       isJoker: false
     });
@@ -3085,21 +3112,24 @@ function enforceSamsarRoundTeamSelection() {
 }
 
 function ensureCurrentRoundSelectionValid() {
-  const availableIdSets = {
-    teamA: new Set(
-      state.teams.teamA.players.filter((player) => player.status === "available").map((player) => player.id)
-    ),
-    teamB: new Set(
-      state.teams.teamB.players.filter((player) => player.status === "available").map((player) => player.id)
-    )
-  };
+  const availableIds = new Set(
+    [...state.teams.teamA.players, ...state.teams.teamB.players]
+      .filter((player) => player.status === "available")
+      .map((player) => player.id)
+  );
 
-  state.roundSelection.activeByTeam.teamA = state.roundSelection.activeByTeam.teamA.filter((id) =>
-    availableIdSets.teamA.has(id)
-  );
-  state.roundSelection.activeByTeam.teamB = state.roundSelection.activeByTeam.teamB.filter((id) =>
-    availableIdSets.teamB.has(id)
-  );
+  const seen = new Set();
+  const normalizeLane = (ids = []) =>
+    ids.filter((id) => {
+      if (!availableIds.has(id) || seen.has(id)) {
+        return false;
+      }
+      seen.add(id);
+      return true;
+    });
+
+  state.roundSelection.activeByTeam.teamA = normalizeLane(state.roundSelection.activeByTeam.teamA);
+  state.roundSelection.activeByTeam.teamB = normalizeLane(state.roundSelection.activeByTeam.teamB);
 
   for (const teamKey of ["teamA", "teamB"]) {
     const jokerSlot = state.roundSelection.jokerAssignment === teamKey ? 1 : 0;
@@ -3554,6 +3584,207 @@ function renderShowJokerControl(options = {}) {
         )}</option>
       </select>
     </div>
+  `;
+}
+
+function getShowPlayerLane(playerId) {
+  if (playerId === JOKER_PLAYER_ID) {
+    return state.roundSelection.jokerAssignment === "teamA" || state.roundSelection.jokerAssignment === "teamB"
+      ? state.roundSelection.jokerAssignment
+      : "out";
+  }
+  if (state.roundSelection.activeByTeam.teamA.includes(playerId)) {
+    return "teamA";
+  }
+  if (state.roundSelection.activeByTeam.teamB.includes(playerId)) {
+    return "teamB";
+  }
+  return "out";
+}
+
+function canAssignShowPlayerToTeam(playerId, targetTeamKey) {
+  if (!["teamA", "teamB"].includes(targetTeamKey)) {
+    return false;
+  }
+  const currentLane = getShowPlayerLane(playerId);
+  if (currentLane === targetTeamKey) {
+    return true;
+  }
+  const record = findPlayerRecordById(playerId);
+  if (!record?.player || record.player.status !== "available") {
+    return false;
+  }
+  return countActiveWithJoker(targetTeamKey) < MAX_ACTIVE_PER_TEAM;
+}
+
+function assignShowPlayerToLane(playerId, targetLane) {
+  if (state.roundSelection.locked) {
+    setLastResultSummary("Game lineup is locked. Unlock to move players.");
+    saveState("Show assignment blocked while locked.");
+    return;
+  }
+  if (!["teamA", "teamB", "out"].includes(targetLane)) {
+    return;
+  }
+
+  if (playerId === JOKER_PLAYER_ID) {
+    setJokerAssignment(targetLane);
+    return;
+  }
+
+  const record = findPlayerRecordById(playerId);
+  if (!record?.player) {
+    return;
+  }
+
+  const currentLane = getShowPlayerLane(playerId);
+  if (currentLane === targetLane) {
+    return;
+  }
+
+  if (targetLane !== "out") {
+    if (record.player.status !== "available") {
+      setLastResultSummary(`${record.player.name} is ${record.player.status} and cannot join a team.`);
+      saveState("Show assignment rejected: player unavailable.");
+      return;
+    }
+    if (!canAssignShowPlayerToTeam(playerId, targetLane)) {
+      setLastResultSummary(`${state.teams[targetLane].name} reached max ${MAX_ACTIVE_PER_TEAM} active players.`);
+      saveState("Show assignment rejected: active limit reached.");
+      return;
+    }
+  }
+
+  state.roundSelection.activeByTeam.teamA = state.roundSelection.activeByTeam.teamA.filter((id) => id !== playerId);
+  state.roundSelection.activeByTeam.teamB = state.roundSelection.activeByTeam.teamB.filter((id) => id !== playerId);
+
+  if (targetLane === "teamA") {
+    state.roundSelection.activeByTeam.teamA.push(playerId);
+  } else if (targetLane === "teamB") {
+    state.roundSelection.activeByTeam.teamB.push(playerId);
+  }
+
+  saveCurrentRoundSnapshot();
+  renderRoundSelection();
+  setLastResultSummary(`${record.player.name} moved to ${targetLane === "out" ? "Bench" : state.teams[targetLane].name}.`);
+  saveState("Show assignment updated.");
+}
+
+function renderShowPlayerAssignmentBoard() {
+  const isLocked = state.roundSelection.locked;
+  const tokens = [
+    ...state.teams.teamA.players.map((player) => ({
+      id: player.id,
+      name: player.name,
+      status: player.status,
+      sourceTeamKey: "teamA",
+      isJoker: false
+    })),
+    ...state.teams.teamB.players.map((player) => ({
+      id: player.id,
+      name: player.name,
+      status: player.status,
+      sourceTeamKey: "teamB",
+      isJoker: false
+    })),
+    {
+      id: JOKER_PLAYER_ID,
+      name: "Joker Player",
+      status: "available",
+      sourceTeamKey: "joker",
+      isJoker: true
+    }
+  ];
+
+  const laneBuckets = {
+    teamA: [],
+    out: [],
+    teamB: []
+  };
+
+  for (const token of tokens) {
+    const lane = getShowPlayerLane(token.id);
+    const currentLane = lane === "teamA" || lane === "teamB" ? lane : "out";
+    const teamAReady = token.isJoker ? true : canAssignShowPlayerToTeam(token.id, "teamA");
+    const teamBReady = token.isJoker ? true : canAssignShowPlayerToTeam(token.id, "teamB");
+    const laneLabel = currentLane === "out" ? "Bench" : state.teams[currentLane].name;
+    const statusLabel = token.isJoker
+      ? "Special token"
+      : token.status === "available"
+        ? `Roster: ${state.teams[token.sourceTeamKey].name}`
+        : token.status;
+    const disabledTeamA = isLocked || (!teamAReady && currentLane !== "teamA") ? "disabled" : "";
+    const disabledTeamB = isLocked || (!teamBReady && currentLane !== "teamB") ? "disabled" : "";
+    const disabledBench = isLocked ? "disabled" : "";
+    laneBuckets[currentLane].push(`
+      <article class="show-assignment-token ${token.isJoker ? "is-joker" : ""} ${
+        token.status === "unavailable" ? "is-unavailable" : ""
+      }">
+        <div class="show-assignment-token-head">
+          <p class="show-assignment-name">${escapeHtml(token.name)}</p>
+          <p class="show-assignment-meta">${escapeHtml(statusLabel)}</p>
+          <p class="show-assignment-lane-label">Now: ${escapeHtml(laneLabel)}</p>
+        </div>
+        <div class="show-assignment-token-controls">
+          <button class="pill-btn ${currentLane === "teamA" ? "is-active" : ""}" type="button" data-show-player-assign data-player-id="${
+            token.id
+          }" data-target-lane="teamA" ${disabledTeamA}>${escapeHtml(state.teams.teamA.name)}</button>
+          <button class="pill-btn ${currentLane === "out" ? "is-active" : ""}" type="button" data-show-player-assign data-player-id="${
+            token.id
+          }" data-target-lane="out" ${disabledBench}>Bench</button>
+          <button class="pill-btn ${currentLane === "teamB" ? "is-active" : ""}" type="button" data-show-player-assign data-player-id="${
+            token.id
+          }" data-target-lane="teamB" ${disabledTeamB}>${escapeHtml(state.teams.teamB.name)}</button>
+        </div>
+      </article>
+    `);
+  }
+
+  const laneCards = [
+    {
+      lane: "teamA",
+      title: state.teams.teamA.name,
+      subtitle: `${countActiveWithJoker("teamA")}/${MAX_ACTIVE_PER_TEAM} active`
+    },
+    {
+      lane: "out",
+      title: "Bench / Inactive",
+      subtitle: `${laneBuckets.out.length} tokens`
+    },
+    {
+      lane: "teamB",
+      title: state.teams.teamB.name,
+      subtitle: `${countActiveWithJoker("teamB")}/${MAX_ACTIVE_PER_TEAM} active`
+    }
+  ]
+    .map((laneCard) => {
+      const tokensHtml = laneBuckets[laneCard.lane].join("");
+      return `
+        <section class="show-assignment-lane show-assignment-lane-${laneCard.lane}">
+          <div class="show-assignment-lane-head">
+            <p class="show-info-label">${escapeHtml(laneCard.title)}</p>
+            <p class="show-info-sub">${escapeHtml(laneCard.subtitle)}</p>
+          </div>
+          <div class="show-assignment-lane-body">
+            ${tokensHtml || '<p class="show-round-copy">No tokens in this lane.</p>'}
+          </div>
+        </section>
+      `;
+    })
+    .join("");
+
+  return `
+    <article class="show-player-assignment-board">
+      <div class="show-player-assignment-head">
+        <h3>Controller Assignment</h3>
+        <p class="show-control-note">${
+          isLocked
+            ? "Lineup is locked. Unlock to move tokens."
+            : "Move each token Left / Bench / Right. Joker Player is a normal special token here."
+        }</p>
+      </div>
+      <div class="show-assignment-grid">${laneCards}</div>
+    </article>
   `;
 }
 
@@ -4827,13 +5058,9 @@ function buildShowScreenContent(screenId) {
       <ul class="show-rule-list">${rules}</ul>
       <div class="show-round-card">
         <p class="show-info-label">Game Lineup</p>
-        <p class="show-round-copy">Pick active players once for this mini-game. Lineup stays active on every round.</p>
+        <p class="show-round-copy">Assign tokens once for this mini-game. This lineup stays active on every round.</p>
       </div>
-      ${renderShowJokerControl({ mode: "game" })}
-      <div class="show-overlay-grid two-col">
-        ${renderShowPlayerSelectionBlock("teamA", { allowStatus: false })}
-        ${renderShowPlayerSelectionBlock("teamB", { allowStatus: false })}
-      </div>
+      ${renderShowPlayerAssignmentBoard()}
       <div class="show-action-footer">
         <button class="primary-btn" type="button" data-show-action="go-live-round">Start live round</button>
         <button class="secondary-btn" type="button" data-show-action="go-game-select">Change game</button>
@@ -5128,15 +5355,18 @@ function applyAdminPlayerFix() {
       activeIds.push(player.id);
     }
   } else if (action === "deactivate") {
-    state.roundSelection.activeByTeam[teamKey] = state.roundSelection.activeByTeam[teamKey].filter((id) => id !== player.id);
+    state.roundSelection.activeByTeam.teamA = state.roundSelection.activeByTeam.teamA.filter((id) => id !== player.id);
+    state.roundSelection.activeByTeam.teamB = state.roundSelection.activeByTeam.teamB.filter((id) => id !== player.id);
   } else if (action === "status-available") {
     player.status = "available";
   } else if (action === "status-bench") {
     player.status = "bench";
-    state.roundSelection.activeByTeam[teamKey] = state.roundSelection.activeByTeam[teamKey].filter((id) => id !== player.id);
+    state.roundSelection.activeByTeam.teamA = state.roundSelection.activeByTeam.teamA.filter((id) => id !== player.id);
+    state.roundSelection.activeByTeam.teamB = state.roundSelection.activeByTeam.teamB.filter((id) => id !== player.id);
   } else if (action === "status-unavailable") {
     player.status = "unavailable";
-    state.roundSelection.activeByTeam[teamKey] = state.roundSelection.activeByTeam[teamKey].filter((id) => id !== player.id);
+    state.roundSelection.activeByTeam.teamA = state.roundSelection.activeByTeam.teamA.filter((id) => id !== player.id);
+    state.roundSelection.activeByTeam.teamB = state.roundSelection.activeByTeam.teamB.filter((id) => id !== player.id);
   }
 
   saveCurrentRoundSnapshot();
@@ -5819,6 +6049,14 @@ function handleShowOverlayClick(event) {
       setShowScreen("game-intro", { persist: false });
       saveState(`Game selected from overlay: ${getGameLabel(gameId)}.`);
     }
+    return;
+  }
+
+  const assignPlayerButton = event.target.closest("[data-show-player-assign]");
+  if (assignPlayerButton) {
+    const playerId = assignPlayerButton.getAttribute("data-player-id");
+    const targetLane = assignPlayerButton.getAttribute("data-target-lane");
+    assignShowPlayerToLane(playerId, targetLane);
     return;
   }
 
@@ -8986,9 +9224,11 @@ function removePlayer(teamKey, playerId) {
   const removed = players[playerIndex];
   players.splice(playerIndex, 1);
 
-  state.roundSelection.activeByTeam[teamKey] = state.roundSelection.activeByTeam[teamKey].filter((id) => id !== playerId);
+  state.roundSelection.activeByTeam.teamA = state.roundSelection.activeByTeam.teamA.filter((id) => id !== playerId);
+  state.roundSelection.activeByTeam.teamB = state.roundSelection.activeByTeam.teamB.filter((id) => id !== playerId);
   for (const snapshot of Object.values(state.roundSelection.history)) {
-    snapshot.activeByTeam[teamKey] = snapshot.activeByTeam[teamKey].filter((id) => id !== playerId);
+    snapshot.activeByTeam.teamA = snapshot.activeByTeam.teamA.filter((id) => id !== playerId);
+    snapshot.activeByTeam.teamB = snapshot.activeByTeam.teamB.filter((id) => id !== playerId);
   }
 
   renderRoundSelection();
@@ -9028,7 +9268,8 @@ function updatePlayerStatus(teamKey, playerId, nextStatus) {
 
   player.status = nextStatus;
   if (nextStatus !== "available") {
-    state.roundSelection.activeByTeam[teamKey] = state.roundSelection.activeByTeam[teamKey].filter((id) => id !== playerId);
+    state.roundSelection.activeByTeam.teamA = state.roundSelection.activeByTeam.teamA.filter((id) => id !== playerId);
+    state.roundSelection.activeByTeam.teamB = state.roundSelection.activeByTeam.teamB.filter((id) => id !== playerId);
   }
 
   saveCurrentRoundSnapshot();
