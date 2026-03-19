@@ -21,12 +21,14 @@
         <button class="show-screen-btn is-active" type="button" data-show-screen-target="show-home">Show Home</button>
         <button class="show-screen-btn" type="button" data-show-screen-target="game-select">Game Select</button>
         <button class="show-screen-btn" type="button" data-show-screen-target="game-intro">Game Intro</button>
+        <button class="show-screen-btn" type="button" data-show-screen-target="roster-management">Manage Roster</button>
         <button class="show-screen-btn" type="button" data-show-screen-target="live-round">Live Round</button>
         <button class="show-screen-btn" type="button" data-show-screen-target="reveal-result">Reveal / Result</button>
         <button class="show-screen-btn" type="button" data-show-screen-target="end-of-game">End of Game</button>
         <button class="show-screen-btn" type="button" data-show-screen-target="end-screen">End Screen</button>
       </div>
       <div class="show-header-actions">
+        <button class="secondary-btn" type="button" data-show-screen-target="roster-management">Manage Players / Roster</button>
         <button id="hostPanelToggleBtn" class="pill-btn host-trigger-btn" type="button">Host / God Mode</button>
       </div>
     </header>
@@ -41,7 +43,7 @@
           <span class="show-pill-label">Round</span>
           <span id="showStageRoundLabel" class="show-pill-value">1</span>
         </div>
-        <div class="show-pill">
+        <div class="show-pill show-pill-timer">
           <span class="show-pill-label">Timer</span>
           <span id="showStageTimer" class="show-pill-value">01:00</span>
         </div>
@@ -51,12 +53,12 @@
         <article class="show-team-card">
           <p class="show-team-name" data-team-name="teamA">Lupii</p>
           <p class="show-team-money" data-team-money="teamA">$1,000</p>
-          <p class="show-team-active" id="showActivePlayersTeamA">Active: none</p>
+          <div class="show-team-active" id="showActivePlayersTeamA">Lineup not set</div>
         </article>
         <article class="show-team-card">
           <p class="show-team-name" data-team-name="teamB">Vulturii</p>
           <p class="show-team-money" data-team-money="teamB">$1,000</p>
-          <p class="show-team-active" id="showActivePlayersTeamB">Active: none</p>
+          <div class="show-team-active" id="showActivePlayersTeamB">Lineup not set</div>
         </article>
       </div>
 

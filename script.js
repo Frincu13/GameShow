@@ -26,6 +26,7 @@ const SHOW_SCREEN_IDS = [
   "show-home",
   "game-select",
   "game-intro",
+  "roster-management",
   "live-round",
   "reveal-result",
   "end-of-game",
@@ -94,8 +95,8 @@ const GAME_FLOW_DEFINITIONS = {
         id: "item-brief",
         label: "Item Brief",
         description: "Select item, set both bets, and prepare both teams.",
-        visible: ["item card", "team answers", "team bets", "active players"],
-        actions: ["set item", "set answers", "set bets", "player select"]
+        visible: ["item card", "team answers", "team bets", "lineup from Game Intro"],
+        actions: ["set item", "set answers", "set bets"]
       },
       {
         id: "estimate-live",
@@ -122,9 +123,9 @@ const GAME_FLOW_DEFINITIONS = {
       {
         id: "round-brief",
         label: "Round Brief",
-        description: "Choose round image, team, bet, and active players.",
-        visible: ["round image", "team in play", "bet", "active players"],
-        actions: ["team select", "set bet", "player select"]
+        description: "Choose round image, team, and bet.",
+        visible: ["round image", "team in play", "bet", "lineup from Game Intro"],
+        actions: ["team select", "set bet"]
       },
       {
         id: "clue-reveal",
@@ -151,9 +152,9 @@ const GAME_FLOW_DEFINITIONS = {
       {
         id: "persona-brief",
         label: "Persona Brief",
-        description: "Present round persona and pick one active player per team.",
-        visible: ["persona card", "player selectors", "round info"],
-        actions: ["select active player team1/team2"]
+        description: "Present round persona using the confirmed lineup.",
+        visible: ["persona card", "lineup snapshot", "round info"],
+        actions: ["open substitution if needed"]
       },
       {
         id: "negotiation-live",
@@ -180,9 +181,9 @@ const GAME_FLOW_DEFINITIONS = {
       {
         id: "order-brief",
         label: "Order Brief",
-        description: "Set matchup, active players, and bets.",
-        visible: ["matchup board", "bets", "active players"],
-        actions: ["player select", "set bets"]
+        description: "Set matchup and bets for the confirmed game lineup.",
+        visible: ["matchup board", "bets", "lineup snapshot"],
+        actions: ["set bets"]
       },
       {
         id: "order-live",
@@ -209,9 +210,9 @@ const GAME_FLOW_DEFINITIONS = {
       {
         id: "beer-brief",
         label: "Match Brief",
-        description: "Set active players and bets for both teams.",
-        visible: ["team cards", "bets", "active players"],
-        actions: ["player select", "set bets", "lock selection"]
+        description: "Set bets for both teams using the confirmed lineup.",
+        visible: ["team cards", "bets", "lineup snapshot"],
+        actions: ["set bets", "lock selection"]
       },
       {
         id: "beer-live",
@@ -238,9 +239,9 @@ const GAME_FLOW_DEFINITIONS = {
       {
         id: "shot-brief",
         label: "Side Bet Brief",
-        description: "Prepare base bets, side bets, multiplier, and active players.",
-        visible: ["side bet list", "multiplier", "active players"],
-        actions: ["set bets", "add/remove side bets", "player select"]
+        description: "Prepare base bets, side bets, and multiplier for confirmed lineup.",
+        visible: ["side bet list", "multiplier", "lineup snapshot"],
+        actions: ["set bets", "add/remove side bets"]
       },
       {
         id: "shot-live",
@@ -267,9 +268,9 @@ const GAME_FLOW_DEFINITIONS = {
       {
         id: "race-brief",
         label: "Race Brief",
-        description: "Set multi-bets, bettors, and active players.",
-        visible: ["horse roster", "multi-bet board", "active players"],
-        actions: ["set bets", "set bettors", "player select"]
+        description: "Set multi-bets and bettors for the confirmed lineup.",
+        visible: ["horse roster", "multi-bet board", "lineup snapshot"],
+        actions: ["set bets", "set bettors"]
       },
       {
         id: "race-live",
@@ -512,6 +513,7 @@ const DEFAULT_STATE = {
     liveRoundStep: "topic-select",
     gameNightStarted: false,
     completedGameIds: [],
+    lineupReadyByGame: {},
     answerLocked: false,
     hostPanelOpen: false,
     adminAdvancedOpen: false
@@ -2039,6 +2041,16 @@ function sanitizeState(rawState) {
   clean.showUi.completedGameIds = Array.isArray(source.showUi?.completedGameIds)
     ? Array.from(new Set(source.showUi.completedGameIds.filter((gameId) => GAME_ORDER.includes(gameId))))
     : [];
+  clean.showUi.lineupReadyByGame = {};
+  if (source.showUi?.lineupReadyByGame && typeof source.showUi.lineupReadyByGame === "object") {
+    for (const gameId of GAME_ORDER) {
+      clean.showUi.lineupReadyByGame[gameId] = Boolean(source.showUi.lineupReadyByGame[gameId]);
+    }
+  } else {
+    for (const gameId of GAME_ORDER) {
+      clean.showUi.lineupReadyByGame[gameId] = false;
+    }
+  }
   clean.showUi.answerLocked = Boolean(source.showUi?.answerLocked);
   clean.showUi.hostPanelOpen = Boolean(source.showUi?.hostPanelOpen);
   clean.showUi.adminAdvancedOpen = Boolean(source.showUi?.adminAdvancedOpen);
@@ -3156,7 +3168,7 @@ function saveCurrentRoundSnapshot() {
 function loadCurrentRoundSnapshot() {
   const roundSnapshot = state.roundSelection.history[getRoundKey()];
   const lineupSnapshot = state.roundSelection.history[getGameLineupKey()];
-  const snapshot = roundSnapshot || lineupSnapshot;
+  const snapshot = lineupSnapshot || roundSnapshot;
   if (snapshot) {
     const safe = sanitizeHistorySnapshot(snapshot);
     state.roundSelection.activeByTeam.teamA = [...safe.activeByTeam.teamA];
@@ -3188,6 +3200,7 @@ function getShowScreenTitle(screenId = state.showUi?.activeScreen) {
     "show-home": "Show Home",
     "game-select": "Game Select",
     "game-intro": "Game Intro",
+    "roster-management": "Manage Players / Roster",
     "live-round": "Live Round",
     "reveal-result": "Reveal / Result",
     "end-of-game": "End of Game",
@@ -3203,6 +3216,9 @@ function getSectionForShowScreen(screenId) {
   }
   if (screenId === "leaderboard") {
     return "leaderboard";
+  }
+  if (screenId === "roster-management") {
+    return "players-teams";
   }
   if (screenId === "end-screen") {
     return "end-screen";
@@ -3304,7 +3320,8 @@ function ensureShowUiState() {
   if (!state.showUi || typeof state.showUi !== "object") {
     state.showUi = {
       ...DEFAULT_STATE.showUi,
-      completedGameIds: [...DEFAULT_STATE.showUi.completedGameIds]
+      completedGameIds: [...DEFAULT_STATE.showUi.completedGameIds],
+      lineupReadyByGame: { ...DEFAULT_STATE.showUi.lineupReadyByGame }
     };
   }
   if (!SHOW_SCREEN_IDS.includes(state.showUi.activeScreen)) {
@@ -3322,12 +3339,40 @@ function ensureShowUiState() {
   state.showUi.completedGameIds = Array.from(
     new Set(state.showUi.completedGameIds.filter((gameId) => GAME_ORDER.includes(gameId)))
   );
+  if (!state.showUi.lineupReadyByGame || typeof state.showUi.lineupReadyByGame !== "object") {
+    state.showUi.lineupReadyByGame = {};
+  }
+  for (const gameId of GAME_ORDER) {
+    if (typeof state.showUi.lineupReadyByGame[gameId] !== "boolean") {
+      state.showUi.lineupReadyByGame[gameId] = false;
+    }
+  }
   if (typeof state.showUi.gameNightStarted !== "boolean") {
     state.showUi.gameNightStarted = false;
   }
   if (typeof state.showUi.answerLocked !== "boolean") {
     state.showUi.answerLocked = false;
   }
+  if (state.showUi.activeScreen === "live-round" && !Boolean(state.showUi.lineupReadyByGame[currentGameId])) {
+    state.showUi.activeScreen = "game-intro";
+  }
+}
+
+function isGameLineupReady(gameId = state.progress.currentGame) {
+  ensureShowUiState();
+  return Boolean(state.showUi.lineupReadyByGame[gameId]);
+}
+
+function setGameLineupReady(gameId, nextReady) {
+  if (!GAME_ORDER.includes(gameId)) {
+    return;
+  }
+  ensureShowUiState();
+  state.showUi.lineupReadyByGame[gameId] = Boolean(nextReady);
+}
+
+function hasAnyCurrentGameLineupMembers() {
+  return countActiveWithJoker("teamA") > 0 || countActiveWithJoker("teamB") > 0;
 }
 
 function isOverlayAnswerLocked() {
@@ -3373,6 +3418,9 @@ function startGameNightFlow(options = {}) {
   ensureShowUiState();
   state.showUi.gameNightStarted = true;
   state.showUi.completedGameIds = [];
+  for (const gameId of GAME_ORDER) {
+    state.showUi.lineupReadyByGame[gameId] = false;
+  }
   const nextGameId = getNextUnfinishedGameId();
   switchRoundContext(nextGameId, 1, { navigateToSection: false });
   state.showUi.activeScreen = "game-select";
@@ -3394,6 +3442,7 @@ function finishCurrentGameAndReturn(options = {}) {
   if (!state.showUi.completedGameIds.includes(finishedGameId)) {
     state.showUi.completedGameIds.push(finishedGameId);
   }
+  state.showUi.lineupReadyByGame[finishedGameId] = false;
   if (isGameNightComplete()) {
     state.showUi.activeScreen = "end-screen";
     setLastResultSummary("All games complete. Opening Final End Screen.");
@@ -3435,6 +3484,29 @@ function getTeamActivePlayersLabel(teamKey) {
   }
   const names = participants.map((entry) => entry.displayName).filter((name) => typeof name === "string" && name.trim());
   return names.length > 0 ? `Active: ${names.join(", ")}` : "Active: none";
+}
+
+function getTeamLineupHudHtml(teamKey) {
+  const participants = getActiveParticipantsForTeam(teamKey);
+  const lineupReady = isGameLineupReady(state.progress.currentGame);
+  if (participants.length === 0) {
+    return `<p class="show-team-lineup-empty">${
+      lineupReady ? "No active members in current lineup." : "Lineup not set. Confirm in Game Intro."
+    }</p>`;
+  }
+  const chips = participants
+    .map((entry) => {
+      const chipClass = entry.id === JOKER_PLAYER_ID ? "show-team-chip is-joker" : "show-team-chip";
+      return `<span class="${chipClass}">${escapeHtml(entry.displayName)}</span>`;
+    })
+    .join("");
+  if (!lineupReady) {
+    return `
+      <div class="show-team-chip-list">${chips}</div>
+      <p class="show-team-lineup-empty">Lineup pending confirmation.</p>
+    `;
+  }
+  return `<div class="show-team-chip-list">${chips}</div>`;
 }
 
 function getCurrentRoundResultForShow(gameId) {
@@ -3784,6 +3856,43 @@ function renderShowPlayerAssignmentBoard() {
         }</p>
       </div>
       <div class="show-assignment-grid">${laneCards}</div>
+    </article>
+  `;
+}
+
+function renderShowRosterManagementTeam(teamKey) {
+  const team = state.teams[teamKey];
+  const rows = team.players
+    .map((player) => {
+      return `
+        <article class="show-roster-row" data-team="${teamKey}" data-player-id="${player.id}">
+          <input
+            class="text-input"
+            type="text"
+            value="${escapeHtml(player.name)}"
+            data-show-roster-name
+          >
+          <select class="text-input compact-input" data-show-roster-status>
+            <option value="available" ${player.status === "available" ? "selected" : ""}>Available</option>
+            <option value="bench" ${player.status === "bench" ? "selected" : ""}>Bench</option>
+            <option value="unavailable" ${player.status === "unavailable" ? "selected" : ""}>Unavailable</option>
+          </select>
+          <button class="pill-btn" type="button" data-show-roster-remove>Remove</button>
+        </article>
+      `;
+    })
+    .join("");
+
+  return `
+    <article class="show-control-card show-roster-team-card" data-team="${teamKey}">
+      <h3>${escapeHtml(team.name)} roster</h3>
+      <div class="show-roster-add-row">
+        <input class="text-input" type="text" placeholder="Add new player..." data-show-roster-add-name data-team="${teamKey}">
+        <button class="primary-btn" type="button" data-show-roster-add data-team="${teamKey}">Add Player</button>
+      </div>
+      <div class="show-roster-list">
+        ${rows || '<p class="show-round-copy">No players yet.</p>'}
+      </div>
     </article>
   `;
 }
@@ -4667,7 +4776,7 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
         <div class="show-round-card">
           <p class="show-info-label">Item brief</p>
           <p class="show-round-title">${escapeHtml(item?.name || "Selecteaza item")}</p>
-          <p class="show-round-copy">Set both bets and active players before answer phase.</p>
+          <p class="show-round-copy">Set both bets before answer phase. Lineup comes from Game Intro.</p>
         </div>
       `;
     }
@@ -4705,7 +4814,7 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
         <div class="show-round-card">
           <p class="show-info-label">Round brief</p>
           <p class="show-round-title">${escapeHtml(item?.title || "Selecteaza item")}</p>
-          <p class="show-round-copy">Set team, bet, and active players before reveals.</p>
+          <p class="show-round-copy">Set team and bet before reveals. Lineup stays from Game Intro.</p>
         </div>
       `;
     }
@@ -4777,7 +4886,7 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
         <div class="show-round-card">
           <p class="show-info-label">${escapeHtml(getGameLabel(manualGameId))} setup</p>
           <p class="show-round-title">Round ${state.progress.currentRound}</p>
-          <p class="show-round-copy">Select active players and bets before live phase.</p>
+          <p class="show-round-copy">Set bets before live phase. Lineup stays from Game Intro.</p>
         </div>
       `;
     }
@@ -4889,6 +4998,7 @@ function buildLiveRoundQuickActions(gameId, liveStep) {
         label: flowComplete ? "Finish Trivia" : "Next Topic"
       });
     }
+    actions.push({ tone: "secondary-btn", action: "go-game-intro", label: "Lineup substitution" });
     return renderFlowActionButtons(actions);
   }
 
@@ -4928,6 +5038,7 @@ function buildLiveRoundQuickActions(gameId, liveStep) {
   if (liveStep !== lastStateId && liveStep !== payoutStateId && nextStateId !== liveStep) {
     actions.push({ tone: "secondary-btn", action: "live-step-next", label: "Next step" });
   }
+  actions.push({ tone: "secondary-btn", action: "go-game-intro", label: "Lineup substitution" });
   actions.push({ tone: "secondary-btn", action: "next-round", label: "Next round" });
   actions.push({ tone: "secondary-btn", action: "next-game", label: "Next game" });
   return renderFlowActionButtons(actions);
@@ -5005,6 +5116,7 @@ function buildShowScreenContent(screenId) {
           hasStarted ? "Restart Game Night" : "Start Game Night"
         }</button>
         <button class="secondary-btn" type="button" data-show-action="go-game-select">Open Game Select</button>
+        <button class="secondary-btn" type="button" data-show-action="go-roster-management">Manage Players / Roster</button>
         <button class="secondary-btn" type="button" data-show-action="go-end-screen">Final End Screen</button>
       </div>
     `;
@@ -5046,6 +5158,8 @@ function buildShowScreenContent(screenId) {
 
   if (screenId === "game-intro") {
     const maxBet = getBetPercent(gameId);
+    const lineupReady = isGameLineupReady(gameId);
+    const lineupHasMembers = hasAnyCurrentGameLineupMembers();
     const rules = getGameIntroRules(gameId)
       .map((line) => `<li>${escapeHtml(line)}</li>`)
       .join("");
@@ -5059,11 +5173,40 @@ function buildShowScreenContent(screenId) {
       <div class="show-round-card">
         <p class="show-info-label">Game Lineup</p>
         <p class="show-round-copy">Assign tokens once for this mini-game. This lineup stays active on every round.</p>
+        <p class="show-round-copy">${
+          lineupReady
+            ? "Lineup confirmed for this game."
+            : "Lineup not confirmed yet. Confirm before entering Live Round."
+        }</p>
       </div>
       ${renderShowPlayerAssignmentBoard()}
       <div class="show-action-footer">
-        <button class="primary-btn" type="button" data-show-action="go-live-round">Start live round</button>
+        <button class="primary-btn" type="button" data-show-action="confirm-lineup-start" ${
+          lineupHasMembers ? "" : "disabled"
+        }>Confirm Lineup & Start</button>
+        <button class="secondary-btn" type="button" data-show-action="go-live-round" ${
+          lineupReady ? "" : "disabled"
+        }>Start live round</button>
+        <button class="secondary-btn" type="button" data-show-action="go-roster-management">Manage Players / Roster</button>
         <button class="secondary-btn" type="button" data-show-action="go-game-select">Change game</button>
+      </div>
+    `;
+  }
+
+  if (screenId === "roster-management") {
+    return `
+      <div class="show-round-card">
+        <p class="show-info-label">Manage Players / Roster</p>
+        <p class="show-round-title">Total Player Pool</p>
+        <p class="show-round-copy">Use this screen to add, remove, rename, or mark players unavailable. Lineup assignment for a game stays in Game Intro.</p>
+      </div>
+      <div class="show-overlay-grid two-col">
+        ${renderShowRosterManagementTeam("teamA")}
+        ${renderShowRosterManagementTeam("teamB")}
+      </div>
+      <div class="show-action-footer">
+        <button class="primary-btn" type="button" data-show-action="save-roster">Save roster</button>
+        <button class="secondary-btn" type="button" data-show-action="go-game-intro">Back to Game Intro</button>
       </div>
     `;
   }
@@ -5407,6 +5550,9 @@ function renderHostAdminPanel() {
 
 function renderShowUi() {
   ensureShowUiState();
+  if (isGameLineupReady(state.progress.currentGame) && !hasAnyCurrentGameLineupMembers()) {
+    setGameLineupReady(state.progress.currentGame, false);
+  }
 
   const activeScreen = state.showUi.activeScreen;
   elements.showScreenButtons.forEach((button) => {
@@ -5423,10 +5569,10 @@ function renderShowUi() {
     elements.showStageTimer.textContent = formatTimer(state.timer.remaining);
   }
   if (elements.showActivePlayersTeamA) {
-    elements.showActivePlayersTeamA.textContent = getTeamActivePlayersLabel("teamA");
+    elements.showActivePlayersTeamA.innerHTML = getTeamLineupHudHtml("teamA");
   }
   if (elements.showActivePlayersTeamB) {
-    elements.showActivePlayersTeamB.textContent = getTeamActivePlayersLabel("teamB");
+    elements.showActivePlayersTeamB.innerHTML = getTeamLineupHudHtml("teamB");
   }
   if (elements.showLatestResult) {
     elements.showLatestResult.textContent = state.progress.lastResultSummary || DEFAULT_RESULT_SUMMARY;
@@ -5480,6 +5626,10 @@ function setShowScreen(screenId, options = {}) {
   if (screenId === "end-screen" && !allowIncompleteEndScreen && !isGameNightComplete()) {
     setLastResultSummary("End Screen final se deschide dupa ce termini toate jocurile.");
     screenId = "game-select";
+  }
+  if (screenId === "live-round" && !isGameLineupReady(state.progress.currentGame)) {
+    setLastResultSummary("Confirm lineup in Game Intro before starting the round.");
+    screenId = "game-intro";
   }
 
   ensureShowUiState();
@@ -5649,8 +5799,32 @@ function handleShowOverlayAction(action, trigger) {
     setShowScreen("game-intro");
     return;
   }
+  if (action === "go-roster-management") {
+    setShowScreen("roster-management");
+    return;
+  }
   if (action === "go-live-round") {
     setShowScreen("live-round");
+    return;
+  }
+  if (action === "confirm-lineup-start") {
+    const gameId = state.progress.currentGame;
+    if (!hasAnyCurrentGameLineupMembers()) {
+      setLastResultSummary("Assign at least one player token before confirming lineup.");
+      renderShowUi();
+      saveState("Lineup confirmation blocked: no assigned tokens.");
+      return;
+    }
+    setGameLineupReady(gameId, true);
+    setLastResultSummary(`Lineup confirmed for ${getGameLabel(gameId)}. Live round ready.`);
+    setShowScreen("live-round", { persist: false });
+    saveState(`Lineup confirmed: ${getGameLabel(gameId)}.`);
+    return;
+  }
+  if (action === "save-roster") {
+    setLastResultSummary("Roster saved.");
+    saveState("Roster saved from overlay.");
+    renderShowUi();
     return;
   }
   if (action === "go-end-of-game") {
@@ -5894,6 +6068,26 @@ function handleShowOverlayChange(target) {
     updatePlayerStatus(teamKey, playerId, target.value);
     return;
   }
+  if (target.matches("[data-show-roster-name]")) {
+    const row = target.closest("[data-team][data-player-id]");
+    const teamKey = row?.getAttribute("data-team");
+    const playerId = row?.getAttribute("data-player-id");
+    if (!["teamA", "teamB"].includes(teamKey) || !playerId) {
+      return;
+    }
+    updatePlayerName(teamKey, playerId, target.value);
+    return;
+  }
+  if (target.matches("[data-show-roster-status]")) {
+    const row = target.closest("[data-team][data-player-id]");
+    const teamKey = row?.getAttribute("data-team");
+    const playerId = row?.getAttribute("data-player-id");
+    if (!["teamA", "teamB"].includes(teamKey) || !playerId) {
+      return;
+    }
+    updatePlayerStatus(teamKey, playerId, target.value, { ignoreLock: true });
+    return;
+  }
   if (target.matches("[data-show-trivia-team]")) {
     setTriviaPlayingTeam(target.value);
     return;
@@ -6057,6 +6251,29 @@ function handleShowOverlayClick(event) {
     const playerId = assignPlayerButton.getAttribute("data-player-id");
     const targetLane = assignPlayerButton.getAttribute("data-target-lane");
     assignShowPlayerToLane(playerId, targetLane);
+    return;
+  }
+
+  const addRosterButton = event.target.closest("[data-show-roster-add]");
+  if (addRosterButton) {
+    const teamKey = addRosterButton.getAttribute("data-team");
+    const input = elements.showScreenContent?.querySelector(`[data-show-roster-add-name][data-team="${teamKey}"]`);
+    if (!["teamA", "teamB"].includes(teamKey) || !input) {
+      return;
+    }
+    addPlayer(teamKey, input, { ignoreLock: true });
+    return;
+  }
+
+  const removeRosterButton = event.target.closest("[data-show-roster-remove]");
+  if (removeRosterButton) {
+    const row = removeRosterButton.closest("[data-team][data-player-id]");
+    const teamKey = row?.getAttribute("data-team");
+    const playerId = row?.getAttribute("data-player-id");
+    if (!["teamA", "teamB"].includes(teamKey) || !playerId) {
+      return;
+    }
+    removePlayer(teamKey, playerId, { ignoreLock: true });
     return;
   }
 
@@ -9062,6 +9279,7 @@ function nextGame() {
   if (isManualMatchGame(nextGameId)) {
     state.manualMatch.selectedGame = nextGameId;
   }
+  setGameLineupReady(nextGameId, false);
   switchRoundContext(nextGameId, 1, { navigateToSection: true });
   state.showUi.activeScreen = "game-intro";
   setLastResultSummary(`Moved to ${getGameLabel(nextGameId)}. Round reset to 1.`);
@@ -9100,6 +9318,7 @@ function resetCurrentGame() {
       delete state.roundSelection.history[key];
     }
   }
+  setGameLineupReady(currentGameId, false);
 
   switchRoundContext(currentGameId, 1, { navigateToSection: false });
   setActiveSection("home", { persist: false });
@@ -9185,8 +9404,9 @@ function findPlayer(teamKey, playerId) {
   return state.teams[teamKey].players.find((player) => player.id === playerId);
 }
 
-function addPlayer(teamKey, inputElement) {
-  if (state.roundSelection.locked) {
+function addPlayer(teamKey, inputElement, options = {}) {
+  const ignoreLock = options.ignoreLock === true;
+  if (state.roundSelection.locked && !ignoreLock) {
     setLastResultSummary("Game lineup is locked. Unlock to add players.");
     saveState("Add player blocked while locked.");
     return;
@@ -9208,8 +9428,9 @@ function addPlayer(teamKey, inputElement) {
   saveState("Player added.");
 }
 
-function removePlayer(teamKey, playerId) {
-  if (state.roundSelection.locked) {
+function removePlayer(teamKey, playerId, options = {}) {
+  const ignoreLock = options.ignoreLock === true;
+  if (state.roundSelection.locked && !ignoreLock) {
     setLastResultSummary("Game lineup is locked. Unlock to remove players.");
     saveState("Remove player blocked while locked.");
     return;
@@ -9250,8 +9471,9 @@ function updatePlayerName(teamKey, playerId, newName) {
   saveState();
 }
 
-function updatePlayerStatus(teamKey, playerId, nextStatus) {
-  if (state.roundSelection.locked) {
+function updatePlayerStatus(teamKey, playerId, nextStatus, options = {}) {
+  const ignoreLock = options.ignoreLock === true;
+  if (state.roundSelection.locked && !ignoreLock) {
     setLastResultSummary("Game lineup is locked. Unlock to update statuses.");
     saveState("Status change blocked while locked.");
     return;
@@ -9654,7 +9876,7 @@ function bindEvents() {
         state.manualMatch.selectedGame = gameId;
       }
       switchRoundContext(gameId, state.progress.currentRound, { navigateToSection: true });
-      state.showUi.activeScreen = "live-round";
+      state.showUi.activeScreen = isGameLineupReady(gameId) ? "live-round" : "game-intro";
       setLastResultSummary(`Opened ${getGameLabel(gameId)}.`);
       renderAll();
       saveState(`Opened game: ${getGameLabel(gameId)}`);

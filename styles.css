@@ -140,6 +140,22 @@ body {
   font-weight: 700;
 }
 
+.show-pill-timer {
+  border-color: rgba(246, 194, 73, 0.58);
+  background: linear-gradient(148deg, rgba(38, 57, 102, 0.95), rgba(15, 30, 61, 0.9));
+}
+
+.show-pill-timer .show-pill-label {
+  color: #ffe5a3;
+}
+
+.show-pill-timer .show-pill-value {
+  font-family: "Bebas Neue", sans-serif;
+  font-size: clamp(2.1rem, 5.8vw, 4.2rem);
+  line-height: 0.84;
+  letter-spacing: 0.05em;
+}
+
 .show-team-grid {
   display: grid;
   gap: 10px;
@@ -174,6 +190,35 @@ body {
   margin: 0;
   color: #b8caef;
   font-size: 0.88rem;
+}
+
+.show-team-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.show-team-chip {
+  border: 1px solid rgba(134, 173, 255, 0.45);
+  border-radius: 999px;
+  background: rgba(9, 25, 54, 0.58);
+  color: #e7f0ff;
+  padding: 3px 9px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.show-team-chip.is-joker {
+  border-color: rgba(246, 194, 73, 0.8);
+  background: rgba(246, 194, 73, 0.16);
+  color: #fff0c2;
+}
+
+.show-team-lineup-empty {
+  margin: 1px 0 0;
+  font-size: 0.84rem;
+  color: #c7d7f6;
 }
 
 .show-main-card {
@@ -1680,10 +1725,39 @@ button.show-leader-row {
   color: var(--ink);
 }
 
+.show-stage .show-pill.show-pill-timer {
+  border-color: #e4c776;
+  background: linear-gradient(145deg, #fff5d6, #ffe8ae);
+}
+
+.show-stage .show-pill.show-pill-timer .show-pill-label {
+  color: #7d5a08;
+}
+
+.show-stage .show-pill.show-pill-timer .show-pill-value {
+  color: #362704;
+}
+
 .show-stage .show-team-active,
 .show-stage .show-round-copy,
 .show-stage .show-info-sub,
 .show-stage .show-rule-list {
+  color: var(--ink-soft);
+}
+
+.show-stage .show-team-chip {
+  background: #edf1ff;
+  border-color: #cfd9ff;
+  color: #24325f;
+}
+
+.show-stage .show-team-chip.is-joker {
+  background: #fff3cc;
+  border-color: #ebc45b;
+  color: #654708;
+}
+
+.show-stage .show-team-lineup-empty {
   color: var(--ink-soft);
 }
 
@@ -1883,6 +1957,33 @@ button.show-leader-row {
 .show-assignment-token-controls .pill-btn.is-active {
   background: linear-gradient(120deg, var(--accent), #ffd986);
   border-color: transparent;
+}
+
+.show-roster-team-card {
+  display: grid;
+  gap: 10px;
+}
+
+.show-roster-add-row {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.show-roster-list {
+  display: grid;
+  gap: 8px;
+}
+
+.show-roster-row {
+  border: 1px solid #d2dcff;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 8px;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(0, 1fr) 150px auto;
+  align-items: center;
 }
 
 /* Game feel polish pass: live screens */
@@ -2263,6 +2364,11 @@ button.show-leader-row {
 
 @media (max-width: 980px) {
   .show-assignment-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .show-roster-add-row,
+  .show-roster-row {
     grid-template-columns: 1fr;
   }
 
