@@ -52,6 +52,25 @@ const GAME_CONFIG = [
 
 const GAME_ORDER = GAME_CONFIG.map((game) => game.id);
 const MANUAL_MATCH_GAME_IDS = ["guess-right-order", "beer-pong", "shot-fake"];
+const STANDARD_FIXED_BONUS_BY_GAME = {
+  trivia: 50,
+  "guess-right-order": 50,
+  "pretul-corect": 50,
+  "cel-mai-bun-samsar": 100,
+  "beer-pong": 100,
+  "shot-fake": 0,
+  "curse-de-cai": 0
+};
+const GAME_ROUND_LIMITS = {
+  trivia: 12,
+  "guess-right-order": 3,
+  "pretul-corect": 12,
+  "film-joc-franciza-fun-fact": 12,
+  "cel-mai-bun-samsar": 6,
+  "beer-pong": 3,
+  "shot-fake": 6,
+  "curse-de-cai": 3
+};
 const GAME_FLOW_DEFINITIONS = {
   trivia: {
     states: [
@@ -144,9 +163,9 @@ const GAME_FLOW_DEFINITIONS = {
       {
         id: "bet-screen",
         label: "Bet Screen",
-        description: "Pick team in play and confirm round bet.",
-        visible: ["team select", "bet input"],
-        actions: ["set team", "set bet"]
+        description: "Both teams place bets before image + card reveal.",
+        visible: ["team bet inputs", "max bet info"],
+        actions: ["set team bets"]
       },
       {
         id: "card-reveal",
@@ -166,7 +185,7 @@ const GAME_FLOW_DEFINITIONS = {
     ],
     payoutStateId: "breakdown-result",
     roundReturn: "After reveal, Next round moves to next image round.",
-    gameEnd: "Game ends when all configured rounds are used, then returns to Game Select."
+    gameEnd: "Game ends when all 12 configured rounds are used, then returns to Game Select."
   },
   "cel-mai-bun-samsar": {
     states: [
@@ -224,7 +243,7 @@ const GAME_FLOW_DEFINITIONS = {
     ],
     payoutStateId: "result-screen",
     roundReturn: "After reveal, use Next round for the next order challenge.",
-    gameEnd: "Game end is manual from End of Game when host decides."
+    gameEnd: "Game ends after 3 rounds, then returns to Game Select."
   },
   "beer-pong": {
     states: [
@@ -253,7 +272,7 @@ const GAME_FLOW_DEFINITIONS = {
     ],
     payoutStateId: "result-screen",
     roundReturn: "After reveal, Next round starts the next beer pong round.",
-    gameEnd: "Game end is manual from End of Game when host decides."
+    gameEnd: "Game ends after 3 rounds, then returns to Game Select."
   },
   "shot-fake": {
     states: [
@@ -282,7 +301,7 @@ const GAME_FLOW_DEFINITIONS = {
     ],
     payoutStateId: "result-screen",
     roundReturn: "After reveal, Next round starts next Shot Fake round.",
-    gameEnd: "Game end is manual from End of Game when host decides."
+    gameEnd: "Game ends after 6 rounds, then returns to Game Select."
   },
   "curse-de-cai": {
     states: [
@@ -325,7 +344,7 @@ const GAME_FLOW_DEFINITIONS = {
     ],
     payoutStateId: "payout-screen",
     roundReturn: "After reveal, Next round starts the next race.",
-    gameEnd: "Game end is manual from End of Game when host decides."
+    gameEnd: "Game ends after 3 races, then returns to Game Select."
   }
 };
 const DEFAULT_RESULT_SUMMARY = "Niciun rezultat aplicat inca.";
@@ -361,6 +380,75 @@ const DEFAULT_TRIVIA_CATEGORIES = [
     options: ["12", "14", "16", "18"],
     correctOptionIndex: 2,
     answer: "16"
+  },
+  {
+    id: "trivia-cat-5",
+    title: "Stiinta",
+    question: "Ce planeta este cunoscuta drept Planeta Rosie?",
+    options: ["Venus", "Marte", "Jupiter", "Mercur"],
+    correctOptionIndex: 1,
+    answer: "Marte"
+  },
+  {
+    id: "trivia-cat-6",
+    title: "Tehnologie",
+    question: "Ce inseamna abrevierea USB?",
+    options: ["Universal Serial Bus", "Unified System Base", "Ultra Speed Bridge", "User Sync Board"],
+    correctOptionIndex: 0,
+    answer: "Universal Serial Bus"
+  },
+  {
+    id: "trivia-cat-7",
+    title: "Muzica",
+    question: "Care instrument are de obicei 88 de clape?",
+    options: ["Chitara", "Pian", "Vioara", "Saxofon"],
+    correctOptionIndex: 1,
+    answer: "Pian"
+  },
+  {
+    id: "trivia-cat-8",
+    title: "Cultura generala",
+    question: "Cate continente are Pamantul?",
+    options: ["5", "6", "7", "8"],
+    correctOptionIndex: 2,
+    answer: "7"
+  },
+  {
+    id: "trivia-cat-9",
+    title: "Romania",
+    question: "Ce rau traverseaza orasul Bucuresti?",
+    options: ["Somes", "Bega", "Dambovita", "Mures"],
+    correctOptionIndex: 2,
+    answer: "Dambovita"
+  },
+  {
+    id: "trivia-cat-10",
+    title: "Gaming",
+    question: "In ce joc apare personajul Geralt of Rivia?",
+    options: ["Skyrim", "The Witcher", "Elden Ring", "Assassin's Creed"],
+    correctOptionIndex: 1,
+    answer: "The Witcher"
+  },
+  {
+    id: "trivia-cat-11",
+    title: "Sport",
+    question: "Cate minute are o repriza standard la fotbal?",
+    options: ["30", "40", "45", "50"],
+    correctOptionIndex: 2,
+    answer: "45"
+  },
+  {
+    id: "trivia-cat-12",
+    title: "Business",
+    question: "Ce reprezinta TVA in Romania?",
+    options: [
+      "Taxa pe valoare adaugata",
+      "Taxa variabila anuala",
+      "Transfer valutar automat",
+      "Tarif vanzare autorizat"
+    ],
+    correctOptionIndex: 0,
+    answer: "Taxa pe valoare adaugata"
   }
 ];
 const DEFAULT_PRETUL_ITEMS = [
@@ -383,6 +471,46 @@ const DEFAULT_PRETUL_ITEMS = [
     id: "pretul-item-4",
     name: "Garmin Venu Sq 2 (smartwatch)",
     referencePrice: 260
+  },
+  {
+    id: "pretul-item-5",
+    name: "LEGO Icons Corvette",
+    referencePrice: 150
+  },
+  {
+    id: "pretul-item-6",
+    name: "IKEA Markus (scaun birou)",
+    referencePrice: 230
+  },
+  {
+    id: "pretul-item-7",
+    name: "Bose SoundLink Flex",
+    referencePrice: 170
+  },
+  {
+    id: "pretul-item-8",
+    name: "Kindle Paperwhite 11th Gen",
+    referencePrice: 160
+  },
+  {
+    id: "pretul-item-9",
+    name: "PlayStation DualSense Edge",
+    referencePrice: 250
+  },
+  {
+    id: "pretul-item-10",
+    name: "Ninja Foodi Air Fryer",
+    referencePrice: 190
+  },
+  {
+    id: "pretul-item-11",
+    name: "Samsung 980 Pro 1TB SSD",
+    referencePrice: 140
+  },
+  {
+    id: "pretul-item-12",
+    name: "GoPro Hero 12 Black",
+    referencePrice: 380
   }
 ];
 const FILM_FALLBACK_IMAGE =
@@ -396,7 +524,7 @@ const FILM_COMPONENT_WEIGHTS = {
 const DEFAULT_FILM_ITEMS = [
   {
     id: "film-item-1",
-    title: "Runda 1 - Film clasic",
+    title: "Runda 1 - Wizard School",
     imageUrl: FILM_FALLBACK_IMAGE,
     imageAlt: "Imagine demo runda 1",
     characterPrompt: "Hermione Granger",
@@ -405,7 +533,7 @@ const DEFAULT_FILM_ITEMS = [
   },
   {
     id: "film-item-2",
-    title: "Runda 2 - Joc video",
+    title: "Runda 2 - God of War",
     imageUrl: FILM_FALLBACK_IMAGE,
     imageAlt: "Imagine demo runda 2",
     characterPrompt: "Kratos",
@@ -414,12 +542,93 @@ const DEFAULT_FILM_ITEMS = [
   },
   {
     id: "film-item-3",
-    title: "Runda 3 - Franciza blockbuster",
+    title: "Runda 3 - MCU",
     imageUrl: FILM_FALLBACK_IMAGE,
     imageAlt: "Imagine demo runda 3",
     characterPrompt: "Tony Stark / Iron Man",
     franchisePrompt: "Marvel Cinematic Universe",
     funFactPrompt: "Primul film MCU a fost Iron Man (2008)."
+  },
+  {
+    id: "film-item-4",
+    title: "Runda 4 - Gotham",
+    imageUrl: FILM_FALLBACK_IMAGE,
+    imageAlt: "Imagine demo runda 4",
+    characterPrompt: "Bruce Wayne / Batman",
+    franchisePrompt: "DC Universe",
+    funFactPrompt: "Batman a aparut prima data in Detective Comics #27 (1939)."
+  },
+  {
+    id: "film-item-5",
+    title: "Runda 5 - Mushroom Kingdom",
+    imageUrl: FILM_FALLBACK_IMAGE,
+    imageAlt: "Imagine demo runda 5",
+    characterPrompt: "Mario",
+    franchisePrompt: "Super Mario",
+    funFactPrompt: "Prima aparitie a lui Mario a fost in Donkey Kong (1981)."
+  },
+  {
+    id: "film-item-6",
+    title: "Runda 6 - Galaxy Saga",
+    imageUrl: FILM_FALLBACK_IMAGE,
+    imageAlt: "Imagine demo runda 6",
+    characterPrompt: "Luke Skywalker",
+    franchisePrompt: "Star Wars",
+    funFactPrompt: "Star Wars: A New Hope a fost lansat in 1977."
+  },
+  {
+    id: "film-item-7",
+    title: "Runda 7 - Post Apocalyptic",
+    imageUrl: FILM_FALLBACK_IMAGE,
+    imageAlt: "Imagine demo runda 7",
+    characterPrompt: "Joel Miller",
+    franchisePrompt: "The Last of Us",
+    funFactPrompt: "Jocul original The Last of Us a fost lansat in 2013."
+  },
+  {
+    id: "film-item-8",
+    title: "Runda 8 - Ring Quest",
+    imageUrl: FILM_FALLBACK_IMAGE,
+    imageAlt: "Imagine demo runda 8",
+    characterPrompt: "Frodo Baggins",
+    franchisePrompt: "The Lord of the Rings",
+    funFactPrompt: "Trilogia LOTR a fost filmata in Noua Zeelanda."
+  },
+  {
+    id: "film-item-9",
+    title: "Runda 9 - Racing Legend",
+    imageUrl: FILM_FALLBACK_IMAGE,
+    imageAlt: "Imagine demo runda 9",
+    characterPrompt: "Dominic Toretto",
+    franchisePrompt: "Fast & Furious",
+    funFactPrompt: "Primul film Fast & Furious a aparut in 2001."
+  },
+  {
+    id: "film-item-10",
+    title: "Runda 10 - Assassin",
+    imageUrl: FILM_FALLBACK_IMAGE,
+    imageAlt: "Imagine demo runda 10",
+    characterPrompt: "Ezio Auditore",
+    franchisePrompt: "Assassin's Creed",
+    funFactPrompt: "Assassin's Creed II a fost lansat in 2009."
+  },
+  {
+    id: "film-item-11",
+    title: "Runda 11 - Magic World",
+    imageUrl: FILM_FALLBACK_IMAGE,
+    imageAlt: "Imagine demo runda 11",
+    characterPrompt: "Geralt of Rivia",
+    franchisePrompt: "The Witcher",
+    funFactPrompt: "Saga Witcher a inceput ca serie de carti in Polonia."
+  },
+  {
+    id: "film-item-12",
+    title: "Runda 12 - Pirate Adventure",
+    imageUrl: FILM_FALLBACK_IMAGE,
+    imageAlt: "Imagine demo runda 12",
+    characterPrompt: "Jack Sparrow",
+    franchisePrompt: "Pirates of the Caribbean",
+    funFactPrompt: "Primul film Pirates of the Caribbean a aparut in 2003."
   }
 ];
 const DEFAULT_SAMSAR_ROUNDS = [
@@ -525,7 +734,7 @@ const SECTION_NOTES_DEFAULTS = {
   pretulRules:
     "- Ambele echipe dau raspuns si pariu (max 15%, rotunjit la 10).\n- Introdu pretul real la finalul rundei.\n- Castigatorul este detectat automat dupa distanta fata de pretul real.\n- Distanta egala = tie, pariurile se returneaza.",
   filmJocRules:
-    "- O singura echipa joaca runda.\n- Componente: Character/Title x1, Franchise x1, Fun Fact x3.\n- Payout partial pe componente, nu all-or-nothing.\n- Bet-ul se activeaza doar la minim 2/3 corecte.",
+    "- Team vs team pe aceeasi imagine + carduri.\n- Componente: Character/Title x1, Franchise x1, Fun Fact x3.\n- Payout partial pe componente, nu all-or-nothing.\n- Bet-ul se activeaza separat per echipa la minim 2/3 corecte.",
   samsarRules:
     "- Joc in 6 runde, fiecare cu persona si cerinte clare.\n- Fiecare echipa trimite un jucator activ.\n- Scor mai mare castiga, scor egal = draw.\n- Payout standard Samsar cu limita de bet a jocului.",
   manualMatchups:
@@ -605,7 +814,7 @@ const DEFAULT_STATE = {
     history: {}
   },
   trivia: {
-    fixedBonus: 100,
+    fixedBonus: getStandardFixedBonus("trivia"),
     turnTeamKey: "teamA",
     categories: DEFAULT_TRIVIA_CATEGORIES,
     rounds: {}
@@ -1266,6 +1475,14 @@ function getBetPercent(gameId) {
   return getGameConfig(gameId).maxBetPercent;
 }
 
+function getStandardFixedBonus(gameId) {
+  return Math.max(0, Math.round(sanitizeNumber(STANDARD_FIXED_BONUS_BY_GAME[gameId], 0)));
+}
+
+function getGameRoundLimit(gameId) {
+  return Math.max(1, Math.round(sanitizeNumber(GAME_ROUND_LIMITS[gameId], 1)));
+}
+
 function makePlayerId(teamKey) {
   return `${teamKey}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -1673,6 +1890,8 @@ function sanitizeFilmRoundState(rawRoundState) {
     selectedItemId: "",
     usedItemIds: [],
     betAmount: 100,
+    betTeamA: 100,
+    betTeamB: 100,
     revealed: {
       character: false,
       franchise: false,
@@ -1682,6 +1901,18 @@ function sanitizeFilmRoundState(rawRoundState) {
       character: null,
       franchise: null,
       funFact: null
+    },
+    outcomesByTeam: {
+      teamA: {
+        character: null,
+        franchise: null,
+        funFact: null
+      },
+      teamB: {
+        character: null,
+        franchise: null,
+        funFact: null
+      }
     },
     lastResult: ""
   };
@@ -1698,14 +1929,30 @@ function sanitizeFilmRoundState(rawRoundState) {
   safeState.usedItemIds = Array.isArray(rawRoundState.usedItemIds)
     ? Array.from(new Set(rawRoundState.usedItemIds.filter((id) => typeof id === "string")))
     : [];
-  safeState.betAmount = normalizeBetAmount(rawRoundState.betAmount);
+  const rawBetTeamA = rawRoundState.betTeamA ?? (safeState.teamKey === "teamA" ? rawRoundState.betAmount : 100);
+  const rawBetTeamB = rawRoundState.betTeamB ?? (safeState.teamKey === "teamB" ? rawRoundState.betAmount : 100);
+  safeState.betTeamA = normalizeBetAmount(rawBetTeamA);
+  safeState.betTeamB = normalizeBetAmount(rawBetTeamB);
   safeState.lastResult = sanitizeString(rawRoundState.lastResult, "");
 
   for (const key of FILM_COMPONENT_KEYS) {
     safeState.revealed[key] = Boolean(rawRoundState.revealed?.[key]);
-    const outcome = rawRoundState.outcomes?.[key];
-    safeState.outcomes[key] = ["correct", "wrong"].includes(outcome) ? outcome : null;
+    const legacyOutcome = rawRoundState.outcomes?.[key];
+    const teamAOutcome = rawRoundState.outcomesByTeam?.teamA?.[key];
+    const teamBOutcome = rawRoundState.outcomesByTeam?.teamB?.[key];
+    safeState.outcomesByTeam.teamA[key] = ["correct", "wrong"].includes(teamAOutcome)
+      ? teamAOutcome
+      : safeState.teamKey === "teamA" && ["correct", "wrong"].includes(legacyOutcome)
+        ? legacyOutcome
+        : null;
+    safeState.outcomesByTeam.teamB[key] = ["correct", "wrong"].includes(teamBOutcome)
+      ? teamBOutcome
+      : safeState.teamKey === "teamB" && ["correct", "wrong"].includes(legacyOutcome)
+        ? legacyOutcome
+        : null;
   }
+  safeState.betAmount = safeState.teamKey === "teamA" ? safeState.betTeamA : safeState.betTeamB;
+  safeState.outcomes = { ...safeState.outcomesByTeam[safeState.teamKey] };
 
   return safeState;
 }
@@ -1725,11 +1972,24 @@ function getOrCreateFilmRoundState(roundNumber = state.progress.currentRound) {
       teamKey: previousRound.teamKey || "teamA",
       selectedItemId: nextAvailable?.id || state.filmGame.items[0]?.id || "",
       usedItemIds: carryUsed,
-      betAmount: previousRound.betAmount || 100,
+      betTeamA: previousRound.betTeamA || 100,
+      betTeamB: previousRound.betTeamB || 100,
       revealed: {
         character: false,
         franchise: false,
         funFact: false
+      },
+      outcomesByTeam: {
+        teamA: {
+          character: null,
+          franchise: null,
+          funFact: null
+        },
+        teamB: {
+          character: null,
+          franchise: null,
+          funFact: null
+        }
       },
       outcomes: {
         character: null,
@@ -2137,7 +2397,7 @@ function sanitizeState(rawState) {
   clean.timer.isRunning = Boolean(source.timer?.isRunning);
   clean.timer.lastTickMs = source.timer?.lastTickMs ? Number(source.timer.lastTickMs) : null;
 
-  clean.trivia.fixedBonus = Math.max(0, Math.round(sanitizeNumber(source.trivia?.fixedBonus, 100)));
+  clean.trivia.fixedBonus = getStandardFixedBonus("trivia");
   clean.trivia.turnTeamKey = ["teamA", "teamB"].includes(source.trivia?.turnTeamKey)
     ? source.trivia.turnTeamKey
     : clean.trivia.turnTeamKey;
@@ -3191,6 +3451,16 @@ function saveCurrentRoundSnapshot() {
   state.roundSelection.history[getGameLineupKey()] = sanitizeHistorySnapshot(snapshot);
 }
 
+function buildDefaultTeamLineupSnapshot() {
+  return sanitizeHistorySnapshot({
+    activeByTeam: {
+      teamA: [],
+      teamB: []
+    },
+    jokerAssignment: "out"
+  });
+}
+
 function loadCurrentRoundSnapshot() {
   const roundSnapshot = state.roundSelection.history[getRoundKey()];
   const lineupSnapshot = state.roundSelection.history[getGameLineupKey()];
@@ -3201,9 +3471,11 @@ function loadCurrentRoundSnapshot() {
     state.roundSelection.activeByTeam.teamB = [...safe.activeByTeam.teamB];
     state.roundSelection.jokerAssignment = "out";
   } else {
-    state.roundSelection.activeByTeam.teamA = [];
-    state.roundSelection.activeByTeam.teamB = [];
+    const defaultSnapshot = buildDefaultTeamLineupSnapshot();
+    state.roundSelection.activeByTeam.teamA = [...defaultSnapshot.activeByTeam.teamA];
+    state.roundSelection.activeByTeam.teamB = [...defaultSnapshot.activeByTeam.teamB];
     state.roundSelection.jokerAssignment = "out";
+    state.roundSelection.history[getRoundKey()] = sanitizeHistorySnapshot(defaultSnapshot);
   }
   ensureCurrentRoundSelectionValid();
   state.roundSelection.history[getGameLineupKey()] = sanitizeHistorySnapshot({
@@ -3217,6 +3489,16 @@ function loadCurrentRoundSnapshot() {
 
 function countActiveWithJoker(teamKey) {
   return state.roundSelection.activeByTeam[teamKey].length;
+}
+
+function getSelectableGameLineupPlayers(teamKey) {
+  if (!["teamA", "teamB"].includes(teamKey)) {
+    return [];
+  }
+  const activeIds = new Set(state.roundSelection.activeByTeam[teamKey] || []);
+  const availablePlayers = state.teams[teamKey].players.filter((player) => player.status === "available");
+  const lineupPlayers = availablePlayers.filter((player) => activeIds.has(player.id));
+  return lineupPlayers.length > 0 ? lineupPlayers : availablePlayers;
 }
 
 function getShowScreenTitle(screenId = state.showUi?.activeScreen) {
@@ -3320,22 +3602,33 @@ function getFlowGameEndRule(gameId) {
 function isGameFlowComplete(gameId) {
   if (gameId === "trivia") {
     const roundState = getOrCreateTriviaRoundState();
-    const total = Math.max(0, state.trivia.categories.length);
+    const total = Math.min(getGameRoundLimit("trivia"), Math.max(0, state.trivia.categories.length));
     return total > 0 && roundState.usedCategoryIds.length >= total;
   }
   if (gameId === "pretul-corect") {
     const roundState = getOrCreatePretulRoundState();
-    const total = Math.max(0, state.pretul.items.length);
+    const total = Math.min(getGameRoundLimit("pretul-corect"), Math.max(0, state.pretul.items.length));
     return total > 0 && roundState.usedItemIds.length >= total;
   }
   if (gameId === "film-joc-franciza-fun-fact") {
     const roundState = getOrCreateFilmRoundState();
-    const total = Math.max(0, state.filmGame.items.length);
+    const total = Math.min(getGameRoundLimit("film-joc-franciza-fun-fact"), Math.max(0, state.filmGame.items.length));
     return total > 0 && roundState.usedItemIds.length >= total;
   }
   if (gameId === "cel-mai-bun-samsar") {
-    const totalRounds = Math.max(1, state.samsarGame.roundsData?.length || 6);
-    return state.progress.currentRound >= totalRounds;
+    return state.progress.currentRound >= getGameRoundLimit("cel-mai-bun-samsar");
+  }
+  if (gameId === "guess-right-order") {
+    return state.progress.currentRound >= getGameRoundLimit("guess-right-order");
+  }
+  if (gameId === "beer-pong") {
+    return state.progress.currentRound >= getGameRoundLimit("beer-pong");
+  }
+  if (gameId === "shot-fake") {
+    return state.progress.currentRound >= getGameRoundLimit("shot-fake");
+  }
+  if (gameId === "curse-de-cai") {
+    return state.progress.currentRound >= getGameRoundLimit("curse-de-cai");
   }
   return false;
 }
@@ -3457,7 +3750,10 @@ function startGameNightFlow(options = {}) {
   state.showUi.completedGameIds = [];
   for (const gameId of GAME_ORDER) {
     state.showUi.lineupReadyByGame[gameId] = false;
+    state.roundSelection.history[getGameLineupKey(gameId)] = buildDefaultTeamLineupSnapshot();
   }
+  state.roundSelection.activeByTeam.teamA = [];
+  state.roundSelection.activeByTeam.teamB = [];
   const nextGameId = getNextUnfinishedGameId();
   switchRoundContext(nextGameId, 1, { navigateToSection: false });
   state.showUi.activeScreen = "game-select";
@@ -3476,16 +3772,7 @@ function finishCurrentGameAndReturn(options = {}) {
     state.showUi.completedGameIds.push(finishedGameId);
   }
   state.showUi.lineupReadyByGame[finishedGameId] = false;
-  state.roundSelection.history[getGameLineupKey(finishedGameId)] = sanitizeHistorySnapshot({
-    activeByTeam: {
-      teamA: [],
-      teamB: []
-    },
-    jokerAssignment: "out"
-  });
-  state.roundSelection.activeByTeam.teamA = [];
-  state.roundSelection.activeByTeam.teamB = [];
-  state.roundSelection.jokerAssignment = "out";
+  state.roundSelection.history[getGameLineupKey(finishedGameId)] = buildDefaultTeamLineupSnapshot();
   if (isGameNightComplete()) {
     state.showUi.activeScreen = "end-screen";
     setLastResultSummary("All games complete. Opening Final End Screen.");
@@ -3589,57 +3876,63 @@ function getGameIntroRules(gameId) {
     return [
       "One team plays each round; turn switches automatically after result.",
       "Flow: Topic Select -> Bet -> Question+Answers (timer live) -> Result -> next topic.",
-      "Multiple choice topics are disabled after use; correct gives bonus + bet win."
+      `Multiple choice topics are disabled after use; correct gives +${formatMoney(getStandardFixedBonus("trivia"))} bonus + bet win.`,
+      `Game ends after ${getGameRoundLimit("trivia")} topics.`
     ];
   }
   if (gameId === "pretul-corect") {
     return [
       "Both teams submit a price estimate and a bet.",
       "Winner is auto-detected by closest distance to real price.",
-      "Equal distance is a tie and both bets are returned."
+      `Equal distance is a tie and both bets are returned. Winner payout: +${formatMoney(getStandardFixedBonus("pretul-corect"))} bonus + bet win.`,
+      `Game ends after ${getGameRoundLimit("pretul-corect")} products.`
     ];
   }
   if (gameId === "film-joc-franciza-fun-fact") {
     return [
-      "One image round with Character/Title, Franchise, and Fun Fact components.",
+      "Team-vs-team visual round with Character/Title, Franchise, and Fun Fact components.",
       "Image and reveal cards are played together on the same live stage step.",
       "Partial payout is based on component scores (1/1/3).",
-      "Bet activates only with minimum 2 of 3 components correct."
+      "Bet activates only with minimum 2 of 3 components correct (per team).",
+      `Game ends after ${getGameRoundLimit("film-joc-franciza-fun-fact")} rounds.`
     ];
   }
   if (gameId === "cel-mai-bun-samsar") {
     return [
       "Fast flow: Bet setup -> Live duel -> Result + payout.",
       "Round persona + duelist selection are inside Live Duel screen.",
-      "Higher manual score wins the round; tie is draw with standard Samsar payout."
+      `Higher manual score wins the round; tie returns bets. Winner gets +${formatMoney(getStandardFixedBonus("cel-mai-bun-samsar"))} bonus + bet win.`,
+      `Game ends after ${getGameRoundLimit("cel-mai-bun-samsar")} rounds.`
     ];
   }
   if (gameId === "guess-right-order") {
     return [
       "Team vs team manual result entry.",
-      "Standard payout with draw allowed.",
-      "Game lineup is selected once at game start (max 6 per team)."
+      `Standard payout with draw allowed (+${formatMoney(getStandardFixedBonus("guess-right-order"))} winner bonus + bet win).`,
+      `Game lineup is selected once at game start (max 6 per team), ${getGameRoundLimit("guess-right-order")} rounds total.`
     ];
   }
   if (gameId === "beer-pong") {
     return [
       "Team vs team manual result entry.",
-      "Standard payout with draw allowed.",
-      "Game lineup is selected once at game start (max 6 per team)."
+      `Standard payout with draw allowed (+${formatMoney(getStandardFixedBonus("beer-pong"))} winner bonus + bet win).`,
+      `Game lineup is selected once at game start (max 6 per team), ${getGameRoundLimit("beer-pong")} rounds total.`
     ];
   }
   if (gameId === "shot-fake") {
     return [
       "Bet-only mode with no fixed round bonus.",
       "Round can include multiple side bets.",
-      "Special transfer uses x * active players from both teams in current game lineup."
+      "Special transfer uses x * active players from both teams in current game lineup.",
+      `${getGameRoundLimit("shot-fake")} rounds total (3 per side).`
     ];
   }
   if (gameId === "curse-de-cai") {
     return [
       "Bet-only horse race with manual movement by symbol.",
       "Multiple horse bets are allowed per team.",
-      "Only the winning horse bet pays x4; all others lose."
+      "Only the winning horse bet pays x4; all others lose.",
+      `${getGameRoundLimit("curse-de-cai")} races total.`
     ];
   }
   return ["Regulile acestui joc pot fi completate din Settings."];
@@ -4875,9 +5168,12 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
   if (gameId === "film-joc-franciza-fun-fact") {
     const roundState = getOrCreateFilmRoundState();
     const item = state.filmGame.items.find((entry) => entry.id === roundState.selectedItemId);
-    const breakdown = getFilmRoundBreakdown(roundState, roundState.betAmount);
-    const playingTeam = state.teams[roundState.teamKey];
-    const maxBet = getMaxBetAmount(playingTeam.money, "film-joc-franciza-fun-fact");
+    const maxBetA = getMaxBetAmount(state.teams.teamA.money, "film-joc-franciza-fun-fact");
+    const maxBetB = getMaxBetAmount(state.teams.teamB.money, "film-joc-franciza-fun-fact");
+    roundState.betTeamA = maxBetA <= 0 ? 0 : Math.min(normalizeBetAmount(roundState.betTeamA), maxBetA);
+    roundState.betTeamB = maxBetB <= 0 ? 0 : Math.min(normalizeBetAmount(roundState.betTeamB), maxBetB);
+    const breakdownA = getFilmRoundBreakdown(roundState, roundState.betTeamA, "teamA");
+    const breakdownB = getFilmRoundBreakdown(roundState, roundState.betTeamB, "teamB");
     const cardConfig = [
       { key: "character", title: "Character / Title", revealText: item?.characterPrompt || "Placeholder character/title" },
       { key: "franchise", title: "Franchise", revealText: item?.franchisePrompt || "Placeholder franchise" },
@@ -4888,32 +5184,47 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
       return `
         <section class="show-stage-stack">
           <p class="show-info-label">Bet Screen</p>
+          <p class="show-round-title">${escapeHtml(item?.title || "Select round card first")}</p>
           <div class="show-vs-input-grid">
             <article class="show-stage-mini-card">
-              <p class="show-info-label">Team In Play</p>
-              <select class="text-input" data-show-film-team>
-                <option value="teamA" ${roundState.teamKey === "teamA" ? "selected" : ""}>${escapeHtml(state.teams.teamA.name)}</option>
-                <option value="teamB" ${roundState.teamKey === "teamB" ? "selected" : ""}>${escapeHtml(state.teams.teamB.name)}</option>
-              </select>
+              <p class="show-info-label">${escapeHtml(state.teams.teamA.name)} bet</p>
+              <input
+                class="text-input show-stage-money-input"
+                type="number"
+                min="0"
+                step="10"
+                value="${roundState.betTeamA}"
+                data-show-film-bet-team
+                data-team="teamA"
+              >
+              <p class="show-info-sub">Max: ${formatMoney(maxBetA)}</p>
             </article>
             <article class="show-stage-mini-card">
-              <p class="show-info-label">Round Card</p>
-              <select class="text-input" data-show-film-item>
-                ${state.filmGame.items
-                  .map((entry) => {
-                    const isUsed = roundState.usedItemIds.includes(entry.id);
-                    return `<option value="${entry.id}" ${roundState.selectedItemId === entry.id ? "selected" : ""} ${
-                      isUsed ? "disabled" : ""
-                    }>${escapeHtml(entry.title)}${isUsed ? " (USED)" : ""}</option>`;
-                  })
-                  .join("")}
-              </select>
+              <p class="show-info-label">${escapeHtml(state.teams.teamB.name)} bet</p>
+              <input
+                class="text-input show-stage-money-input"
+                type="number"
+                min="0"
+                step="10"
+                value="${roundState.betTeamB}"
+                data-show-film-bet-team
+                data-team="teamB"
+              >
+              <p class="show-info-sub">Max: ${formatMoney(maxBetB)}</p>
             </article>
           </div>
           <article class="show-stage-mini-card">
-            <p class="show-info-label">Bet Amount</p>
-            <input class="text-input show-stage-money-input" type="number" min="0" step="10" value="${roundState.betAmount}" data-show-film-bet>
-            <p class="show-info-sub">Max: ${formatMoney(maxBet)}</p>
+            <p class="show-info-label">Round Card</p>
+            <select class="text-input" data-show-film-item>
+              ${state.filmGame.items
+                .map((entry) => {
+                  const isUsed = roundState.usedItemIds.includes(entry.id);
+                  return `<option value="${entry.id}" ${roundState.selectedItemId === entry.id ? "selected" : ""} ${
+                    isUsed ? "disabled" : ""
+                  }>${escapeHtml(entry.title)}${isUsed ? " (USED)" : ""}</option>`;
+                })
+                .join("")}
+            </select>
           </article>
         </section>
       `;
@@ -4930,8 +5241,9 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
           <div class="show-film-card-grid">
             ${cardConfig
               .map((card) => {
-                const outcome = roundState.outcomes[card.key];
                 const revealState = roundState.revealed[card.key];
+                const outcomeA = roundState.outcomesByTeam.teamA[card.key];
+                const outcomeB = roundState.outcomesByTeam.teamB[card.key];
                 return `
                   <article class="show-film-reveal-card ${revealState ? "is-open" : ""}">
                     <div class="show-film-card-head">
@@ -4940,8 +5252,14 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
                     </div>
                     <p class="show-round-copy">${escapeHtml(revealState ? card.revealText : "Hidden until reveal")}</p>
                     <div class="show-film-outcome-row">
-                      <button class="pill-btn ${outcome === "correct" ? "is-active" : ""}" type="button" data-show-film-outcome="${card.key}:correct">Correct</button>
-                      <button class="pill-btn ${outcome === "wrong" ? "is-active" : ""}" type="button" data-show-film-outcome="${card.key}:wrong">Wrong</button>
+                      <span class="show-info-sub">${escapeHtml(state.teams.teamA.name)}</span>
+                      <button class="pill-btn ${outcomeA === "correct" ? "is-active" : ""}" type="button" data-show-film-outcome="teamA:${card.key}:correct">Correct</button>
+                      <button class="pill-btn ${outcomeA === "wrong" ? "is-active" : ""}" type="button" data-show-film-outcome="teamA:${card.key}:wrong">Wrong</button>
+                    </div>
+                    <div class="show-film-outcome-row">
+                      <span class="show-info-sub">${escapeHtml(state.teams.teamB.name)}</span>
+                      <button class="pill-btn ${outcomeB === "correct" ? "is-active" : ""}" type="button" data-show-film-outcome="teamB:${card.key}:correct">Correct</button>
+                      <button class="pill-btn ${outcomeB === "wrong" ? "is-active" : ""}" type="button" data-show-film-outcome="teamB:${card.key}:wrong">Wrong</button>
                     </div>
                   </article>
                 `;
@@ -4955,24 +5273,21 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
     return `
       <section class="show-stage-stack show-stage-result-card">
         <p class="show-info-label">Result / Breakdown</p>
-        <p class="show-stage-result-headline">${breakdown.totalPoints}/${breakdown.maxPoints} points</p>
         <div class="show-film-breakdown-grid">
           <article class="show-stage-mini-card">
-            <p class="show-info-label">Character / Title</p>
-            <p class="show-info-value">${breakdown.points.character} / ${FILM_COMPONENT_WEIGHTS.character}</p>
+            <p class="show-info-label">${escapeHtml(state.teams.teamA.name)}</p>
+            <p class="show-info-value">${breakdownA.totalPoints}/${breakdownA.maxPoints}</p>
+            <p class="show-info-sub">Correct: ${breakdownA.correctCount}/3 | Bet: ${breakdownA.betEligible ? "ON" : "OFF"}</p>
+            <p class="show-info-sub">Delta: ${formatSignedMoney(breakdownA.totalDelta)}</p>
           </article>
           <article class="show-stage-mini-card">
-            <p class="show-info-label">Franchise</p>
-            <p class="show-info-value">${breakdown.points.franchise} / ${FILM_COMPONENT_WEIGHTS.franchise}</p>
-          </article>
-          <article class="show-stage-mini-card">
-            <p class="show-info-label">Fun Fact</p>
-            <p class="show-info-value">${breakdown.points.funFact} / ${FILM_COMPONENT_WEIGHTS.funFact}</p>
+            <p class="show-info-label">${escapeHtml(state.teams.teamB.name)}</p>
+            <p class="show-info-value">${breakdownB.totalPoints}/${breakdownB.maxPoints}</p>
+            <p class="show-info-sub">Correct: ${breakdownB.correctCount}/3 | Bet: ${breakdownB.betEligible ? "ON" : "OFF"}</p>
+            <p class="show-info-sub">Delta: ${formatSignedMoney(breakdownB.totalDelta)}</p>
           </article>
         </div>
-        <p class="show-round-copy">Correct components: ${breakdown.correctCount}/3.</p>
-        <p class="show-round-copy">Bet activation: ${breakdown.betEligible ? "ON (minimum 2/3 met)" : "OFF (under 2/3)"}</p>
-        <p class="show-round-copy">Round delta: ${formatSignedMoney(breakdown.totalDelta)}.</p>
+        <p class="show-round-copy">Scoring weights: Character x1, Franchise x1, Fun Fact x3.</p>
         <p class="show-round-copy">${escapeHtml(roundState.lastResult || "Apply result to generate payout breakdown.")}</p>
       </section>
     `;
@@ -4981,24 +5296,25 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
     const roundNumber = getSamsarRoundNumber();
     const roundState = getOrCreateSamsarRoundState(roundNumber);
     const template = state.samsarGame.roundsData[roundNumber - 1];
-    const teamAOptions = state.teams.teamA.players
-      .filter((player) => player.status === "available")
+    const selectableTeamA = getSelectableGameLineupPlayers("teamA");
+    const selectableTeamB = getSelectableGameLineupPlayers("teamB");
+    const teamAOptions = selectableTeamA
       .map((player) => `<option value="${player.id}" ${roundState.activePlayerTeamAId === player.id ? "selected" : ""}>${escapeHtml(player.name)}</option>`)
       .join("");
-    const teamBOptions = state.teams.teamB.players
-      .filter((player) => player.status === "available")
+    const teamBOptions = selectableTeamB
       .map((player) => `<option value="${player.id}" ${roundState.activePlayerTeamBId === player.id ? "selected" : ""}>${escapeHtml(player.name)}</option>`)
       .join("");
     const maxBetA = Math.min(SAMSAR_STANDARD_BET, getMaxBetAmount(state.teams.teamA.money, "cel-mai-bun-samsar"));
     const maxBetB = Math.min(SAMSAR_STANDARD_BET, getMaxBetAmount(state.teams.teamB.money, "cel-mai-bun-samsar"));
-    const duelistA = state.teams.teamA.players.find((player) => player.id === roundState.activePlayerTeamAId);
-    const duelistB = state.teams.teamB.players.find((player) => player.id === roundState.activePlayerTeamBId);
+    const duelistA = selectableTeamA.find((player) => player.id === roundState.activePlayerTeamAId);
+    const duelistB = selectableTeamB.find((player) => player.id === roundState.activePlayerTeamBId);
 
     if (liveStep === "bet-screen") {
       return `
         <section class="show-stage-stack">
           <p class="show-info-label">Bet Screen</p>
           <p class="show-round-title">Round ${roundNumber} stakes</p>
+          <p class="show-round-copy">Winner gets +${formatMoney(getStandardFixedBonus("cel-mai-bun-samsar"))} bonus + bet win.</p>
           <div class="show-vs-input-grid">
             <article class="show-stage-mini-card">
               <p class="show-info-label">${escapeHtml(state.teams.teamA.name)} stake</p>
@@ -5481,6 +5797,8 @@ function buildLiveRoundQuickActions(gameId, liveStep) {
   }
 
   if (gameId === "cel-mai-bun-samsar") {
+    const roundState = getOrCreateSamsarRoundState(getSamsarRoundNumber());
+    const roundSettled = Boolean((roundState.lastResult || "").trim());
     const flowComplete = isGameFlowComplete(gameId);
     if (liveStep === "bet-screen") {
       actions.push({ tone: "primary-btn", action: "live-step-live-duel", label: "Start Live Duel" });
@@ -5488,11 +5806,13 @@ function buildLiveRoundQuickActions(gameId, liveStep) {
       actions.push({ tone: "primary-btn", action: "live-step-result-screen", label: "Go to Result" });
     } else if (liveStep === "result-screen") {
       actions.push({ tone: "primary-btn", action: "samsar-apply", label: "Apply Result" });
-      actions.push({
-        tone: "secondary-btn",
-        action: flowComplete ? "finish-game-return" : "next-round",
-        label: flowComplete ? "Finish Samsar" : "Next Round"
-      });
+      if (roundSettled) {
+        actions.push({
+          tone: "secondary-btn",
+          action: flowComplete ? "finish-game-return" : "next-round",
+          label: flowComplete ? "Finish Samsar" : "Next Round"
+        });
+      }
     }
     if (!["live-duel", "result-screen"].includes(liveStep)) {
       actions.push({ tone: "secondary-btn", action: "go-game-intro", label: "Lineup substitution" });
@@ -5501,14 +5821,22 @@ function buildLiveRoundQuickActions(gameId, liveStep) {
   }
 
   if (gameId === "guess-right-order" || gameId === "beer-pong") {
+    const roundState = getOrCreateManualMatchRoundState(gameId, state.progress.currentRound);
+    const roundSettled = Boolean((roundState.lastResult || "").trim());
+    const flowComplete = isGameFlowComplete(gameId);
     if (liveStep === "bet-screen") {
       actions.push({ tone: "primary-btn", action: "live-step-live-round", label: "Start Live Round" });
     } else if (liveStep === "live-round") {
       actions.push({ tone: "primary-btn", action: "live-step-result-screen", label: "Open Result" });
     } else if (liveStep === "result-screen") {
       actions.push({ tone: "primary-btn", action: "manual-apply", label: "Apply Result" });
-      actions.push({ tone: "secondary-btn", action: "next-round", label: "Next Round" });
-      actions.push({ tone: "secondary-btn", action: "go-end-of-game", label: "End This Game" });
+      if (roundSettled) {
+        actions.push({
+          tone: "secondary-btn",
+          action: flowComplete ? "finish-game-return" : "next-round",
+          label: flowComplete ? "Finish Game" : "Next Round"
+        });
+      }
     }
     if (!["live-round", "result-screen"].includes(liveStep)) {
       actions.push({ tone: "secondary-btn", action: "go-game-intro", label: "Lineup substitution" });
@@ -5517,14 +5845,22 @@ function buildLiveRoundQuickActions(gameId, liveStep) {
   }
 
   if (gameId === "shot-fake") {
+    const roundState = getOrCreateManualMatchRoundState(gameId, state.progress.currentRound);
+    const roundSettled = Boolean((roundState.lastResult || "").trim());
+    const flowComplete = isGameFlowComplete(gameId);
     if (liveStep === "sidebet-setup") {
       actions.push({ tone: "primary-btn", action: "live-step-live-round", label: "Start Live Round" });
     } else if (liveStep === "live-round") {
       actions.push({ tone: "primary-btn", action: "live-step-result-screen", label: "Open Settlement" });
     } else if (liveStep === "result-screen") {
       actions.push({ tone: "primary-btn", action: "manual-apply", label: "Apply Settlement" });
-      actions.push({ tone: "secondary-btn", action: "next-round", label: "Next Round" });
-      actions.push({ tone: "secondary-btn", action: "go-end-of-game", label: "End This Game" });
+      if (roundSettled) {
+        actions.push({
+          tone: "secondary-btn",
+          action: flowComplete ? "finish-game-return" : "next-round",
+          label: flowComplete ? "Finish Game" : "Next Round"
+        });
+      }
     }
     if (liveStep === "sidebet-setup") {
       actions.push({ tone: "secondary-btn", action: "go-game-intro", label: "Lineup substitution" });
@@ -5533,6 +5869,9 @@ function buildLiveRoundQuickActions(gameId, liveStep) {
   }
 
   if (gameId === "curse-de-cai") {
+    const roundState = getOrCreateCurseRoundState(state.progress.currentRound);
+    const raceSettled = Boolean(roundState.payoutApplied);
+    const flowComplete = isGameFlowComplete(gameId);
     if (liveStep === "race-intro") {
       actions.push({ tone: "primary-btn", action: "live-step-bet-screen", label: "Go to Bets" });
     } else if (liveStep === "bet-screen") {
@@ -5546,8 +5885,13 @@ function buildLiveRoundQuickActions(gameId, liveStep) {
       actions.push({ tone: "secondary-btn", action: "live-step-race-screen", label: "Back to Race" });
     } else if (liveStep === "payout-screen") {
       actions.push({ tone: "primary-btn", action: "curse-apply", label: "Apply Payout" });
-      actions.push({ tone: "secondary-btn", action: "next-round", label: "Next Race" });
-      actions.push({ tone: "secondary-btn", action: "go-end-of-game", label: "End This Game" });
+      if (raceSettled) {
+        actions.push({
+          tone: "secondary-btn",
+          action: flowComplete ? "finish-game-return" : "next-round",
+          label: flowComplete ? "Finish Game" : "Next Race"
+        });
+      }
     }
     if (!["race-screen", "winner-screen", "payout-screen"].includes(liveStep)) {
       actions.push({ tone: "secondary-btn", action: "go-game-intro", label: "Lineup substitution" });
@@ -6679,12 +7023,14 @@ function handleShowOverlayChange(target) {
     return;
   }
   if (target.matches("[data-show-trivia-bonus]")) {
-    state.trivia.fixedBonus = Math.max(0, Math.round(sanitizeNumber(target.value, state.trivia.fixedBonus)));
+    state.trivia.fixedBonus = getStandardFixedBonus("trivia");
     if (elements.triviaFixedBonusInput) {
       elements.triviaFixedBonusInput.value = String(state.trivia.fixedBonus);
+      elements.triviaFixedBonusInput.disabled = true;
     }
+    setLastResultSummary(`Trivia fixed bonus is locked at ${formatMoney(state.trivia.fixedBonus)}.`);
     renderTriviaControls();
-    saveState("Trivia bonus adjusted from overlay.");
+    saveState("Trivia fixed bonus remains locked.");
     return;
   }
   if (target.matches("[data-show-pretul-item]")) {
@@ -6709,6 +7055,11 @@ function handleShowOverlayChange(target) {
   }
   if (target.matches("[data-show-film-item]")) {
     setFilmSelectedItem(target.value);
+    return;
+  }
+  if (target.matches("[data-show-film-bet-team]")) {
+    const teamKey = target.getAttribute("data-team");
+    setFilmTeamBet(teamKey, target.value);
     return;
   }
   if (target.matches("[data-show-film-bet]")) {
@@ -6895,11 +7246,19 @@ function handleShowOverlayClick(event) {
   const outcomeButton = event.target.closest("[data-show-film-outcome]");
   if (outcomeButton) {
     const value = outcomeButton.getAttribute("data-show-film-outcome") || "";
-    const [componentKey, outcome] = value.split(":");
+    const parts = value.split(":");
+    let teamKey = null;
+    let componentKey = "";
+    let outcome = "";
+    if (parts.length === 3 && ["teamA", "teamB"].includes(parts[0])) {
+      [teamKey, componentKey, outcome] = parts;
+    } else {
+      [componentKey, outcome] = parts;
+    }
     if (!FILM_COMPONENT_KEYS.includes(componentKey)) {
       return;
     }
-    setFilmComponentOutcome(componentKey, outcome === "correct" ? "correct" : "wrong");
+    setFilmComponentOutcome(componentKey, outcome === "correct" ? "correct" : "wrong", teamKey);
     return;
   }
 
@@ -7139,20 +7498,23 @@ function renderSettingsRulesSnapshot() {
   }
 
   const betCapsSummary = GAME_CONFIG.map((game) => `${game.label}: ${game.maxBetPercent}%`).join(" | ");
-  const triviaBonus = Math.max(0, Math.round(sanitizeNumber(state.trivia.fixedBonus, 0)));
 
   elements.settingsBetCapsLine.textContent = `Bet caps: ${betCapsSummary} (all rounded to ${BET_ROUNDING_STEP}).`;
   elements.settingsBonusesLine.textContent =
-    `Fixed bonus: Trivia +${formatMoney(triviaBonus)} on correct answer. ` +
-    "No fixed bonus for Guess the Right Order, Pretul corect, Film/Joc/Franciza/Fun Fact, Cel mai bun samsar, Beer Pong, Shot Fake, or Curse de cai.";
+    `Fixed bonuses: Trivia +${formatMoney(getStandardFixedBonus("trivia"))}, Guess the Right Order +${formatMoney(
+      getStandardFixedBonus("guess-right-order")
+    )}, Pretul corect +${formatMoney(getStandardFixedBonus("pretul-corect"))}, Cel mai bun samsar +${formatMoney(
+      getStandardFixedBonus("cel-mai-bun-samsar")
+    )}, Beer Pong +${formatMoney(getStandardFixedBonus("beer-pong"))}. ` +
+    "Shot Fake and Curse de cai are bet-only (no fixed bonus).";
   elements.settingsTriviaRuleLine.textContent =
     "Trivia de grup: one-team-per-round with automatic turn switch. Active team picks a multiple-choice topic, places bet, answers under timer, and result is auto-checked.";
   elements.settingsPretulRuleLine.textContent =
     "Pretul corect: both teams submit answer + bet, and winner is auto-detected by closest value to real price; equal distance is tie.";
   elements.settingsFilmRuleLine.textContent =
-    "Film/Joc/Franciza/Fun Fact: one-team-only, component weights 1/1/3, partial payout per component, and bet is active only at minimum 2/3 correct.";
+    "Film/Joc/Franciza/Fun Fact: team-vs-team, component weights 1/1/3, partial payout per team, and each team bet is active only at minimum 2/3 correct.";
   elements.settingsSamsarRuleLine.textContent =
-    "Cel mai bun samsar: 6 rounds cu persona/cerinte editabile, no link fields, one active player selector per team, higher score wins, equal score draw.";
+    "Cel mai bun samsar: 6 rounds cu persona/cerinte editabile, no link fields, one duelist per team, higher score wins, equal score draw, payout standard + fixed bonus.";
   elements.settingsShotFakeRuleLine.textContent =
     "Shot Fake: bet-only team-vs-team mode with no fixed bonus, draw allowed, multiple side bets, and special x * active opponents transfer.";
   elements.settingsCurseRuleLine.textContent =
@@ -7208,8 +7570,10 @@ function renderTriviaControls() {
     elements.triviaCategorySelect.value = triviaRoundState.selectedCategoryId;
   }
 
-  const bonus = Math.max(0, Math.round(sanitizeNumber(state.trivia.fixedBonus, 100)));
+  const bonus = getStandardFixedBonus("trivia");
+  state.trivia.fixedBonus = bonus;
   elements.triviaFixedBonusInput.value = String(bonus);
+  elements.triviaFixedBonusInput.disabled = true;
   elements.triviaBetAmountInput.value = String(normalizedBet);
   elements.triviaBetRuleInfo.textContent =
     `Only ${playingTeam.name} can bet this Trivia round (auto turn mode). Max 10% and rounded to 10. ` +
@@ -7365,6 +7729,7 @@ function renderPretulControls() {
     roundState.lastResult || "Rezultatul rundei va aparea aici.";
   elements.pretulRuleInfo.textContent =
     `Auto winner = closest answer to real price. Tie when distances are equal. ` +
+    `Winner payout: +${formatMoney(getStandardFixedBonus("pretul-corect"))} bonus + bet win. ` +
     `Bet cap is 15%, rounded to ${BET_ROUNDING_STEP}. ` +
     `${teamA.name} max now: ${formatMoney(maxBetA)} | ${teamB.name} max now: ${formatMoney(maxBetB)}.`;
 
@@ -7412,8 +7777,8 @@ function setPretulSelectedItem(itemId) {
   saveState("Pretul item selected.");
 }
 
-function updatePretulRoundInputs() {
-  const roundState = getOrCreatePretulRoundState();
+function updatePretulRoundInputs(roundStateInput = null) {
+  const roundState = roundStateInput || getOrCreatePretulRoundState();
   const teamA = state.teams.teamA;
   const teamB = state.teams.teamB;
   const maxBetA = getMaxBetAmount(teamA.money, "pretul-corect");
@@ -7473,7 +7838,7 @@ function applyPretulRoundResult() {
   }
 
   const roundState = getOrCreatePretulRoundState();
-  updatePretulRoundInputs();
+  updatePretulRoundInputs(roundState);
 
   const selectedItemId = roundState.selectedItemId;
   if (!selectedItemId) {
@@ -7491,6 +7856,7 @@ function applyPretulRoundResult() {
   const distanceB = Math.abs(answerB - realPrice);
   const maxBetA = getMaxBetAmount(state.teams.teamA.money, "pretul-corect");
   const maxBetB = getMaxBetAmount(state.teams.teamB.money, "pretul-corect");
+  const fixedBonus = getStandardFixedBonus("pretul-corect");
   const betA = Math.min(roundState.betTeamA, maxBetA);
   const betB = Math.min(roundState.betTeamB, maxBetB);
 
@@ -7510,23 +7876,25 @@ function applyPretulRoundResult() {
       `Tie on ${itemLabel}: ${state.teams.teamA.name} and ${state.teams.teamB.name} are both ` +
       `${formatMoney(distanceA)} away from ${formatMoney(realPrice)}. No payout applied.`;
   } else if (distanceA < distanceB) {
-    state.teams.teamA.money += betA;
+    state.teams.teamA.money += fixedBonus + betA;
     state.teams.teamB.money = Math.max(0, state.teams.teamB.money - betB);
     winnerTeam = "teamA";
-    deltaA = betA;
+    deltaA = fixedBonus + betA;
     deltaB = -betB;
     resultText =
       `${state.teams.teamA.name} wins ${itemLabel}: distance ${formatMoney(distanceA)} vs ${formatMoney(distanceB)}. ` +
-      `${state.teams.teamA.name} +${formatMoney(betA)}, ${state.teams.teamB.name} -${formatMoney(betB)}.`;
+      `${state.teams.teamA.name} +${formatMoney(fixedBonus)} bonus +${formatMoney(betA)} bet, ` +
+      `${state.teams.teamB.name} -${formatMoney(betB)}.`;
   } else {
-    state.teams.teamB.money += betB;
+    state.teams.teamB.money += fixedBonus + betB;
     state.teams.teamA.money = Math.max(0, state.teams.teamA.money - betA);
     winnerTeam = "teamB";
     deltaA = -betA;
-    deltaB = betB;
+    deltaB = fixedBonus + betB;
     resultText =
       `${state.teams.teamB.name} wins ${itemLabel}: distance ${formatMoney(distanceB)} vs ${formatMoney(distanceA)}. ` +
-      `${state.teams.teamB.name} +${formatMoney(betB)}, ${state.teams.teamA.name} -${formatMoney(betA)}.`;
+      `${state.teams.teamB.name} +${formatMoney(fixedBonus)} bonus +${formatMoney(betB)} bet, ` +
+      `${state.teams.teamA.name} -${formatMoney(betA)}.`;
   }
 
   const teamAOutcome = getOutcomeForTeamFromWinner(winnerTeam, "teamA");
@@ -7569,16 +7937,20 @@ function applyPretulRoundResult() {
   return true;
 }
 
-function getFilmRoundBreakdown(roundState, betAmount) {
+function getFilmRoundBreakdown(roundState, betAmount, teamKey = roundState?.teamKey || "teamA") {
+  const sourceOutcomes =
+    roundState?.outcomesByTeam?.[teamKey] && typeof roundState.outcomesByTeam[teamKey] === "object"
+      ? roundState.outcomesByTeam[teamKey]
+      : roundState?.outcomes || {};
   const points = {
-    character: roundState.outcomes.character === "correct" ? FILM_COMPONENT_WEIGHTS.character : 0,
-    franchise: roundState.outcomes.franchise === "correct" ? FILM_COMPONENT_WEIGHTS.franchise : 0,
-    funFact: roundState.outcomes.funFact === "correct" ? FILM_COMPONENT_WEIGHTS.funFact : 0
+    character: sourceOutcomes.character === "correct" ? FILM_COMPONENT_WEIGHTS.character : 0,
+    franchise: sourceOutcomes.franchise === "correct" ? FILM_COMPONENT_WEIGHTS.franchise : 0,
+    funFact: sourceOutcomes.funFact === "correct" ? FILM_COMPONENT_WEIGHTS.funFact : 0
   };
   const totalPoints = points.character + points.franchise + points.funFact;
   const maxPoints = FILM_COMPONENT_WEIGHTS.character + FILM_COMPONENT_WEIGHTS.franchise + FILM_COMPONENT_WEIGHTS.funFact;
   const correctCount = FILM_COMPONENT_KEYS.reduce((count, key) => {
-    return count + (roundState.outcomes[key] === "correct" ? 1 : 0);
+    return count + (sourceOutcomes[key] === "correct" ? 1 : 0);
   }, 0);
   const betEligible = correctCount >= 2;
   const componentPayout = Math.max(0, Math.round((betAmount * totalPoints) / maxPoints));
@@ -7651,8 +8023,17 @@ function renderFilmControls() {
   const playingTeamKey = ["teamA", "teamB"].includes(roundState.teamKey) ? roundState.teamKey : "teamA";
   roundState.teamKey = playingTeamKey;
   const playingTeam = state.teams[playingTeamKey];
+  const otherTeamKey = playingTeamKey === "teamA" ? "teamB" : "teamA";
+  const otherTeam = state.teams[otherTeamKey];
   const maxBet = getMaxBetAmount(playingTeam.money, "film-joc-franciza-fun-fact");
-  roundState.betAmount = maxBet <= 0 ? 0 : Math.min(normalizeBetAmount(roundState.betAmount), maxBet);
+  if (playingTeamKey === "teamA") {
+    roundState.betTeamA = maxBet <= 0 ? 0 : Math.min(normalizeBetAmount(roundState.betTeamA), maxBet);
+    roundState.betAmount = roundState.betTeamA;
+  } else {
+    roundState.betTeamB = maxBet <= 0 ? 0 : Math.min(normalizeBetAmount(roundState.betTeamB), maxBet);
+    roundState.betAmount = roundState.betTeamB;
+  }
+  roundState.outcomes = { ...roundState.outcomesByTeam[playingTeamKey] };
 
   elements.filmPlayingTeamSelect.options[0].text = state.teams.teamA.name;
   elements.filmPlayingTeamSelect.options[1].text = state.teams.teamB.name;
@@ -7694,7 +8075,7 @@ function renderFilmControls() {
   renderFilmOutcomeStatus(elements.filmStatusFranchise, roundState.outcomes.franchise);
   renderFilmOutcomeStatus(elements.filmStatusFunFact, roundState.outcomes.funFact);
 
-  const breakdown = getFilmRoundBreakdown(roundState, roundState.betAmount);
+  const breakdown = getFilmRoundBreakdown(roundState, roundState.betAmount, playingTeamKey);
   const betDeltaLabel = breakdown.betDelta >= 0 ? `+${formatMoney(breakdown.betDelta)}` : `-${formatMoney(Math.abs(breakdown.betDelta))}`;
   const totalDeltaLabel =
     breakdown.totalDelta >= 0 ? `+${formatMoney(breakdown.totalDelta)}` : `-${formatMoney(Math.abs(breakdown.totalDelta))}`;
@@ -7706,16 +8087,17 @@ function renderFilmControls() {
   elements.filmCorrectCount.textContent = `${breakdown.correctCount} / 3`;
   elements.filmBetEligibility.textContent = breakdown.betEligible ? "Bet active" : "Bet inactive";
   elements.filmRuleInfo.textContent =
-    `Weights: Character/Title x1, Franchise x1, Fun Fact x3. Component payout preview: +${formatMoney(
+    `Weights: Character/Title x1, Franchise x1, Fun Fact x3. Component payout preview (${playingTeam.name}): +${formatMoney(
       breakdown.componentPayout
     )}. Bet preview: ${betDeltaLabel}. Net preview: ${totalDeltaLabel}. ` +
-    `Bet cap is 15%, rounded to ${BET_ROUNDING_STEP}. Max now for ${playingTeam.name}: ${formatMoney(maxBet)}.`;
+    `Bet cap is 15%, rounded to ${BET_ROUNDING_STEP}. ${playingTeam.name} max now: ${formatMoney(maxBet)} | ` +
+    `${otherTeam.name} max now: ${formatMoney(getMaxBetAmount(otherTeam.money, "film-joc-franciza-fun-fact"))}.`;
   elements.filmRoundResult.textContent = roundState.lastResult || "Rezultatul rundei va aparea aici.";
 
   const activeCount = countActiveWithJoker(playingTeamKey);
   elements.filmActiveSelectionInfo.textContent =
-    `${playingTeam.name} is active for this round (${activeCount}/${MAX_ACTIVE_PER_TEAM}). ` +
-    `Only this team can be selected while this game is active.`;
+    `${playingTeam.name} lineup for this game: ${activeCount}/${MAX_ACTIVE_PER_TEAM} active. ` +
+    `Lineup stays fixed for the whole mini-game unless host override is used.`;
   const hasAnyActive =
     state.roundSelection.activeByTeam[playingTeamKey].length > 0;
   elements.filmClearActiveBtn.disabled = state.roundSelection.locked || !hasAnyActive;
@@ -7773,6 +8155,8 @@ function setFilmPlayingTeam(teamKey) {
 
   const roundState = getOrCreateFilmRoundState();
   roundState.teamKey = teamKey;
+  roundState.betAmount = teamKey === "teamA" ? roundState.betTeamA : roundState.betTeamB;
+  roundState.outcomes = { ...roundState.outcomesByTeam[teamKey] };
   saveCurrentRoundSnapshot();
   renderRoundSelection();
   renderFilmControls();
@@ -7795,6 +8179,18 @@ function setFilmSelectedItem(itemId) {
     franchise: false,
     funFact: false
   };
+  roundState.outcomesByTeam = {
+    teamA: {
+      character: null,
+      franchise: null,
+      funFact: null
+    },
+    teamB: {
+      character: null,
+      franchise: null,
+      funFact: null
+    }
+  };
   roundState.outcomes = {
     character: null,
     franchise: null,
@@ -7807,8 +8203,36 @@ function setFilmSelectedItem(itemId) {
 
 function setFilmBetAmount(rawBetAmount) {
   const roundState = getOrCreateFilmRoundState();
-  const maxBet = getMaxBetAmount(state.teams[roundState.teamKey].money, "film-joc-franciza-fun-fact");
-  roundState.betAmount = maxBet <= 0 ? 0 : Math.min(normalizeBetAmount(rawBetAmount), maxBet);
+  const teamKey = roundState.teamKey;
+  const maxBet = getMaxBetAmount(state.teams[teamKey].money, "film-joc-franciza-fun-fact");
+  const normalized = maxBet <= 0 ? 0 : Math.min(normalizeBetAmount(rawBetAmount), maxBet);
+  if (teamKey === "teamA") {
+    roundState.betTeamA = normalized;
+  } else {
+    roundState.betTeamB = normalized;
+  }
+  roundState.betAmount = normalized;
+  roundState.outcomes = { ...roundState.outcomesByTeam[teamKey] };
+  renderFilmControls();
+  saveState("Film round bet adjusted.");
+}
+
+function setFilmTeamBet(teamKey, rawBetAmount) {
+  if (!["teamA", "teamB"].includes(teamKey)) {
+    return;
+  }
+  const roundState = getOrCreateFilmRoundState();
+  const maxBet = getMaxBetAmount(state.teams[teamKey].money, "film-joc-franciza-fun-fact");
+  const normalized = maxBet <= 0 ? 0 : Math.min(normalizeBetAmount(rawBetAmount), maxBet);
+  if (teamKey === "teamA") {
+    roundState.betTeamA = normalized;
+  } else {
+    roundState.betTeamB = normalized;
+  }
+  if (roundState.teamKey === teamKey) {
+    roundState.betAmount = normalized;
+    roundState.outcomes = { ...roundState.outcomesByTeam[teamKey] };
+  }
   renderFilmControls();
   saveState("Film round bet adjusted.");
 }
@@ -7823,7 +8247,7 @@ function toggleFilmReveal(componentKey) {
   saveState("Film component reveal toggled.");
 }
 
-function setFilmComponentOutcome(componentKey, nextOutcome) {
+function setFilmComponentOutcome(componentKey, nextOutcome, teamKey = null) {
   if (!FILM_COMPONENT_KEYS.includes(componentKey)) {
     return;
   }
@@ -7831,7 +8255,11 @@ function setFilmComponentOutcome(componentKey, nextOutcome) {
     return;
   }
   const roundState = getOrCreateFilmRoundState();
-  roundState.outcomes[componentKey] = nextOutcome;
+  const targetTeam = ["teamA", "teamB"].includes(teamKey) ? teamKey : roundState.teamKey;
+  roundState.outcomesByTeam[targetTeam][componentKey] = nextOutcome;
+  if (targetTeam === roundState.teamKey) {
+    roundState.outcomes[componentKey] = nextOutcome;
+  }
   renderFilmControls();
   saveState("Film component outcome updated.");
 }
@@ -7857,10 +8285,25 @@ function resetFilmUsedItems() {
   const roundState = getOrCreateFilmRoundState();
   roundState.usedItemIds = [];
   roundState.selectedItemId = state.filmGame.items[0]?.id || "";
+  roundState.betTeamA = 100;
+  roundState.betTeamB = 100;
+  roundState.betAmount = roundState.teamKey === "teamA" ? roundState.betTeamA : roundState.betTeamB;
   roundState.revealed = {
     character: false,
     franchise: false,
     funFact: false
+  };
+  roundState.outcomesByTeam = {
+    teamA: {
+      character: null,
+      franchise: null,
+      funFact: null
+    },
+    teamB: {
+      character: null,
+      franchise: null,
+      funFact: null
+    }
   };
   roundState.outcomes = {
     character: null,
@@ -7905,72 +8348,72 @@ function applyFilmRoundResult() {
     return false;
   }
 
-  const missingComponents = FILM_COMPONENT_KEYS.filter((key) => roundState.outcomes[key] === null);
-  if (missingComponents.length > 0) {
-    const missingLabel = missingComponents.join(", ");
-    roundState.lastResult = `Mark all components before payout. Missing: ${missingLabel}.`;
+  const maxBetA = getMaxBetAmount(state.teams.teamA.money, "film-joc-franciza-fun-fact");
+  const maxBetB = getMaxBetAmount(state.teams.teamB.money, "film-joc-franciza-fun-fact");
+  roundState.betTeamA = maxBetA <= 0 ? 0 : Math.min(normalizeBetAmount(roundState.betTeamA), maxBetA);
+  roundState.betTeamB = maxBetB <= 0 ? 0 : Math.min(normalizeBetAmount(roundState.betTeamB), maxBetB);
+  roundState.betAmount = roundState.teamKey === "teamA" ? roundState.betTeamA : roundState.betTeamB;
+  roundState.outcomes = { ...roundState.outcomesByTeam[roundState.teamKey] };
+
+  const missingByTeam = ["teamA", "teamB"]
+    .map((teamKey) => {
+      const missingComponents = FILM_COMPONENT_KEYS.filter(
+        (key) => roundState.outcomesByTeam?.[teamKey]?.[key] === null
+      );
+      return missingComponents.length > 0 ? `${state.teams[teamKey].name}: ${missingComponents.join(", ")}` : "";
+    })
+    .filter(Boolean);
+  if (missingByTeam.length > 0) {
+    roundState.lastResult = `Mark all 3 components for both teams before payout. Missing -> ${missingByTeam.join(" | ")}.`;
     renderFilmControls();
     setLastResultSummary(roundState.lastResult);
     saveState("Film round blocked: incomplete outcomes.");
     return false;
   }
 
-  const playingTeam = state.teams[roundState.teamKey];
-  const maxBet = getMaxBetAmount(playingTeam.money, "film-joc-franciza-fun-fact");
-  if (maxBet <= 0) {
-    roundState.lastResult = `${playingTeam.name} cannot place a Film/Joc bet right now (max allowed is 0).`;
-    renderFilmControls();
-    setLastResultSummary(roundState.lastResult);
-    saveState("Film round blocked: bet cap zero.");
-    return false;
-  }
-
-  const effectiveBet = Math.min(roundState.betAmount, maxBet);
-  roundState.betAmount = effectiveBet;
-  const breakdown = getFilmRoundBreakdown(roundState, effectiveBet);
+  const breakdownA = getFilmRoundBreakdown(roundState, roundState.betTeamA, "teamA");
+  const breakdownB = getFilmRoundBreakdown(roundState, roundState.betTeamB, "teamB");
 
   pushResultUndoSnapshot("Film/Joc/Franciza/Fun Fact round result");
-  const moneyBefore = playingTeam.money;
-  playingTeam.money = Math.max(0, playingTeam.money + breakdown.totalDelta);
-  const appliedDelta = playingTeam.money - moneyBefore;
-  const roundOutcome = appliedDelta > 0 ? "win" : appliedDelta < 0 ? "loss" : "draw";
-  const betOutcome = effectiveBet > 0 ? (breakdown.betEligible ? "win" : "loss") : "draw";
-  const playingParticipants = getActiveParticipantsForTeam(roundState.teamKey);
-  const teamPayload = {
-    participants: playingParticipants,
-    roundOutcome,
-    teamNetDelta: appliedDelta,
-    teamBetAmount: effectiveBet,
-    betOutcome
-  };
+  const moneyBeforeA = state.teams.teamA.money;
+  const moneyBeforeB = state.teams.teamB.money;
+  state.teams.teamA.money = Math.max(0, state.teams.teamA.money + breakdownA.totalDelta);
+  state.teams.teamB.money = Math.max(0, state.teams.teamB.money + breakdownB.totalDelta);
+  const appliedDeltaA = state.teams.teamA.money - moneyBeforeA;
+  const appliedDeltaB = state.teams.teamB.money - moneyBeforeB;
+
+  const roundOutcomeA = appliedDeltaA > appliedDeltaB ? "win" : appliedDeltaA < appliedDeltaB ? "loss" : "draw";
+  const roundOutcomeB = roundOutcomeA === "win" ? "loss" : roundOutcomeA === "loss" ? "win" : "draw";
+  const betOutcomeA = roundState.betTeamA > 0 ? (breakdownA.betEligible ? "win" : "loss") : "draw";
+  const betOutcomeB = roundState.betTeamB > 0 ? (breakdownB.betEligible ? "win" : "loss") : "draw";
+
   applyRoundPlayerStats({
     gameId: "film-joc-franciza-fun-fact",
-    teamA: roundState.teamKey === "teamA" ? teamPayload : null,
-    teamB: roundState.teamKey === "teamB" ? teamPayload : null
+    teamA: {
+      participants: getActiveParticipantsForTeam("teamA"),
+      roundOutcome: roundOutcomeA,
+      teamNetDelta: appliedDeltaA,
+      teamBetAmount: roundState.betTeamA,
+      betOutcome: betOutcomeA
+    },
+    teamB: {
+      participants: getActiveParticipantsForTeam("teamB"),
+      roundOutcome: roundOutcomeB,
+      teamNetDelta: appliedDeltaB,
+      teamBetAmount: roundState.betTeamB,
+      betOutcome: betOutcomeB
+    }
   });
 
   if (!roundState.usedItemIds.includes(selectedItem.id)) {
     roundState.usedItemIds.push(selectedItem.id);
   }
-  const nextAvailable = state.filmGame.items.find((item) => !roundState.usedItemIds.includes(item.id));
-  roundState.selectedItemId = nextAvailable?.id || "";
-  roundState.revealed = {
-    character: false,
-    franchise: false,
-    funFact: false
-  };
-  roundState.outcomes = {
-    character: null,
-    franchise: null,
-    funFact: null
-  };
 
-  const componentText = `components ${breakdown.totalPoints}/${breakdown.maxPoints} (correct ${breakdown.correctCount}/3)`;
-  const componentPayoutText = `component payout +${formatMoney(breakdown.componentPayout)}`;
-  const betResultText = breakdown.betEligible ? `bet +${formatMoney(effectiveBet)} (2/3 rule met)` : `bet -${formatMoney(effectiveBet)} (under 2/3)`;
-  const totalText = appliedDelta >= 0 ? `total +${formatMoney(appliedDelta)}` : `total -${formatMoney(Math.abs(appliedDelta))}`;
   roundState.lastResult =
-    `${playingTeam.name} on ${selectedItem.title}: ${componentText}; ${componentPayoutText}; ${betResultText}; ${totalText}.`;
+    `${selectedItem.title}: ${state.teams.teamA.name} ${breakdownA.totalPoints}/${breakdownA.maxPoints} ` +
+    `(bet ${breakdownA.betEligible ? "ON" : "OFF"}) => ${formatSignedMoney(appliedDeltaA)} | ` +
+    `${state.teams.teamB.name} ${breakdownB.totalPoints}/${breakdownB.maxPoints} ` +
+    `(bet ${breakdownB.betEligible ? "ON" : "OFF"}) => ${formatSignedMoney(appliedDeltaB)}.`;
 
   saveCurrentRoundSnapshot();
   setLastResultSummary(roundState.lastResult);
@@ -8005,8 +8448,8 @@ function renderSamsarControls() {
   };
   const roundState = getOrCreateSamsarRoundState(roundNumber);
 
-  const availableTeamA = state.teams.teamA.players.filter((player) => player.status === "available");
-  const availableTeamB = state.teams.teamB.players.filter((player) => player.status === "available");
+  const availableTeamA = getSelectableGameLineupPlayers("teamA");
+  const availableTeamB = getSelectableGameLineupPlayers("teamB");
 
   if (!availableTeamA.some((player) => player.id === roundState.activePlayerTeamAId)) {
     roundState.activePlayerTeamAId = "";
@@ -8042,10 +8485,10 @@ function renderSamsarControls() {
   const maxBetB = getMaxBetAmount(state.teams.teamB.money, "cel-mai-bun-samsar");
   const stakeA = maxBetA <= 0 ? 0 : Math.min(SAMSAR_STANDARD_BET, maxBetA);
   const stakeB = maxBetB <= 0 ? 0 : Math.min(SAMSAR_STANDARD_BET, maxBetB);
+  const fixedBonus = getStandardFixedBonus("cel-mai-bun-samsar");
   elements.samsarRuleInfo.textContent =
-    `Rule: higher score wins, equal score is draw. Standard Samsar payout uses base ${formatMoney(
-      SAMSAR_STANDARD_BET
-    )}, capped at 20% per team. ` +
+    `Rule: higher score wins, equal score is draw. Winner gets +${formatMoney(fixedBonus)} bonus + bet win. ` +
+    `Base bet ${formatMoney(SAMSAR_STANDARD_BET)}, capped at 20% per team. ` +
     `${state.teams.teamA.name} stake now: ${formatMoney(stakeA)} | ${state.teams.teamB.name} stake now: ${formatMoney(stakeB)}.`;
   elements.samsarRoundResult.textContent = roundState.lastResult || "Rezultatul rundei va aparea aici.";
 
@@ -8079,9 +8522,10 @@ function setSamsarActivePlayer(teamKey, playerId) {
     return;
   }
 
-  const player = state.teams[teamKey].players.find((entry) => entry.id === playerId);
+  const allowedPlayers = getSelectableGameLineupPlayers(teamKey);
+  const player = allowedPlayers.find((entry) => entry.id === playerId);
   if (!player || player.status !== "available") {
-    setLastResultSummary("Selected player is not available for this round.");
+    setLastResultSummary("Selected player is not available in current game lineup.");
     renderSamsarControls();
     saveState("Samsar active player rejected.");
     return;
@@ -8107,7 +8551,11 @@ function setSamsarScore(teamKey, rawScore) {
 }
 
 function goToSamsarRound(roundNumber) {
-  const targetRound = clampNumber(Math.round(sanitizeNumber(roundNumber, 1)), 1, 6);
+  const targetRound = clampNumber(
+    Math.round(sanitizeNumber(roundNumber, 1)),
+    1,
+    getGameRoundLimit("cel-mai-bun-samsar")
+  );
   switchRoundContext("cel-mai-bun-samsar", targetRound, { navigateToSection: false });
   setLastResultSummary(`Samsar round changed to ${targetRound}.`);
   renderAll();
@@ -8136,23 +8584,25 @@ function applySamsarRoundResult() {
   pushResultUndoSnapshot("Cel mai bun samsar round result");
 
   if (roundState.scoreTeamA > roundState.scoreTeamB) {
-    state.teams.teamA.money += stakeA;
+    state.teams.teamA.money += fixedBonus + stakeA;
     state.teams.teamB.money = Math.max(0, state.teams.teamB.money - stakeB);
     winnerTeam = "teamA";
-    deltaA = stakeA;
+    deltaA = fixedBonus + stakeA;
     deltaB = -stakeB;
     resultText =
       `${state.teams.teamA.name} wins Samsar round ${roundNumber} (${roundState.scoreTeamA} - ${roundState.scoreTeamB}). ` +
-      `${state.teams.teamA.name} +${formatMoney(stakeA)}, ${state.teams.teamB.name} -${formatMoney(stakeB)}.`;
+      `${state.teams.teamA.name} +${formatMoney(fixedBonus)} bonus +${formatMoney(stakeA)} bet, ` +
+      `${state.teams.teamB.name} -${formatMoney(stakeB)}.`;
   } else if (roundState.scoreTeamB > roundState.scoreTeamA) {
-    state.teams.teamB.money += stakeB;
+    state.teams.teamB.money += fixedBonus + stakeB;
     state.teams.teamA.money = Math.max(0, state.teams.teamA.money - stakeA);
     winnerTeam = "teamB";
     deltaA = -stakeA;
-    deltaB = stakeB;
+    deltaB = fixedBonus + stakeB;
     resultText =
       `${state.teams.teamB.name} wins Samsar round ${roundNumber} (${roundState.scoreTeamB} - ${roundState.scoreTeamA}). ` +
-      `${state.teams.teamB.name} +${formatMoney(stakeB)}, ${state.teams.teamA.name} -${formatMoney(stakeA)}.`;
+      `${state.teams.teamB.name} +${formatMoney(fixedBonus)} bonus +${formatMoney(stakeB)} bet, ` +
+      `${state.teams.teamA.name} -${formatMoney(stakeA)}.`;
   } else {
     resultText =
       `Samsar round ${roundNumber} is draw (${roundState.scoreTeamA} - ${roundState.scoreTeamB}). ` +
@@ -8287,11 +8737,12 @@ function calculateManualMatchSettlement(gameId, roundState) {
     return paid;
   };
 
+  const fixedBonus = gameId === "shot-fake" ? 0 : getStandardFixedBonus(gameId);
   if (winner === "teamA") {
-    addToTeam("teamA", effectiveBetA);
+    addToTeam("teamA", fixedBonus + effectiveBetA);
     deductFromTeam("teamB", effectiveBetB);
   } else if (winner === "teamB") {
-    addToTeam("teamB", effectiveBetB);
+    addToTeam("teamB", fixedBonus + effectiveBetB);
     deductFromTeam("teamA", effectiveBetA);
   }
 
@@ -8330,6 +8781,7 @@ function calculateManualMatchSettlement(gameId, roundState) {
 
   return {
     winner,
+    fixedBonus,
     maxBetA,
     maxBetB,
     effectiveBetA,
@@ -8443,11 +8895,12 @@ function renderManualMatchControls() {
       `Shot Fake max bet: Team 1 ${formatMoney(settlement.maxBetA)}, Team 2 ${formatMoney(settlement.maxBetB)}. ` +
       "Draw is allowed. Bet-only mode (no fixed bonus) with base bets + side bets + special x * active opponents transfer.";
   } else {
+    const fixedBonus = getStandardFixedBonus(gameId);
     elements.manualBetRuleInfo.textContent =
       `${getGameLabel(gameId)} max bet: Team 1 ${formatMoney(settlement.maxBetA)}, Team 2 ${formatMoney(
         settlement.maxBetB
       )}. ` +
-      "Draw is allowed. Standard payout applies.";
+      `Draw is allowed. Standard payout applies (+${formatMoney(fixedBonus)} winner bonus + bet win).`;
   }
   elements.manualRoundResult.textContent = roundState.lastResult || "Rezultatul rundei va aparea aici.";
 
@@ -8490,14 +8943,19 @@ function setManualMatchGame(gameId) {
     return;
   }
   state.manualMatch.selectedGame = gameId;
-  setCurrentGame(gameId, { keepRound: true, navigateToSection: false });
+  setCurrentGame(gameId, { keepRound: false, navigateToSection: false });
   renderManualMatchControls();
   saveState(`Manual game changed: ${getGameLabel(gameId)}.`);
 }
 
 function setManualMatchRound(rawRoundValue) {
-  const roundNumber = Math.max(1, Math.round(sanitizeNumber(rawRoundValue, state.progress.currentRound)));
   const targetGame = getCurrentManualMatchGame();
+  const maxRounds = getGameRoundLimit(targetGame);
+  const roundNumber = clampNumber(
+    Math.max(1, Math.round(sanitizeNumber(rawRoundValue, state.progress.currentRound))),
+    1,
+    maxRounds
+  );
   if (!isManualMatchGame(state.progress.currentGame)) {
     switchRoundContext(targetGame, roundNumber, { navigateToSection: false });
     setLastResultSummary(`Round set to ${roundNumber} for ${getGameLabel(targetGame)}.`);
@@ -8682,6 +9140,8 @@ function applyManualMatchRoundResult() {
     gameId === "shot-fake"
       ? ` Special transfer: ${formatMoney(settlement.specialTransfer)} (${settlement.activeCountA} vs ${settlement.activeCountB} active).`
       : "";
+  const standardBonusSuffix =
+    settlement.fixedBonus > 0 ? ` Fixed winner bonus: ${formatMoney(settlement.fixedBonus)}.` : "";
 
   const teamAOutcome = getOutcomeForTeamFromWinner(settlement.winner, "teamA");
   const teamBOutcome = getOutcomeForTeamFromWinner(settlement.winner, "teamB");
@@ -8705,7 +9165,7 @@ function applyManualMatchRoundResult() {
 
   roundState.lastResult =
     `${getGameLabel(gameId)} round ${state.progress.currentRound}: ${winnerLabel} ` +
-    `(${roundState.scoreTeamA}-${roundState.scoreTeamB}). Team 1 ${deltaLabelA}, Team 2 ${deltaLabelB}.${shotFakeSuffix}`;
+    `(${roundState.scoreTeamA}-${roundState.scoreTeamB}). Team 1 ${deltaLabelA}, Team 2 ${deltaLabelB}.${standardBonusSuffix}${shotFakeSuffix}`;
 
   saveCurrentRoundSnapshot();
   setLastResultSummary(roundState.lastResult);
@@ -8952,7 +9412,11 @@ function renderCurseControls() {
 }
 
 function setCurseRound(rawRoundValue) {
-  const roundNumber = Math.max(1, Math.round(sanitizeNumber(rawRoundValue, state.progress.currentRound)));
+  const roundNumber = clampNumber(
+    Math.max(1, Math.round(sanitizeNumber(rawRoundValue, state.progress.currentRound))),
+    1,
+    getGameRoundLimit("curse-de-cai")
+  );
   if (state.progress.currentGame !== "curse-de-cai") {
     switchRoundContext("curse-de-cai", roundNumber, { navigateToSection: false });
     setLastResultSummary(`Curse de cai round set to ${roundNumber}.`);
@@ -9524,10 +9988,7 @@ function applyTriviaRoundResult(isCorrect, options = {}) {
 
   const playingTeamKey = triviaRoundState.teamKey;
   const playingTeam = state.teams[playingTeamKey];
-  const bonus = Math.max(
-    0,
-    Math.round(sanitizeNumber(elements.triviaFixedBonusInput?.value, state.trivia.fixedBonus))
-  );
+  const bonus = getStandardFixedBonus("trivia");
   state.trivia.fixedBonus = bonus;
 
   const sourceBet =
@@ -9867,7 +10328,11 @@ function switchRoundContext(nextGameId, nextRound, options = {}) {
   saveCurrentRoundSnapshot();
 
   state.progress.currentGame = nextGameId;
-  state.progress.currentRound = Math.max(1, Math.round(sanitizeNumber(nextRound, 1)));
+  state.progress.currentRound = clampNumber(
+    Math.max(1, Math.round(sanitizeNumber(nextRound, 1))),
+    1,
+    getGameRoundLimit(nextGameId)
+  );
   if (gameChanged) {
     state.roundSelection.locked = false;
   }
@@ -9876,18 +10341,6 @@ function switchRoundContext(nextGameId, nextRound, options = {}) {
   state.showUi.answerLocked = false;
 
   loadCurrentRoundSnapshot();
-  if (!isGameLineupReady(nextGameId)) {
-    state.roundSelection.activeByTeam.teamA = [];
-    state.roundSelection.activeByTeam.teamB = [];
-    state.roundSelection.jokerAssignment = "out";
-    state.roundSelection.history[getGameLineupKey(nextGameId)] = sanitizeHistorySnapshot({
-      activeByTeam: {
-        teamA: [],
-        teamB: []
-      },
-      jokerAssignment: "out"
-    });
-  }
 
   if (navigateToSection) {
     setActiveSection(getGameSection(nextGameId), { persist: false });
@@ -9910,7 +10363,11 @@ function setCurrentGame(gameId, options = {}) {
 }
 
 function setCurrentRound(nextRoundValue) {
-  const nextRound = Math.max(1, Math.round(sanitizeNumber(nextRoundValue, state.progress.currentRound)));
+  const nextRound = clampNumber(
+    Math.max(1, Math.round(sanitizeNumber(nextRoundValue, state.progress.currentRound))),
+    1,
+    getGameRoundLimit(state.progress.currentGame)
+  );
   switchRoundContext(state.progress.currentGame, nextRound, { navigateToSection: false });
   setLastResultSummary(`Current round set to ${nextRound}.`);
   renderAll();
@@ -10193,9 +10650,9 @@ function togglePlayerActive(teamKey, playerId, shouldBeActive) {
 function setJokerAssignment(nextAssignment) {
   void nextAssignment;
   state.roundSelection.jokerAssignment = "out";
-  setLastResultSummary("Special Joker assignment was removed. Use normal lineup tokens for all players.");
+  setLastResultSummary("Special assignment is disabled. Use normal lineup tokens for all players.");
   renderRoundSelection();
-  saveState("Legacy Joker assignment ignored.");
+  saveState("Legacy special assignment ignored.");
 }
 
 function toggleRoundSelectionLock() {
@@ -10708,10 +11165,13 @@ function bindEvents() {
   }
   if (elements.triviaFixedBonusInput) {
     elements.triviaFixedBonusInput.addEventListener("change", () => {
-      state.trivia.fixedBonus = Math.max(0, Math.round(sanitizeNumber(elements.triviaFixedBonusInput.value, 100)));
+      state.trivia.fixedBonus = getStandardFixedBonus("trivia");
+      elements.triviaFixedBonusInput.value = String(state.trivia.fixedBonus);
+      elements.triviaFixedBonusInput.disabled = true;
+      setLastResultSummary(`Trivia fixed bonus is locked at ${formatMoney(state.trivia.fixedBonus)}.`);
       renderTriviaControls();
       renderSettingsRulesSnapshot();
-      saveState("Trivia bonus updated.");
+      saveState("Trivia fixed bonus remains locked.");
     });
   }
   if (elements.triviaCorrectBtn) {
