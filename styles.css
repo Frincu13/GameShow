@@ -2112,16 +2112,18 @@ button.show-leader-row {
 .show-live-screen .show-control-note {
   margin: 0;
   color: #4f6290;
-  font-size: 0.76rem;
+  font-size: 0.82rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  text-transform: none;
 }
 
 .show-live-screen .show-control-subnote {
   margin: 0;
   color: #7083ad;
-  font-size: 0.82rem;
+  font-size: 0.76rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .show-live-timer-core {
@@ -2155,6 +2157,19 @@ button.show-leader-row {
   padding: 8px 11px;
   border-radius: 999px;
   font-size: 0.87rem;
+}
+
+.show-live-screen .show-control-buttons .show-timer-btn {
+  min-height: 34px;
+  padding: 5px 10px;
+  font-size: 0.8rem;
+  border-color: #d7e0ff;
+  background: #edf1ff;
+  color: #2a3b67;
+}
+
+.show-live-screen .show-control-buttons .show-timer-btn:hover {
+  background: #e4ebff;
 }
 
 .show-live-stage-main .show-round-card,
@@ -2344,11 +2359,20 @@ button.show-leader-row {
   min-height: 100%;
 }
 
+.show-trivia-category-title {
+  margin: 0;
+  font-family: "Bebas Neue", sans-serif;
+  font-size: clamp(1.3rem, 2.8vw, 2rem);
+  line-height: 0.95;
+  letter-spacing: 0.03em;
+  color: #334979;
+}
+
 .show-trivia-question {
-  margin-top: 0;
-  font-size: clamp(1.9rem, 4.8vw, 3.5rem);
+  margin-top: 2px;
+  font-size: clamp(2.15rem, 5.4vw, 4rem);
   line-height: 1.08;
-  color: #141f40;
+  color: #0f1a39;
   font-weight: 700;
 }
 
@@ -2366,6 +2390,23 @@ button.show-leader-row {
   align-items: center;
   gap: 12px;
   padding: 16px 18px;
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease, background 120ms ease;
+}
+
+.show-trivia-answer-btn:hover {
+  transform: translateY(-1px);
+  border-color: #b7c9fb;
+  box-shadow: 0 10px 18px rgba(19, 37, 80, 0.12);
+}
+
+.show-trivia-answer-btn:active {
+  transform: translateY(0);
+}
+
+.show-trivia-answer-btn:focus-visible {
+  outline: 0;
+  box-shadow: 0 0 0 3px rgba(75, 132, 255, 0.24), 0 8px 16px rgba(19, 37, 80, 0.12);
 }
 
 .show-trivia-answer-btn span:first-child {
@@ -2384,8 +2425,20 @@ button.show-leader-row {
 
 .show-stage .show-trivia-answer-btn.is-selected {
   border-color: #dfb947;
-  box-shadow: 0 0 0 2px rgba(232, 187, 58, 0.24) inset;
+  box-shadow: 0 0 0 2px rgba(232, 187, 58, 0.24) inset, 0 10px 16px rgba(174, 130, 18, 0.18);
   background: linear-gradient(160deg, #fff8e1, #fff2c8);
+}
+
+.show-live-screen[data-game-stage="trivia"][data-live-step="question-screen"] {
+  gap: 7px;
+}
+
+.show-live-screen[data-game-stage="trivia"][data-live-step="question-screen"] .show-live-bottom-actions {
+  padding-top: 6px;
+}
+
+.show-live-screen[data-game-stage="trivia"][data-live-step="question-screen"] .show-live-bottom-actions .show-action-footer {
+  justify-content: flex-start;
 }
 
 .show-trivia-result-stage {
@@ -2460,6 +2513,371 @@ button.show-leader-row {
   color: #b02a37;
 }
 
+.show-stage-stack {
+  display: grid;
+  gap: 12px;
+}
+
+.show-stage-topic-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.show-stage-topic-card {
+  border: 1px solid #ced9ff;
+  border-radius: 16px;
+  background: linear-gradient(160deg, #ffffff, #f2f6ff);
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+  text-align: left;
+}
+
+.show-stage-topic-card.is-used {
+  opacity: 0.55;
+}
+
+.show-stage-topic-status {
+  justify-self: start;
+  border-radius: 999px;
+  border: 1px solid #d8e1ff;
+  background: #eef2ff;
+  color: #5b6e9d;
+  padding: 4px 9px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.show-stage-topic-title {
+  margin: 0;
+  font-family: "Bebas Neue", sans-serif;
+  font-size: clamp(1.5rem, 3vw, 2.5rem);
+  line-height: 0.92;
+  color: #162347;
+}
+
+.show-vs-input-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.show-stage-mini-card {
+  border: 1px solid #d3ddff;
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 10px;
+  display: grid;
+  gap: 7px;
+}
+
+.show-stage-focus-card {
+  border: 1px solid #d0dcff;
+  border-radius: 16px;
+  background: linear-gradient(160deg, #ffffff, #f4f7ff);
+  padding: 14px;
+}
+
+.show-stage-result-card {
+  border: 1px solid #d0dcff;
+  border-radius: 16px;
+  background: linear-gradient(160deg, #ffffff, #f5f8ff);
+  padding: 14px;
+}
+
+.show-stage-result-headline {
+  margin: 0;
+  font-family: "Bebas Neue", sans-serif;
+  font-size: clamp(2.2rem, 6vw, 4rem);
+  line-height: 0.88;
+  color: #132044;
+}
+
+.show-stage-money-input {
+  min-height: 52px;
+  font-size: 1.15rem;
+  text-align: center;
+}
+
+.show-stage-score-input {
+  min-height: 52px;
+  font-size: 1.15rem;
+  text-align: center;
+}
+
+.show-stage-price-reveal {
+  border: 1px solid #d4deff;
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 10px;
+  display: grid;
+  gap: 8px;
+  max-width: 460px;
+}
+
+.show-film-stage-figure {
+  margin: 0;
+  border: 1px solid #d2dcff;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.show-film-stage-figure img {
+  display: block;
+  width: 100%;
+  max-height: min(56vh, 440px);
+  object-fit: cover;
+}
+
+.show-film-stage-figure figcaption {
+  padding: 9px 12px;
+  color: #4f6290;
+  font-weight: 700;
+}
+
+.show-film-card-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.show-film-reveal-card {
+  border: 1px solid #d3ddff;
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 10px;
+  display: grid;
+  gap: 10px;
+}
+
+.show-film-reveal-card.is-open {
+  border-color: #dfba4f;
+  box-shadow: 0 0 0 1px rgba(223, 186, 79, 0.24) inset;
+}
+
+.show-film-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.show-film-outcome-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.show-film-outcome-row .pill-btn.is-active {
+  background: linear-gradient(120deg, var(--accent), #ffd986);
+  border-color: transparent;
+  color: var(--ink);
+}
+
+.show-film-breakdown-grid {
+  display: grid;
+  gap: 9px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.show-vs-focus-board {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.show-result-choice-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.show-sidebet-list {
+  display: grid;
+  gap: 8px;
+}
+
+.show-sidebet-card {
+  border: 1px solid #d3ddff;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 9px;
+  display: grid;
+  gap: 8px;
+}
+
+.show-sidebet-controls {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(90px, 120px) minmax(120px, 1fr) auto;
+  align-items: center;
+}
+
+.show-stage-horse-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.show-stage-horse-card {
+  border: 1px solid #d3ddff;
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 10px;
+  display: grid;
+  gap: 7px;
+}
+
+.show-stage-horse-symbol {
+  margin: 0;
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 1.5rem;
+  line-height: 0.9;
+  letter-spacing: 0.04em;
+  color: #a67600;
+}
+
+.show-stage-horse-name {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #162347;
+}
+
+.show-stage-race-bets {
+  display: grid;
+  gap: 8px;
+}
+
+.show-stage-race-bet-row {
+  border: 1px solid #d6dfff;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 8px;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(130px, 1.4fr) minmax(96px, 1fr) minmax(96px, 1fr);
+  align-items: center;
+}
+
+.show-stage-race-bet-horse {
+  margin: 0;
+  font-weight: 700;
+  color: #17264d;
+}
+
+.show-stage-race-move-bar {
+  border: 1px solid #d4deff;
+  border-radius: 13px;
+  background: #ffffff;
+  padding: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.show-stage-race-move-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(0, 1fr) 140px;
+}
+
+.show-stage-race-track-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.show-stage-race-track-lane {
+  border: 1px solid #d6dfff;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 8px;
+  display: grid;
+  gap: 8px;
+}
+
+.show-stage-race-track-lane.is-winner {
+  border-color: #dfba4f;
+  box-shadow: 0 0 0 1px rgba(223, 186, 79, 0.26) inset;
+}
+
+.show-stage-race-track-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.show-stage-race-track-bar {
+  height: 12px;
+  border-radius: 999px;
+  background: #e8eeff;
+  overflow: hidden;
+}
+
+.show-stage-race-track-bar span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(120deg, var(--accent), #ffd986);
+}
+
+.show-assignment-lane-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: flex-start;
+  align-content: flex-start;
+  min-height: 56px;
+}
+
+.show-assignment-chip {
+  border: 1px solid #d3ddff;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 6px;
+  display: grid;
+  gap: 5px;
+  min-width: 136px;
+}
+
+.show-assignment-chip.is-unavailable {
+  opacity: 0.72;
+}
+
+.show-assignment-chip-head {
+  display: grid;
+  gap: 2px;
+}
+
+.show-assignment-chip-status {
+  margin: 0;
+  color: #6477a0;
+  font-size: 0.7rem;
+  line-height: 1.1;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.show-assignment-chip-actions {
+  display: grid;
+  gap: 4px;
+  grid-template-columns: 32px minmax(66px, 1fr) 32px;
+}
+
+.show-assignment-chip-actions .pill-btn {
+  min-height: 30px;
+  padding: 4px 6px;
+  font-size: 0.74rem;
+}
+
+.show-assignment-chip-actions .pill-btn.is-active {
+  background: linear-gradient(120deg, var(--accent), #ffd986);
+  border-color: transparent;
+  color: var(--ink);
+}
+
 @media (max-width: 980px) {
   .show-assignment-grid {
     grid-template-columns: 1fr;
@@ -2495,6 +2913,12 @@ button.show-leader-row {
 
   .show-trivia-bet-input {
     max-width: 100%;
+  }
+
+  .show-stage-race-bet-row,
+  .show-sidebet-controls,
+  .show-stage-race-move-grid {
+    grid-template-columns: 1fr;
   }
 }
 

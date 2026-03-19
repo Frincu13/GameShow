@@ -92,203 +92,266 @@ const GAME_FLOW_DEFINITIONS = {
   "pretul-corect": {
     states: [
       {
-        id: "item-brief",
-        label: "Item Brief",
-        description: "Select item, set both bets, and prepare both teams.",
-        visible: ["item card", "team answers", "team bets", "lineup from Game Intro"],
-        actions: ["set item", "set answers", "set bets"]
+        id: "topic-select",
+        label: "Topic Select",
+        description: "Choose the product/topic for this round.",
+        visible: ["topic cards", "used status"],
+        actions: ["select topic"]
       },
       {
-        id: "estimate-live",
-        label: "Estimate Live",
-        description: "Collect final estimates and keep timer visible.",
-        visible: ["estimate board", "timer", "distance context"],
-        actions: ["adjust estimates", "timer control"]
+        id: "bet-screen",
+        label: "Bet Screen",
+        description: "Both teams place bets for the selected product.",
+        visible: ["team bet inputs", "max bet info"],
+        actions: ["set bets", "confirm bets"]
       },
       {
-        id: "confirm-winner",
-        label: "Confirm Winner",
-        description: "Lock answer and run auto winner detection.",
-        visible: ["real price", "auto winner preview", "lock answer"],
-        actions: ["lock answer", "auto detect winner", "open reveal"],
+        id: "product-reveal",
+        label: "Product Reveal",
+        description: "Reveal product card before answer entry.",
+        visible: ["product card", "round context"],
+        actions: ["continue to answers"]
+      },
+      {
+        id: "answer-entry",
+        label: "Answer Entry",
+        description: "Both teams submit their estimated prices.",
+        visible: ["team answers"],
+        actions: ["input estimates", "continue"]
+      },
+      {
+        id: "price-reveal",
+        label: "Price Reveal",
+        description: "Reveal real price and preview distances.",
+        visible: ["real price", "distance preview"],
+        actions: ["auto winner + payout"]
+      },
+      {
+        id: "auto-winner",
+        label: "Auto Winner",
+        description: "Automatic winner detection and payout result.",
+        visible: ["winner/tie", "money delta", "used topic update"],
+        actions: ["next topic / finish game"],
         payout: true
       }
     ],
-    payoutStateId: "confirm-winner",
-    roundReturn: "After reveal, use Next round for next item.",
+    payoutStateId: "auto-winner",
+    roundReturn: "After payout, flow returns to Topic Select.",
     gameEnd: "Game ends when all configured items are used, then returns to Game Select."
   },
   "film-joc-franciza-fun-fact": {
     states: [
       {
-        id: "round-brief",
-        label: "Round Brief",
-        description: "Choose round image, team, and bet.",
-        visible: ["round image", "team in play", "bet", "lineup from Game Intro"],
-        actions: ["team select", "set bet"]
+        id: "bet-screen",
+        label: "Bet Screen",
+        description: "Pick team in play and confirm round bet.",
+        visible: ["team select", "bet input"],
+        actions: ["set team", "set bet"]
       },
       {
-        id: "clue-reveal",
-        label: "Clue Reveal",
-        description: "Reveal Character, Franchise, and Fun Fact cards.",
-        visible: ["image", "reveal cards", "component board"],
-        actions: ["reveal components", "timer control"]
+        id: "image-reveal",
+        label: "Image Reveal",
+        description: "Main round image becomes the visual focus.",
+        visible: ["large round image"],
+        actions: ["continue to cards"]
       },
       {
-        id: "component-judge",
-        label: "Component Judge",
-        description: "Lock answer and score each component.",
-        visible: ["component outcomes", "2/3 bet rule", "partial payout preview"],
-        actions: ["lock answer", "mark correct/wrong", "apply result", "open reveal"],
+        id: "card-reveal",
+        label: "Card Reveal",
+        description: "Reveal Character/Title, Franchise, and Fun Fact cards.",
+        visible: ["3 reveal cards", "mark correct/wrong"],
+        actions: ["reveal cards", "set outcomes", "calculate result"]
+      },
+      {
+        id: "breakdown-result",
+        label: "Breakdown Result",
+        description: "Show weighted breakdown and bet eligibility result.",
+        visible: ["component breakdown", "bet activation", "money delta"],
+        actions: ["next round / finish game"],
         payout: true
       }
     ],
-    payoutStateId: "component-judge",
+    payoutStateId: "breakdown-result",
     roundReturn: "After reveal, Next round moves to next image round.",
     gameEnd: "Game ends when all configured rounds are used, then returns to Game Select."
   },
   "cel-mai-bun-samsar": {
     states: [
       {
-        id: "persona-brief",
-        label: "Persona Brief",
-        description: "Present round persona using the confirmed lineup.",
-        visible: ["persona card", "lineup snapshot", "round info"],
-        actions: ["open substitution if needed"]
+        id: "player-select",
+        label: "Player Select",
+        description: "Pick one active duelist from each team.",
+        visible: ["team duelist selectors"],
+        actions: ["select duelists"]
       },
       {
-        id: "negotiation-live",
-        label: "Negotiation Live",
-        description: "Teams play the negotiation phase.",
-        visible: ["persona requirements", "timer", "active duel"],
-        actions: ["timer control", "lock selection"]
+        id: "bet-screen",
+        label: "Bet Screen",
+        description: "Standard Samsar stakes are prepared for both teams.",
+        visible: ["stake preview", "bet cap info"],
+        actions: ["continue"]
       },
       {
-        id: "score-judge",
-        label: "Score Judge",
-        description: "Lock answer and input final scores.",
-        visible: ["score inputs", "winner preview", "lock answer"],
-        actions: ["lock answer", "apply score result", "open reveal"],
+        id: "persona-intro",
+        label: "Persona Intro",
+        description: "Show persona and requirements before duel.",
+        visible: ["persona card"],
+        actions: ["start duel"]
+      },
+      {
+        id: "live-duel",
+        label: "Live Duel",
+        description: "Real-world duel phase with timer support.",
+        visible: ["duel matchup", "timer"],
+        actions: ["timer control", "go to scoring"]
+      },
+      {
+        id: "score-entry",
+        label: "Score Entry",
+        description: "Host enters final duel scores.",
+        visible: ["score inputs"],
+        actions: ["apply result"]
+      },
+      {
+        id: "result-screen",
+        label: "Result Screen",
+        description: "Winner, payout, and round outcome summary.",
+        visible: ["winner/draw", "money delta"],
+        actions: ["next round / finish game"],
         payout: true
       }
     ],
-    payoutStateId: "score-judge",
+    payoutStateId: "result-screen",
     roundReturn: "After reveal, Next round moves to next samsar round.",
     gameEnd: "Game ends automatically after round 6, then returns to Game Select."
   },
   "guess-right-order": {
     states: [
       {
-        id: "order-brief",
-        label: "Order Brief",
-        description: "Set matchup and bets for the confirmed game lineup.",
-        visible: ["matchup board", "bets", "lineup snapshot"],
+        id: "bet-screen",
+        label: "Bet Screen",
+        description: "Set team bets for this challenge round.",
+        visible: ["team bets", "lineup snapshot"],
         actions: ["set bets"]
       },
       {
-        id: "order-live",
-        label: "Order Live",
+        id: "live-round",
+        label: "Live Round",
         description: "Play the order challenge live.",
-        visible: ["timer", "order challenge board", "scoreline"],
-        actions: ["timer control", "round live control"]
+        visible: ["timer", "challenge focus"],
+        actions: ["timer control", "continue to result"]
       },
       {
-        id: "order-judge",
-        label: "Order Judge",
-        description: "Lock answer and apply result (team1/team2/draw).",
-        visible: ["score inputs", "winner preview", "lock answer"],
-        actions: ["lock answer", "apply result", "open reveal"],
+        id: "result-screen",
+        label: "Result Screen",
+        description: "Pick winner or draw and apply payout.",
+        visible: ["winner controls", "money delta"],
+        actions: ["apply result", "next round / finish game"],
         payout: true
       }
     ],
-    payoutStateId: "order-judge",
+    payoutStateId: "result-screen",
     roundReturn: "After reveal, use Next round for the next order challenge.",
     gameEnd: "Game end is manual from End of Game when host decides."
   },
   "beer-pong": {
     states: [
       {
-        id: "beer-brief",
-        label: "Match Brief",
+        id: "bet-screen",
+        label: "Bet Screen",
         description: "Set bets for both teams using the confirmed lineup.",
         visible: ["team cards", "bets", "lineup snapshot"],
-        actions: ["set bets", "lock selection"]
+        actions: ["set bets"]
       },
       {
-        id: "beer-live",
-        label: "Beer Pong Live",
+        id: "live-round",
+        label: "Live Round",
         description: "Play live with timer and visible scoreline.",
-        visible: ["timer", "scoreline", "round context"],
-        actions: ["timer control", "round live control"]
+        visible: ["timer", "matchup focus"],
+        actions: ["timer control", "continue to result"]
       },
       {
-        id: "beer-judge",
-        label: "Result Judge",
+        id: "result-screen",
+        label: "Result Screen",
         description: "Lock answer and apply final result.",
-        visible: ["score inputs", "winner/draw preview", "lock answer"],
-        actions: ["lock answer", "apply result", "open reveal"],
+        visible: ["winner/draw controls", "money delta"],
+        actions: ["apply result", "next round / finish game"],
         payout: true
       }
     ],
-    payoutStateId: "beer-judge",
+    payoutStateId: "result-screen",
     roundReturn: "After reveal, Next round starts the next beer pong round.",
     gameEnd: "Game end is manual from End of Game when host decides."
   },
   "shot-fake": {
     states: [
       {
-        id: "shot-brief",
-        label: "Side Bet Brief",
+        id: "sidebet-setup",
+        label: "Side Bet Setup",
         description: "Prepare base bets, side bets, and multiplier for confirmed lineup.",
         visible: ["side bet list", "multiplier", "lineup snapshot"],
         actions: ["set bets", "add/remove side bets"]
       },
       {
-        id: "shot-live",
-        label: "Shot Live",
+        id: "live-round",
+        label: "Live Round",
         description: "Run live round with transfer preview.",
         visible: ["special transfer preview", "timer", "scoreline"],
-        actions: ["timer control", "live tracking"]
+        actions: ["timer control", "continue to result"]
       },
       {
-        id: "shot-settle",
-        label: "Settle Round",
+        id: "result-screen",
+        label: "Result Screen",
         description: "Lock answer and apply bet-only settlement.",
-        visible: ["net preview", "lock answer", "settlement controls"],
-        actions: ["lock answer", "apply settlement", "open reveal"],
+        visible: ["net preview", "settlement controls"],
+        actions: ["apply settlement", "next round / finish game"],
         payout: true
       }
     ],
-    payoutStateId: "shot-settle",
+    payoutStateId: "result-screen",
     roundReturn: "After reveal, Next round starts next Shot Fake round.",
     gameEnd: "Game end is manual from End of Game when host decides."
   },
   "curse-de-cai": {
     states: [
       {
-        id: "race-brief",
-        label: "Race Brief",
-        description: "Set multi-bets and bettors for the confirmed lineup.",
-        visible: ["horse roster", "multi-bet board", "lineup snapshot"],
-        actions: ["set bets", "set bettors"]
+        id: "race-intro",
+        label: "Race Intro",
+        description: "Present horses, symbols, and race stories.",
+        visible: ["horse roster", "mini stories"],
+        actions: ["continue to bets"]
       },
       {
-        id: "race-live",
-        label: "Race Live",
-        description: "Move horses manually and track leader.",
-        visible: ["visual track", "move controls", "leader preview"],
-        actions: ["move horse", "timer control", "race control"]
+        id: "bet-screen",
+        label: "Bet Screen",
+        description: "Set multi-bets and bettors for both teams.",
+        visible: ["multi-bet board", "bettor selectors"],
+        actions: ["set bets", "continue to race"]
       },
       {
-        id: "race-settle",
-        label: "Settle Payout",
-        description: "Lock answer and apply winner-horse payout x4.",
-        visible: ["winner horse", "net payout preview", "lock answer"],
-        actions: ["lock answer", "apply payout", "open reveal"],
+        id: "race-screen",
+        label: "Race Screen",
+        description: "Move horses manually on track and handle push-back.",
+        visible: ["visual track", "move controls"],
+        actions: ["move horse", "timer control"]
+      },
+      {
+        id: "winner-screen",
+        label: "Winner Screen",
+        description: "Show detected winner horse before payout.",
+        visible: ["winner horse", "race summary"],
+        actions: ["continue to payout"]
+      },
+      {
+        id: "payout-screen",
+        label: "Payout Screen",
+        description: "Apply x4 payout only for bets on winner horse.",
+        visible: ["net payout preview", "money delta"],
+        actions: ["apply payout", "next race / finish game"],
         payout: true
       }
     ],
-    payoutStateId: "race-settle",
+    payoutStateId: "payout-screen",
     roundReturn: "After reveal, Next round starts the next race.",
     gameEnd: "Game end is manual from End of Game when host decides."
   }
@@ -1571,14 +1634,18 @@ function getPretulRoundKey(roundNumber = state.progress.currentRound) {
 function getOrCreatePretulRoundState(roundNumber = state.progress.currentRound) {
   const roundKey = getPretulRoundKey(roundNumber);
   if (!state.pretul.rounds[roundKey]) {
+    const previousRoundKey = getPretulRoundKey(Math.max(1, roundNumber - 1));
+    const previousRound = sanitizePretulRoundState(state.pretul.rounds[previousRoundKey]);
+    const carryUsed = Array.isArray(previousRound.usedItemIds) ? [...previousRound.usedItemIds] : [];
+    const nextAvailable = state.pretul.items.find((item) => !carryUsed.includes(item.id));
     state.pretul.rounds[roundKey] = sanitizePretulRoundState({
-      selectedItemId: state.pretul.items[0]?.id || "",
-      usedItemIds: [],
+      selectedItemId: nextAvailable?.id || state.pretul.items[0]?.id || "",
+      usedItemIds: carryUsed,
       answerTeamA: 0,
       answerTeamB: 0,
-      realPrice: state.pretul.items[0]?.referencePrice || 0,
-      betTeamA: 100,
-      betTeamB: 100,
+      realPrice: nextAvailable?.referencePrice || state.pretul.items[0]?.referencePrice || 0,
+      betTeamA: previousRound.betTeamA || 100,
+      betTeamB: previousRound.betTeamB || 100,
       lastResult: ""
     });
   }
@@ -1678,11 +1745,15 @@ function getFilmRoundKey(roundNumber = state.progress.currentRound) {
 function getOrCreateFilmRoundState(roundNumber = state.progress.currentRound) {
   const roundKey = getFilmRoundKey(roundNumber);
   if (!state.filmGame.rounds[roundKey]) {
+    const previousRoundKey = getFilmRoundKey(Math.max(1, roundNumber - 1));
+    const previousRound = sanitizeFilmRoundState(state.filmGame.rounds[previousRoundKey]);
+    const carryUsed = Array.isArray(previousRound.usedItemIds) ? [...previousRound.usedItemIds] : [];
+    const nextAvailable = state.filmGame.items.find((item) => !carryUsed.includes(item.id));
     state.filmGame.rounds[roundKey] = sanitizeFilmRoundState({
-      teamKey: "teamA",
-      selectedItemId: state.filmGame.items[0]?.id || "",
-      usedItemIds: [],
-      betAmount: 100,
+      teamKey: previousRound.teamKey || "teamA",
+      selectedItemId: nextAvailable?.id || state.filmGame.items[0]?.id || "",
+      usedItemIds: carryUsed,
+      betAmount: previousRound.betAmount || 100,
       revealed: {
         character: false,
         franchise: false,
@@ -3420,6 +3491,16 @@ function finishCurrentGameAndReturn(options = {}) {
     state.showUi.completedGameIds.push(finishedGameId);
   }
   state.showUi.lineupReadyByGame[finishedGameId] = false;
+  state.roundSelection.history[getGameLineupKey(finishedGameId)] = sanitizeHistorySnapshot({
+    activeByTeam: {
+      teamA: [],
+      teamB: []
+    },
+    jokerAssignment: "out"
+  });
+  state.roundSelection.activeByTeam.teamA = [];
+  state.roundSelection.activeByTeam.teamB = [];
+  state.roundSelection.jokerAssignment = "out";
   if (isGameNightComplete()) {
     state.showUi.activeScreen = "end-screen";
     setLastResultSummary("All games complete. Opening Final End Screen.");
@@ -3595,9 +3676,9 @@ function renderShowStageControls(gameId = state.progress.currentGame, liveStep =
   const filmTeam = state.progress.currentGame === "film-joc-franciza-fun-fact" ? getCurrentFilmTeam() : "";
   const activeGameTeam = triviaTeam || filmTeam;
   const infoLabel = activeGameTeam
-    ? `One-team mode: ${state.teams[activeGameTeam].name}`
-    : "Team-vs-team mode";
-  const compactStatus = `${getGameLabel(gameId)} | Round ${state.progress.currentRound}`;
+    ? `${state.teams[activeGameTeam].name} is up`
+    : `${state.teams.teamA.name} vs ${state.teams.teamB.name}`;
+  const compactStatus = `${getGameLabel(gameId)} - Round ${state.progress.currentRound}`;
   const timerTone = state.timer.remaining <= 10 ? "is-danger" : "";
 
   return `
@@ -3608,11 +3689,11 @@ function renderShowStageControls(gameId = state.progress.currentGame, liveStep =
       </div>
       <div class="show-live-timer-core ${timerTone}" data-show-live-timer-core>${formatTimer(state.timer.remaining)}</div>
       <div class="show-control-buttons">
-        <button class="pill-btn" type="button" data-show-action="timer-start">Start</button>
-        <button class="pill-btn" type="button" data-show-action="timer-pause">Pause</button>
-        <button class="pill-btn" type="button" data-show-action="timer-reset">Reset</button>
-        <button class="pill-btn" type="button" data-show-action="timer-minus-10">-10s</button>
-        <button class="pill-btn" type="button" data-show-action="timer-plus-10">+10s</button>
+        <button class="pill-btn show-timer-btn" type="button" data-show-action="timer-start">Start</button>
+        <button class="pill-btn show-timer-btn" type="button" data-show-action="timer-pause">Pause</button>
+        <button class="pill-btn show-timer-btn" type="button" data-show-action="timer-reset">Reset</button>
+        <button class="pill-btn show-timer-btn" type="button" data-show-action="timer-minus-10">-10s</button>
+        <button class="pill-btn show-timer-btn" type="button" data-show-action="timer-plus-10">+10s</button>
       </div>
     </div>
   `;
@@ -3711,7 +3792,7 @@ function renderShowPlayerAssignmentBoard() {
       status: player.status,
       sourceTeamKey: "teamB"
     }))
-  ];
+  ].sort((left, right) => left.name.localeCompare(right.name));
 
   const laneBuckets = {
     teamA: [],
@@ -3724,19 +3805,18 @@ function renderShowPlayerAssignmentBoard() {
     const currentLane = lane === "teamA" || lane === "teamB" ? lane : "out";
     const teamAReady = canAssignShowPlayerToTeam(token.id, "teamA");
     const teamBReady = canAssignShowPlayerToTeam(token.id, "teamB");
-    const laneLabel = currentLane === "out" ? "Bench" : state.teams[currentLane].name;
-    const statusLabel =
-      token.status === "available" ? `Roster: ${state.teams[token.sourceTeamKey].name}` : token.status;
     const disabledTeamA = isLocked || (!teamAReady && currentLane !== "teamA") ? "disabled" : "";
     const disabledTeamB = isLocked || (!teamBReady && currentLane !== "teamB") ? "disabled" : "";
     const disabledBench = isLocked ? "disabled" : "";
     laneBuckets[currentLane].push(`
-      <article class="show-assignment-token ${token.status === "unavailable" ? "is-unavailable" : ""}">
-        <div class="show-assignment-token-head">
+      <article class="show-assignment-chip ${token.status === "unavailable" ? "is-unavailable" : ""}">
+        <div class="show-assignment-chip-head">
           <p class="show-assignment-name">${escapeHtml(token.name)}</p>
-          <p class="show-assignment-meta">${escapeHtml(statusLabel)} | Now: ${escapeHtml(laneLabel)}</p>
+          <p class="show-assignment-chip-status">${escapeHtml(
+            token.status === "available" ? state.teams[token.sourceTeamKey].name : token.status
+          )}</p>
         </div>
-        <div class="show-assignment-token-controls">
+        <div class="show-assignment-chip-actions">
           <button class="pill-btn ${currentLane === "teamA" ? "is-active" : ""}" type="button" data-show-player-assign data-player-id="${
             token.id
           }" data-target-lane="teamA" ${disabledTeamA} title="Move left to ${escapeHtml(state.teams.teamA.name)}">L</button>
@@ -3776,7 +3856,7 @@ function renderShowPlayerAssignmentBoard() {
             <p class="show-info-label">${escapeHtml(laneCard.title)}</p>
             <p class="show-info-sub">${escapeHtml(laneCard.subtitle)}</p>
           </div>
-          <div class="show-assignment-lane-body">${tokensHtml || '<p class="show-round-copy">No players here.</p>'}</div>
+          <div class="show-assignment-lane-body">${tokensHtml || '<p class="show-round-copy">No players.</p>'}</div>
         </section>
       `;
     })
@@ -3789,7 +3869,7 @@ function renderShowPlayerAssignmentBoard() {
         <p class="show-control-note">${
           isLocked
             ? "Lineup is locked. Unlock to move tokens."
-            : "Move tokens Left / Bench / Right. This lineup stays active for the whole game."
+            : "Move tokens Left / Bench / Right. Lineup stays active for this whole game."
         }</p>
       </div>
       <div class="show-assignment-grid">${laneCards}</div>
@@ -4648,8 +4728,8 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
     if (liveStep === "question-screen") {
       return `
         <section class="show-trivia-qa-stage">
-          <p class="show-info-label">Question Round</p>
-          <p class="show-round-title">${escapeHtml(category?.title || "No topic selected")}</p>
+          <p class="show-info-label">Topic</p>
+          <p class="show-trivia-category-title">${escapeHtml(category?.title || "No topic selected")}</p>
           <p class="show-round-copy show-trivia-question">${escapeHtml(category?.question || "Select a topic to continue.")}</p>
           <div class="show-trivia-options-grid">
             ${options
@@ -4698,188 +4778,663 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
   }
   if (gameId === "pretul-corect") {
     const roundState = getOrCreatePretulRoundState();
-    const item = state.pretul.items.find((entry) => entry.id === roundState.selectedItemId);
+    const item = state.pretul.items.find((entry) => entry.id === roundState.selectedItemId) || state.pretul.items[0];
+    const maxBetA = getMaxBetAmount(state.teams.teamA.money, "pretul-corect");
+    const maxBetB = getMaxBetAmount(state.teams.teamB.money, "pretul-corect");
     const diffA = Math.abs(roundState.answerTeamA - roundState.realPrice);
     const diffB = Math.abs(roundState.answerTeamB - roundState.realPrice);
     const winnerLabel =
       diffA < diffB ? state.teams.teamA.name : diffB < diffA ? state.teams.teamB.name : "Tie (equal distance)";
 
-    if (liveStep === "item-brief") {
+    if (liveStep === "topic-select") {
+      const cards = state.pretul.items
+        .map((entry) => {
+          const isUsed = roundState.usedItemIds.includes(entry.id);
+          return `
+            <button class="show-stage-topic-card ${isUsed ? "is-used" : ""}" type="button" data-show-pretul-item="${entry.id}" ${
+              isUsed ? "disabled" : ""
+            }>
+              <span class="show-stage-topic-status">${isUsed ? "USED" : "TOPIC"}</span>
+              <span class="show-stage-topic-title">${escapeHtml(entry.name)}</span>
+            </button>
+          `;
+        })
+        .join("");
       return `
-        <div class="show-round-card">
-          <p class="show-info-label">Item brief</p>
-          <p class="show-round-title">${escapeHtml(item?.name || "Selecteaza item")}</p>
-          <p class="show-round-copy">Set both bets before answer phase. Lineup comes from Game Intro.</p>
-        </div>
+        <section class="show-stage-stack">
+          <p class="show-info-label">Pretul Corect / Topic Select</p>
+          <p class="show-round-title">Pick the next product</p>
+          <div class="show-stage-topic-grid">${cards}</div>
+        </section>
       `;
     }
 
-    if (liveStep === "estimate-live") {
+    if (liveStep === "bet-screen") {
       return `
-        <div class="show-round-card">
-          <p class="show-info-label">Estimate live</p>
-          <p class="show-round-title">${escapeHtml(state.teams.teamA.name)} ${formatMoney(roundState.answerTeamA)} | ${escapeHtml(
-            state.teams.teamB.name
-          )} ${formatMoney(roundState.answerTeamB)}</p>
-          <p class="show-round-copy">Real price set: ${formatMoney(roundState.realPrice)}.</p>
-        </div>
+        <section class="show-stage-stack">
+          <p class="show-info-label">Bet Screen</p>
+          <p class="show-round-title">${escapeHtml(item?.name || "Select product first")}</p>
+          <div class="show-vs-input-grid">
+            <article class="show-stage-mini-card">
+              <p class="show-info-label">${escapeHtml(state.teams.teamA.name)} Bet</p>
+              <input class="text-input show-stage-money-input" type="number" min="0" step="10" value="${roundState.betTeamA}" data-show-pretul-bet-teama>
+              <p class="show-info-sub">Max: ${formatMoney(maxBetA)}</p>
+            </article>
+            <article class="show-stage-mini-card">
+              <p class="show-info-label">${escapeHtml(state.teams.teamB.name)} Bet</p>
+              <input class="text-input show-stage-money-input" type="number" min="0" step="10" value="${roundState.betTeamB}" data-show-pretul-bet-teamb>
+              <p class="show-info-sub">Max: ${formatMoney(maxBetB)}</p>
+            </article>
+          </div>
+        </section>
+      `;
+    }
+
+    if (liveStep === "product-reveal") {
+      return `
+        <section class="show-stage-stack show-stage-focus-card">
+          <p class="show-info-label">Product Reveal</p>
+          <p class="show-round-title">${escapeHtml(item?.name || "No product selected")}</p>
+          <p class="show-round-copy">Teams now lock their estimates.</p>
+        </section>
+      `;
+    }
+
+    if (liveStep === "answer-entry") {
+      return `
+        <section class="show-stage-stack">
+          <p class="show-info-label">Answer Entry</p>
+          <div class="show-vs-input-grid">
+            <article class="show-stage-mini-card">
+              <p class="show-info-label">${escapeHtml(state.teams.teamA.name)} Estimate</p>
+              <input class="text-input show-stage-money-input" type="number" min="0" step="1" value="${roundState.answerTeamA}" data-show-pretul-answer-teama>
+            </article>
+            <article class="show-stage-mini-card">
+              <p class="show-info-label">${escapeHtml(state.teams.teamB.name)} Estimate</p>
+              <input class="text-input show-stage-money-input" type="number" min="0" step="1" value="${roundState.answerTeamB}" data-show-pretul-answer-teamb>
+            </article>
+          </div>
+        </section>
+      `;
+    }
+
+    if (liveStep === "price-reveal") {
+      return `
+        <section class="show-stage-stack">
+          <p class="show-info-label">Price Reveal</p>
+          <div class="show-stage-price-reveal">
+            <label class="show-info-label" for="showPretulRealPriceFlow">Real Price</label>
+            <input id="showPretulRealPriceFlow" class="text-input show-stage-money-input" type="number" min="0" step="1" value="${
+              roundState.realPrice
+            }" data-show-pretul-real-price>
+            <p class="show-round-copy">${escapeHtml(state.teams.teamA.name)} distance: ${formatMoney(diffA)}</p>
+            <p class="show-round-copy">${escapeHtml(state.teams.teamB.name)} distance: ${formatMoney(diffB)}</p>
+          </div>
+        </section>
       `;
     }
 
     return `
-      <div class="show-round-card">
-        <p class="show-info-label">Confirm winner</p>
-        <p class="show-round-title">${escapeHtml(item?.name || "Selecteaza item")}</p>
-        <p class="show-round-copy">Auto winner: ${escapeHtml(winnerLabel)}.</p>
+      <section class="show-stage-stack show-stage-result-card">
+        <p class="show-info-label">Auto Winner</p>
+        <p class="show-stage-result-headline">${escapeHtml(winnerLabel)}</p>
+        <p class="show-round-copy">${escapeHtml(item?.name || "Selected product")}</p>
         <p class="show-round-copy">${escapeHtml(state.teams.teamA.name)} distance ${formatMoney(diffA)} | ${escapeHtml(
           state.teams.teamB.name
         )} distance ${formatMoney(diffB)}</p>
-      </div>
+        <p class="show-round-copy">${escapeHtml(roundState.lastResult || "Apply payout to generate round result.")}</p>
+      </section>
     `;
   }
   if (gameId === "film-joc-franciza-fun-fact") {
     const roundState = getOrCreateFilmRoundState();
     const item = state.filmGame.items.find((entry) => entry.id === roundState.selectedItemId);
     const breakdown = getFilmRoundBreakdown(roundState, roundState.betAmount);
+    const playingTeam = state.teams[roundState.teamKey];
+    const maxBet = getMaxBetAmount(playingTeam.money, "film-joc-franciza-fun-fact");
+    const cardConfig = [
+      { key: "character", title: "Character / Title", revealText: item?.characterPrompt || "Placeholder character/title" },
+      { key: "franchise", title: "Franchise", revealText: item?.franchisePrompt || "Placeholder franchise" },
+      { key: "funFact", title: "Fun Fact", revealText: item?.funFactPrompt || "Placeholder fun fact" }
+    ];
 
-    if (liveStep === "round-brief") {
+    if (liveStep === "bet-screen") {
       return `
-        <div class="show-round-card">
-          <p class="show-info-label">Round brief</p>
-          <p class="show-round-title">${escapeHtml(item?.title || "Selecteaza item")}</p>
-          <p class="show-round-copy">Set team and bet before reveals. Lineup stays from Game Intro.</p>
-        </div>
+        <section class="show-stage-stack">
+          <p class="show-info-label">Bet Screen</p>
+          <div class="show-vs-input-grid">
+            <article class="show-stage-mini-card">
+              <p class="show-info-label">Team In Play</p>
+              <select class="text-input" data-show-film-team>
+                <option value="teamA" ${roundState.teamKey === "teamA" ? "selected" : ""}>${escapeHtml(state.teams.teamA.name)}</option>
+                <option value="teamB" ${roundState.teamKey === "teamB" ? "selected" : ""}>${escapeHtml(state.teams.teamB.name)}</option>
+              </select>
+            </article>
+            <article class="show-stage-mini-card">
+              <p class="show-info-label">Round Card</p>
+              <select class="text-input" data-show-film-item>
+                ${state.filmGame.items
+                  .map((entry) => {
+                    const isUsed = roundState.usedItemIds.includes(entry.id);
+                    return `<option value="${entry.id}" ${roundState.selectedItemId === entry.id ? "selected" : ""} ${
+                      isUsed ? "disabled" : ""
+                    }>${escapeHtml(entry.title)}${isUsed ? " (USED)" : ""}</option>`;
+                  })
+                  .join("")}
+              </select>
+            </article>
+          </div>
+          <article class="show-stage-mini-card">
+            <p class="show-info-label">Bet Amount</p>
+            <input class="text-input show-stage-money-input" type="number" min="0" step="10" value="${roundState.betAmount}" data-show-film-bet>
+            <p class="show-info-sub">Max: ${formatMoney(maxBet)}</p>
+          </article>
+        </section>
       `;
     }
 
-    if (liveStep === "clue-reveal") {
+    if (liveStep === "image-reveal") {
       return `
-        <div class="show-round-card">
-          <p class="show-info-label">Clue reveal</p>
-          <p class="show-round-title">${escapeHtml(item?.title || "Selecteaza item")}</p>
-          <p class="show-round-copy">Reveal Character/Title, Franchise, then Fun Fact.</p>
-          <p class="show-round-copy">Current reveals: ${
-            roundState.revealed.character ? "Character " : ""
-          }${roundState.revealed.franchise ? "Franchise " : ""}${roundState.revealed.funFact ? "Fun Fact" : ""}</p>
-        </div>
+        <section class="show-stage-stack">
+          <p class="show-info-label">Image Reveal</p>
+          <figure class="show-film-stage-figure">
+            <img src="${escapeHtml(item?.imageUrl || FILM_FALLBACK_IMAGE)}" alt="${escapeHtml(item?.imageAlt || "Round image")}">
+            <figcaption>${escapeHtml(item?.title || "No round item selected")}</figcaption>
+          </figure>
+        </section>
+      `;
+    }
+
+    if (liveStep === "card-reveal") {
+      return `
+        <section class="show-stage-stack">
+          <p class="show-info-label">Card Reveal</p>
+          <div class="show-film-card-grid">
+            ${cardConfig
+              .map((card) => {
+                const outcome = roundState.outcomes[card.key];
+                const revealState = roundState.revealed[card.key];
+                return `
+                  <article class="show-film-reveal-card ${revealState ? "is-open" : ""}">
+                    <div class="show-film-card-head">
+                      <p class="show-info-label">${escapeHtml(card.title)}</p>
+                      <button class="pill-btn" type="button" data-show-film-reveal="${card.key}">${revealState ? "Hide" : "Reveal"}</button>
+                    </div>
+                    <p class="show-round-copy">${escapeHtml(revealState ? card.revealText : "Hidden until reveal")}</p>
+                    <div class="show-film-outcome-row">
+                      <button class="pill-btn ${outcome === "correct" ? "is-active" : ""}" type="button" data-show-film-outcome="${card.key}:correct">Correct</button>
+                      <button class="pill-btn ${outcome === "wrong" ? "is-active" : ""}" type="button" data-show-film-outcome="${card.key}:wrong">Wrong</button>
+                    </div>
+                  </article>
+                `;
+              })
+              .join("")}
+          </div>
+        </section>
       `;
     }
 
     return `
-      <div class="show-round-card">
-        <p class="show-info-label">Component judge</p>
-        <p class="show-round-title">${escapeHtml(item?.title || "Selecteaza item")}</p>
-        <p class="show-round-copy">Scor componente: ${breakdown.totalPoints}/${breakdown.maxPoints} | corecte ${breakdown.correctCount}/3.</p>
-        <p class="show-round-copy">Bet is active only with minimum 2/3 correct.</p>
-      </div>
+      <section class="show-stage-stack show-stage-result-card">
+        <p class="show-info-label">Result / Breakdown</p>
+        <p class="show-stage-result-headline">${breakdown.totalPoints}/${breakdown.maxPoints} points</p>
+        <div class="show-film-breakdown-grid">
+          <article class="show-stage-mini-card">
+            <p class="show-info-label">Character / Title</p>
+            <p class="show-info-value">${breakdown.points.character} / ${FILM_COMPONENT_WEIGHTS.character}</p>
+          </article>
+          <article class="show-stage-mini-card">
+            <p class="show-info-label">Franchise</p>
+            <p class="show-info-value">${breakdown.points.franchise} / ${FILM_COMPONENT_WEIGHTS.franchise}</p>
+          </article>
+          <article class="show-stage-mini-card">
+            <p class="show-info-label">Fun Fact</p>
+            <p class="show-info-value">${breakdown.points.funFact} / ${FILM_COMPONENT_WEIGHTS.funFact}</p>
+          </article>
+        </div>
+        <p class="show-round-copy">Correct components: ${breakdown.correctCount}/3.</p>
+        <p class="show-round-copy">Bet activation: ${breakdown.betEligible ? "ON (minimum 2/3 met)" : "OFF (under 2/3)"}</p>
+        <p class="show-round-copy">Round delta: ${formatSignedMoney(breakdown.totalDelta)}.</p>
+        <p class="show-round-copy">${escapeHtml(roundState.lastResult || "Apply result to generate payout breakdown.")}</p>
+      </section>
     `;
   }
   if (gameId === "cel-mai-bun-samsar") {
     const roundNumber = getSamsarRoundNumber();
     const roundState = getOrCreateSamsarRoundState(roundNumber);
     const template = state.samsarGame.roundsData[roundNumber - 1];
+    const teamAOptions = state.teams.teamA.players
+      .filter((player) => player.status === "available")
+      .map((player) => `<option value="${player.id}" ${roundState.activePlayerTeamAId === player.id ? "selected" : ""}>${escapeHtml(player.name)}</option>`)
+      .join("");
+    const teamBOptions = state.teams.teamB.players
+      .filter((player) => player.status === "available")
+      .map((player) => `<option value="${player.id}" ${roundState.activePlayerTeamBId === player.id ? "selected" : ""}>${escapeHtml(player.name)}</option>`)
+      .join("");
+    const maxBetA = Math.min(SAMSAR_STANDARD_BET, getMaxBetAmount(state.teams.teamA.money, "cel-mai-bun-samsar"));
+    const maxBetB = Math.min(SAMSAR_STANDARD_BET, getMaxBetAmount(state.teams.teamB.money, "cel-mai-bun-samsar"));
+    const duelistA = state.teams.teamA.players.find((player) => player.id === roundState.activePlayerTeamAId);
+    const duelistB = state.teams.teamB.players.find((player) => player.id === roundState.activePlayerTeamBId);
 
-    if (liveStep === "persona-brief") {
+    if (liveStep === "player-select") {
       return `
-        <div class="show-round-card">
-          <p class="show-info-label">Persona brief</p>
+        <section class="show-stage-stack">
+          <p class="show-info-label">Player Select</p>
+          <p class="show-round-title">Pick one duelist per team</p>
+          <div class="show-vs-input-grid">
+            <article class="show-stage-mini-card">
+              <p class="show-info-label">${escapeHtml(state.teams.teamA.name)}</p>
+              <select class="text-input" data-show-samsar-player-teama>
+                <option value="">Select player</option>
+                ${teamAOptions}
+              </select>
+            </article>
+            <article class="show-stage-mini-card">
+              <p class="show-info-label">${escapeHtml(state.teams.teamB.name)}</p>
+              <select class="text-input" data-show-samsar-player-teamb>
+                <option value="">Select player</option>
+                ${teamBOptions}
+              </select>
+            </article>
+          </div>
+        </section>
+      `;
+    }
+
+    if (liveStep === "bet-screen") {
+      return `
+        <section class="show-stage-stack">
+          <p class="show-info-label">Bet Screen</p>
+          <p class="show-round-title">Standard Samsar Stakes</p>
+          <div class="show-vs-input-grid">
+            <article class="show-stage-mini-card">
+              <p class="show-info-label">${escapeHtml(state.teams.teamA.name)} stake</p>
+              <p class="show-info-value">${formatMoney(maxBetA)}</p>
+            </article>
+            <article class="show-stage-mini-card">
+              <p class="show-info-label">${escapeHtml(state.teams.teamB.name)} stake</p>
+              <p class="show-info-value">${formatMoney(maxBetB)}</p>
+            </article>
+          </div>
+        </section>
+      `;
+    }
+
+    if (liveStep === "persona-intro") {
+      return `
+        <section class="show-stage-stack show-stage-focus-card">
+          <p class="show-info-label">Persona Intro / Round ${roundNumber}</p>
           <p class="show-round-title">${escapeHtml(template?.personaTitle || "Persona runda")}</p>
           <p class="show-round-copy">${escapeHtml(template?.personaRequirements || "Completeaza cerintele pentru persona.")}</p>
-        </div>
+        </section>
       `;
     }
 
-    if (liveStep === "negotiation-live") {
+    if (liveStep === "live-duel") {
       return `
-        <div class="show-round-card">
-          <p class="show-info-label">Negotiation live</p>
-          <p class="show-round-title">${escapeHtml(template?.personaTitle || "Persona runda")}</p>
-          <p class="show-round-copy">Ruleaza duelul live, apoi introdu scorurile in etapa de judge.</p>
-        </div>
+        <section class="show-stage-stack">
+          <p class="show-info-label">Live Duel</p>
+          <div class="show-vs-focus-board">
+            <article class="show-stage-mini-card">
+              <p class="show-info-label">${escapeHtml(state.teams.teamA.name)}</p>
+              <p class="show-info-value">${escapeHtml(duelistA?.name || "Select player")}</p>
+            </article>
+            <article class="show-stage-mini-card">
+              <p class="show-info-label">${escapeHtml(state.teams.teamB.name)}</p>
+              <p class="show-info-value">${escapeHtml(duelistB?.name || "Select player")}</p>
+            </article>
+          </div>
+          <p class="show-round-copy">Run the duel live, then go to score entry.</p>
+        </section>
       `;
     }
 
+    if (liveStep === "score-entry") {
+      return `
+        <section class="show-stage-stack">
+          <p class="show-info-label">Score Entry</p>
+          <div class="show-vs-input-grid">
+            <article class="show-stage-mini-card">
+              <p class="show-info-label">${escapeHtml(state.teams.teamA.name)} Score</p>
+              <input class="text-input show-stage-score-input" type="number" min="0" step="1" value="${roundState.scoreTeamA}" data-show-samsar-score-teama>
+            </article>
+            <article class="show-stage-mini-card">
+              <p class="show-info-label">${escapeHtml(state.teams.teamB.name)} Score</p>
+              <input class="text-input show-stage-score-input" type="number" min="0" step="1" value="${roundState.scoreTeamB}" data-show-samsar-score-teamb>
+            </article>
+          </div>
+        </section>
+      `;
+    }
+
+    const winnerLabel =
+      roundState.scoreTeamA > roundState.scoreTeamB
+        ? state.teams.teamA.name
+        : roundState.scoreTeamB > roundState.scoreTeamA
+          ? state.teams.teamB.name
+          : "Draw";
     return `
-      <div class="show-round-card">
-        <p class="show-info-label">Score judge</p>
-        <p class="show-round-title">${escapeHtml(state.teams.teamA.name)} ${roundState.scoreTeamA} - ${roundState.scoreTeamB} ${escapeHtml(
+      <section class="show-stage-stack show-stage-result-card">
+        <p class="show-info-label">Result Screen</p>
+        <p class="show-stage-result-headline">${escapeHtml(winnerLabel)}</p>
+        <p class="show-round-copy">${escapeHtml(state.teams.teamA.name)} ${roundState.scoreTeamA} - ${roundState.scoreTeamB} ${escapeHtml(
           state.teams.teamB.name
         )}</p>
-        <p class="show-round-copy">Higher score wins. Equal score is draw.</p>
-      </div>
+        <p class="show-round-copy">${escapeHtml(roundState.lastResult || "Apply result to settle round payout.")}</p>
+      </section>
     `;
   }
   if (isManualMatchGame(gameId)) {
     const manualGameId = gameId;
     const roundState = getOrCreateManualMatchRoundState(manualGameId, state.progress.currentRound);
     const settlement = calculateManualMatchSettlement(manualGameId, roundState);
+    const maxBetA = settlement.maxBetA;
+    const maxBetB = settlement.maxBetB;
+    const resultHeadline =
+      settlement.winner === "teamA"
+        ? `${state.teams.teamA.name} wins`
+        : settlement.winner === "teamB"
+          ? `${state.teams.teamB.name} wins`
+          : "Draw";
 
-    if (liveStep === "order-brief" || liveStep === "beer-brief" || liveStep === "shot-brief") {
+    if (manualGameId !== "shot-fake" && liveStep === "bet-screen") {
       return `
-        <div class="show-round-card">
-          <p class="show-info-label">${escapeHtml(getGameLabel(manualGameId))} setup</p>
-          <p class="show-round-title">Round ${state.progress.currentRound}</p>
-          <p class="show-round-copy">Set bets before live phase. Lineup stays from Game Intro.</p>
-        </div>
+        <section class="show-stage-stack">
+          <p class="show-info-label">${escapeHtml(getGameLabel(manualGameId))} / Bet Screen</p>
+          <div class="show-vs-input-grid">
+            <article class="show-stage-mini-card">
+              <p class="show-info-label">${escapeHtml(state.teams.teamA.name)} Bet</p>
+              <input class="text-input show-stage-money-input" type="number" min="0" step="10" value="${roundState.betTeamA}" data-show-manual-bet-teama>
+              <p class="show-info-sub">Max: ${formatMoney(maxBetA)}</p>
+            </article>
+            <article class="show-stage-mini-card">
+              <p class="show-info-label">${escapeHtml(state.teams.teamB.name)} Bet</p>
+              <input class="text-input show-stage-money-input" type="number" min="0" step="10" value="${roundState.betTeamB}" data-show-manual-bet-teamb>
+              <p class="show-info-sub">Max: ${formatMoney(maxBetB)}</p>
+            </article>
+          </div>
+        </section>
       `;
     }
 
-    if (liveStep === "order-live" || liveStep === "beer-live" || liveStep === "shot-live") {
+    if (manualGameId === "shot-fake" && liveStep === "sidebet-setup") {
       return `
-        <div class="show-round-card">
-          <p class="show-info-label">${escapeHtml(getGameLabel(manualGameId))} live</p>
-          <p class="show-round-title">${escapeHtml(state.teams.teamA.name)} ${roundState.scoreTeamA} - ${roundState.scoreTeamB} ${escapeHtml(
-            state.teams.teamB.name
-          )}</p>
+        <section class="show-stage-stack">
+          <p class="show-info-label">Shot Fake / Side Bet Setup</p>
+          <div class="show-vs-input-grid">
+            <article class="show-stage-mini-card">
+              <p class="show-info-label">${escapeHtml(state.teams.teamA.name)} Base Bet</p>
+              <input class="text-input show-stage-money-input" type="number" min="0" step="10" value="${roundState.betTeamA}" data-show-manual-bet-teama>
+              <p class="show-info-sub">Max: ${formatMoney(maxBetA)}</p>
+            </article>
+            <article class="show-stage-mini-card">
+              <p class="show-info-label">${escapeHtml(state.teams.teamB.name)} Base Bet</p>
+              <input class="text-input show-stage-money-input" type="number" min="0" step="10" value="${roundState.betTeamB}" data-show-manual-bet-teamb>
+              <p class="show-info-sub">Max: ${formatMoney(maxBetB)}</p>
+            </article>
+          </div>
+          <article class="show-stage-mini-card">
+            <p class="show-info-label">Multiplier (x)</p>
+            <input class="text-input compact-input" type="number" min="0" step="1" value="${roundState.shotFake.multiplier}" data-show-shot-multiplier>
+            <p class="show-round-copy">Special transfer preview: ${formatMoney(settlement.specialTransfer)}.</p>
+          </article>
+          <div class="show-sidebet-list">
+            ${roundState.shotFake.sideBets
+              .map((sideBet) => {
+                return `
+                  <article class="show-sidebet-card" data-show-shot-sidebet-id="${sideBet.id}">
+                    <input class="text-input" type="text" value="${escapeHtml(sideBet.label)}" data-show-shot-sidebet-label>
+                    <div class="show-sidebet-controls">
+                      <input class="text-input compact-input" type="number" min="0" step="10" value="${sideBet.amount}" data-show-shot-sidebet-amount>
+                      <select class="text-input compact-input" data-show-shot-sidebet-winner>
+                        <option value="draw" ${sideBet.winner === "draw" ? "selected" : ""}>Draw</option>
+                        <option value="teamA" ${sideBet.winner === "teamA" ? "selected" : ""}>${escapeHtml(state.teams.teamA.name)}</option>
+                        <option value="teamB" ${sideBet.winner === "teamB" ? "selected" : ""}>${escapeHtml(state.teams.teamB.name)}</option>
+                      </select>
+                      <button class="pill-btn" type="button" data-show-action="manual-sidebet-remove" data-sidebet-id="${sideBet.id}">Remove</button>
+                    </div>
+                  </article>
+                `;
+              })
+              .join("")}
+          </div>
+          <button class="secondary-btn" type="button" data-show-action="manual-sidebet-add">Add Side Bet</button>
+        </section>
+      `;
+    }
+
+    if (liveStep === "live-round") {
+      return `
+        <section class="show-stage-stack show-stage-focus-card">
+          <p class="show-info-label">${escapeHtml(getGameLabel(manualGameId))} / Live Round</p>
+          <p class="show-round-title">${escapeHtml(state.teams.teamA.name)} vs ${escapeHtml(state.teams.teamB.name)}</p>
           <p class="show-round-copy">${
             manualGameId === "shot-fake"
-              ? `Shot Fake transfer preview: ${formatMoney(settlement.specialTransfer)}.`
-              : "Team-vs-team round in progress."
+              ? `Bet-only round. Transfer preview: ${formatMoney(settlement.specialTransfer)}.`
+              : "Play the live challenge, then move to Result Screen."
           }</p>
-        </div>
+        </section>
       `;
     }
 
     return `
-      <div class="show-round-card">
-        <p class="show-info-label">${escapeHtml(getGameLabel(manualGameId))} judge</p>
-        <p class="show-round-title">${escapeHtml(state.teams.teamA.name)} ${roundState.scoreTeamA} - ${roundState.scoreTeamB} ${escapeHtml(
+      <section class="show-stage-stack show-stage-result-card">
+        <p class="show-info-label">${escapeHtml(getGameLabel(manualGameId))} / Result Screen</p>
+        <p class="show-stage-result-headline">${escapeHtml(resultHeadline)}</p>
+        <div class="show-vs-input-grid">
+          <article class="show-stage-mini-card">
+            <p class="show-info-label">${escapeHtml(state.teams.teamA.name)} Score</p>
+            <input class="text-input show-stage-score-input" type="number" min="0" step="1" value="${roundState.scoreTeamA}" data-show-manual-score-teama>
+          </article>
+          <article class="show-stage-mini-card">
+            <p class="show-info-label">${escapeHtml(state.teams.teamB.name)} Score</p>
+            <input class="text-input show-stage-score-input" type="number" min="0" step="1" value="${roundState.scoreTeamB}" data-show-manual-score-teamb>
+          </article>
+        </div>
+        <div class="show-result-choice-row">
+          <button class="pill-btn" type="button" data-show-manual-winner="teamA">${escapeHtml(state.teams.teamA.name)} won</button>
+          <button class="pill-btn" type="button" data-show-manual-winner="draw">Draw</button>
+          <button class="pill-btn" type="button" data-show-manual-winner="teamB">${escapeHtml(state.teams.teamB.name)} won</button>
+        </div>
+        <p class="show-round-copy">Net preview: ${escapeHtml(state.teams.teamA.name)} ${formatSignedMoney(settlement.deltaA)} | ${escapeHtml(
           state.teams.teamB.name
-        )}</p>
-        <p class="show-round-copy">Ready to apply payout. Draw is allowed for this game.</p>
-      </div>
+        )} ${formatSignedMoney(settlement.deltaB)}.</p>
+        <p class="show-round-copy">${escapeHtml(roundState.lastResult || "Apply result to settle payout.")}</p>
+      </section>
     `;
   }
   if (gameId === "curse-de-cai") {
     const roundState = getOrCreateCurseRoundState(state.progress.currentRound);
+    if (!roundState.winnerHorseId) {
+      detectCurseWinner(roundState);
+    }
     const winnerHorse = state.curseRace.horses.find((horse) => horse.id === roundState.winnerHorseId);
+    const leader = state.curseRace.horses
+      .map((horse) => ({
+        horse,
+        position: Math.max(0, Math.round(sanitizeNumber(roundState.positions?.[horse.id], 0)))
+      }))
+      .sort((left, right) => right.position - left.position)[0];
+    const maxBetA = getMaxBetAmount(state.teams.teamA.money, "curse-de-cai");
+    const maxBetB = getMaxBetAmount(state.teams.teamB.money, "curse-de-cai");
+    const totalBetA = getCurseTeamBetTotal(roundState, "teamA");
+    const totalBetB = getCurseTeamBetTotal(roundState, "teamB");
+    const settlement = winnerHorse ? calculateCursePayout(roundState) : null;
+    const bettorOptionsA = getCurseBettorOptions("teamA");
+    const bettorOptionsB = getCurseBettorOptions("teamB");
+    const trackLength = state.curseRace.trackLength;
 
-    if (liveStep === "race-brief") {
+    if (liveStep === "race-intro") {
       return `
-        <div class="show-round-card">
-          <p class="show-info-label">Race brief</p>
-          <p class="show-round-title">${state.curseRace.horses.length} horses ready</p>
-          <p class="show-round-copy">Configure multi-bets and bettors, then move into race live.</p>
-        </div>
+        <section class="show-stage-stack">
+          <p class="show-info-label">Race Intro</p>
+          <p class="show-round-title">Meet the horses</p>
+          <div class="show-stage-horse-grid">
+            ${state.curseRace.horses
+              .map((horse) => {
+                return `
+                  <article class="show-stage-horse-card">
+                    <p class="show-stage-horse-symbol">${escapeHtml(horse.symbol)}</p>
+                    <p class="show-stage-horse-name">${escapeHtml(horse.name)}</p>
+                    <p class="show-round-copy">${escapeHtml(horse.story)}</p>
+                  </article>
+                `;
+              })
+              .join("")}
+          </div>
+        </section>
       `;
     }
 
-    if (liveStep === "race-live") {
+    if (liveStep === "bet-screen") {
       return `
-        <div class="show-round-card">
-          <p class="show-info-label">Race live</p>
-          <p class="show-round-title">${winnerHorse ? `Winner set: ${winnerHorse.symbol} ${winnerHorse.name}` : "Race in progress"}</p>
-          <p class="show-round-copy">Move horses manually by symbol and handle push-back collisions.</p>
-        </div>
+        <section class="show-stage-stack">
+          <p class="show-info-label">Bet Screen</p>
+          <p class="show-round-title">Multi-bet board</p>
+          <div class="show-vs-input-grid">
+            <article class="show-stage-mini-card">
+              <p class="show-info-label">${escapeHtml(state.teams.teamA.name)} bettor</p>
+              <select class="text-input" data-show-curse-bettor-teama>
+                <option value="">No bettor principal</option>
+                ${bettorOptionsA
+                  .map(
+                    (option) =>
+                      `<option value="${option.id}" ${
+                        roundState.bets.teamA.bettorId === option.id ? "selected" : ""
+                      }>${escapeHtml(option.label)}</option>`
+                  )
+                  .join("")}
+              </select>
+              <p class="show-info-sub">Total: ${formatMoney(totalBetA)} / max ${formatMoney(maxBetA)}</p>
+            </article>
+            <article class="show-stage-mini-card">
+              <p class="show-info-label">${escapeHtml(state.teams.teamB.name)} bettor</p>
+              <select class="text-input" data-show-curse-bettor-teamb>
+                <option value="">No bettor principal</option>
+                ${bettorOptionsB
+                  .map(
+                    (option) =>
+                      `<option value="${option.id}" ${
+                        roundState.bets.teamB.bettorId === option.id ? "selected" : ""
+                      }>${escapeHtml(option.label)}</option>`
+                  )
+                  .join("")}
+              </select>
+              <p class="show-info-sub">Total: ${formatMoney(totalBetB)} / max ${formatMoney(maxBetB)}</p>
+            </article>
+          </div>
+          <div class="show-stage-race-bets">
+            ${state.curseRace.horses
+              .map((horse) => {
+                const betA = normalizeOptionalBetAmount(roundState.bets?.teamA?.horseBets?.[horse.id]);
+                const betB = normalizeOptionalBetAmount(roundState.bets?.teamB?.horseBets?.[horse.id]);
+                return `
+                  <article class="show-stage-race-bet-row">
+                    <p class="show-stage-race-bet-horse">${escapeHtml(horse.symbol)} ${escapeHtml(horse.name)}</p>
+                    <input class="text-input show-stage-money-input" type="number" min="0" step="10" value="${betA}" data-show-curse-bet data-team="teamA" data-horse-id="${
+                      horse.id
+                    }">
+                    <input class="text-input show-stage-money-input" type="number" min="0" step="10" value="${betB}" data-show-curse-bet data-team="teamB" data-horse-id="${
+                      horse.id
+                    }">
+                  </article>
+                `;
+              })
+              .join("")}
+          </div>
+        </section>
+      `;
+    }
+
+    if (liveStep === "race-screen") {
+      return `
+        <section class="show-stage-stack">
+          <p class="show-info-label">Race Screen</p>
+          <p class="show-round-title">${
+            winnerHorse ? `Winner detected: ${escapeHtml(winnerHorse.symbol)} ${escapeHtml(winnerHorse.name)}` : "Race in progress"
+          }</p>
+          <p class="show-round-copy">Leader: ${
+            leader ? `${escapeHtml(leader.horse.symbol)} ${escapeHtml(leader.horse.name)} (${leader.position}/${trackLength})` : "No movement yet"
+          }.</p>
+          <article class="show-stage-race-move-bar">
+            <div class="show-stage-race-move-grid">
+              <label class="show-control-cell">
+                <span class="show-info-label">Move horse</span>
+                <select class="text-input" data-show-curse-move-horse>
+                  ${state.curseRace.horses
+                    .map((horse) => {
+                      const selected = roundState.moveHorseId === horse.id ? "selected" : "";
+                      return `<option value="${horse.id}" ${selected}>${escapeHtml(horse.symbol)} ${escapeHtml(horse.name)}</option>`;
+                    })
+                    .join("")}
+                </select>
+              </label>
+              <label class="show-control-cell">
+                <span class="show-info-label">Steps</span>
+                <input class="text-input compact-input" type="number" min="1" step="1" value="${roundState.moveSteps}" data-show-curse-move-steps>
+              </label>
+            </div>
+            <p class="show-round-copy">If horse lands on another horse, that horse is pushed back by 1.</p>
+          </article>
+          <div class="show-stage-race-track-grid">
+            ${state.curseRace.horses
+              .map((horse) => {
+                const position = Math.max(0, Math.round(sanitizeNumber(roundState.positions?.[horse.id], 0)));
+                const progress = trackLength <= 0 ? 0 : Math.min(100, Math.round((Math.min(position, trackLength) / trackLength) * 100));
+                const isWinner = roundState.winnerHorseId === horse.id ? "is-winner" : "";
+                return `
+                  <article class="show-stage-race-track-lane ${isWinner}">
+                    <div class="show-stage-race-track-head">
+                      <p class="show-info-label">${escapeHtml(horse.symbol)} ${escapeHtml(horse.name)}</p>
+                      <p class="show-info-sub">${position}/${trackLength}</p>
+                    </div>
+                    <div class="show-stage-race-track-bar">
+                      <span style="width:${progress}%"></span>
+                    </div>
+                  </article>
+                `;
+              })
+              .join("")}
+          </div>
+        </section>
+      `;
+    }
+
+    if (liveStep === "winner-screen") {
+      return `
+        <section class="show-stage-stack show-stage-result-card">
+          <p class="show-info-label">Winner Screen</p>
+          <p class="show-stage-result-headline">${
+            winnerHorse ? `${escapeHtml(winnerHorse.symbol)} ${escapeHtml(winnerHorse.name)}` : "No winner yet"
+          }</p>
+          <p class="show-round-copy">${
+            winnerHorse
+              ? "Continue to payout to settle all horse bets."
+              : "Continue race until one horse reaches the finish line."
+          }</p>
+        </section>
       `;
     }
 
     return `
-      <div class="show-round-card">
-        <p class="show-info-label">Settle payout</p>
-        <p class="show-round-title">${winnerHorse ? `Winner: ${winnerHorse.symbol} ${winnerHorse.name}` : "Select winner by race outcome"}</p>
-        <p class="show-round-copy">Only winning-horse bet pays x${state.curseRace.payoutMultiplier}. All other horse bets lose.</p>
-      </div>
+      <section class="show-stage-stack show-stage-result-card">
+        <p class="show-info-label">Payout Screen</p>
+        <p class="show-stage-result-headline">${
+          winnerHorse ? `${escapeHtml(winnerHorse.symbol)} ${escapeHtml(winnerHorse.name)}` : "No winner selected"
+        }</p>
+        <p class="show-round-copy">Only bets on winning horse pay x${state.curseRace.payoutMultiplier}. All other horse bets lose.</p>
+        <div class="show-vs-input-grid">
+          <article class="show-stage-mini-card">
+            <p class="show-info-label">${escapeHtml(state.teams.teamA.name)} net</p>
+            <p class="show-info-value">${settlement ? formatSignedMoney(settlement.netA) : formatSignedMoney(0)}</p>
+          </article>
+          <article class="show-stage-mini-card">
+            <p class="show-info-label">${escapeHtml(state.teams.teamB.name)} net</p>
+            <p class="show-info-value">${settlement ? formatSignedMoney(settlement.netB) : formatSignedMoney(0)}</p>
+          </article>
+        </div>
+        <p class="show-round-copy">${escapeHtml(roundState.lastResult || "Apply payout to lock race result.")}</p>
+      </section>
     `;
   }
   return `
@@ -4892,21 +5447,12 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
 }
 
 function buildLiveRoundQuickActions(gameId, liveStep) {
-  const flowStates = getGameFlowStates(gameId);
-  const firstStateId = flowStates[0]?.id;
-  const payoutStateId = getFlowPayoutStateId(gameId);
-  const lastStateId = flowStates[flowStates.length - 1]?.id;
-  const nextStateId = getNextLiveRoundStep(gameId, liveStep);
-  const prevStateId = getPrevLiveRoundStep(gameId, liveStep);
-  const answerLocked = isOverlayAnswerLocked();
-  const lockLabel = answerLocked ? "Unlock answer" : "Lock answer";
   const actions = [];
 
   if (gameId === "trivia") {
     const triviaRoundState = getOrCreateTriviaRoundState();
     const selectedCategory = state.trivia.categories.find((entry) => entry.id === triviaRoundState.selectedCategoryId);
-    const isUsedCategory =
-      selectedCategory && triviaRoundState.usedCategoryIds.includes(selectedCategory.id);
+    const isUsedCategory = selectedCategory && triviaRoundState.usedCategoryIds.includes(selectedCategory.id);
     const hasTopic = Boolean(selectedCategory && !isUsedCategory);
     const flowComplete = isGameFlowComplete("trivia");
 
@@ -4933,41 +5479,143 @@ function buildLiveRoundQuickActions(gameId, liveStep) {
     return renderFlowActionButtons(actions);
   }
 
-  if (liveStep === firstStateId) {
-    actions.push({
-      tone: "primary-btn",
-      action: "live-step-next",
-      label: `Start ${getLiveStepLabel(gameId, nextStateId)}`
-    });
-  } else if (liveStep !== payoutStateId && liveStep !== lastStateId) {
-    actions.push({
-      tone: "primary-btn",
-      action: "live-step-next",
-      label: `Go to ${getLiveStepLabel(gameId, nextStateId)}`
-    });
-  } else {
-    actions.push({ tone: "secondary-btn", action: "toggle-answer-lock", label: lockLabel });
-    if (gameId === "trivia") {
-      actions.push({ tone: "primary-btn", action: "trivia-correct", label: "Confirm correct" });
-      actions.push({ tone: "danger-btn", action: "trivia-wrong", label: "Confirm wrong" });
-    } else if (gameId === "pretul-corect") {
-      actions.push({ tone: "primary-btn", action: "pretul-evaluate", label: "Confirm answer" });
-    } else if (gameId === "film-joc-franciza-fun-fact") {
-      actions.push({ tone: "primary-btn", action: "film-apply", label: "Confirm answer" });
-    } else if (gameId === "cel-mai-bun-samsar") {
-      actions.push({ tone: "primary-btn", action: "samsar-apply", label: "Confirm answer" });
-    } else if (isManualMatchGame(gameId)) {
-      actions.push({ tone: "primary-btn", action: "manual-apply", label: "Confirm answer" });
-    } else if (gameId === "curse-de-cai") {
-      actions.push({ tone: "primary-btn", action: "curse-apply", label: "Confirm answer" });
+  if (gameId === "pretul-corect") {
+    const flowComplete = isGameFlowComplete(gameId);
+    if (liveStep === "topic-select") {
+      actions.push({ tone: "primary-btn", action: "live-step-bet-screen", label: "Lock Topic" });
+      actions.push({ tone: "secondary-btn", action: "pretul-reset-used", label: "Reset topics" });
+    } else if (liveStep === "bet-screen") {
+      actions.push({ tone: "primary-btn", action: "live-step-product-reveal", label: "Continue to Product" });
+      actions.push({ tone: "secondary-btn", action: "live-step-topic-select", label: "Back to Topics" });
+    } else if (liveStep === "product-reveal") {
+      actions.push({ tone: "primary-btn", action: "live-step-answer-entry", label: "Enter Answers" });
+    } else if (liveStep === "answer-entry") {
+      actions.push({ tone: "primary-btn", action: "live-step-price-reveal", label: "Reveal Price" });
+    } else if (liveStep === "price-reveal") {
+      actions.push({ tone: "primary-btn", action: "pretul-evaluate", label: "Auto Winner + Payout" });
+    } else if (liveStep === "auto-winner") {
+      actions.push({
+        tone: "primary-btn",
+        action: flowComplete ? "finish-game-return" : "pretul-next-topic",
+        label: flowComplete ? "Finish Pretul Corect" : "Next Topic"
+      });
     }
-    actions.push({ tone: "secondary-btn", action: "go-reveal", label: "Reveal" });
+    if (!["price-reveal", "auto-winner"].includes(liveStep)) {
+      actions.push({ tone: "secondary-btn", action: "go-game-intro", label: "Lineup substitution" });
+    }
+    return renderFlowActionButtons(actions);
   }
-  if (liveStep !== firstStateId && prevStateId !== liveStep) {
-    actions.push({ tone: "secondary-btn", action: "live-step-prev", label: `Back to ${getLiveStepLabel(gameId, prevStateId)}` });
+
+  if (gameId === "film-joc-franciza-fun-fact") {
+    const flowComplete = isGameFlowComplete(gameId);
+    if (liveStep === "bet-screen") {
+      actions.push({ tone: "primary-btn", action: "live-step-image-reveal", label: "Reveal Image" });
+    } else if (liveStep === "image-reveal") {
+      actions.push({ tone: "primary-btn", action: "live-step-card-reveal", label: "Open Cards" });
+    } else if (liveStep === "card-reveal") {
+      actions.push({ tone: "primary-btn", action: "film-apply", label: "Calculate Result" });
+    } else if (liveStep === "breakdown-result") {
+      actions.push({
+        tone: "primary-btn",
+        action: flowComplete ? "finish-game-return" : "film-next-round",
+        label: flowComplete ? "Finish Film/Joc" : "Next Round"
+      });
+    }
+    if (!["card-reveal", "breakdown-result"].includes(liveStep)) {
+      actions.push({ tone: "secondary-btn", action: "go-game-intro", label: "Lineup substitution" });
+    }
+    return renderFlowActionButtons(actions);
   }
-  if (liveStep !== lastStateId && liveStep !== payoutStateId && nextStateId !== liveStep) {
-    actions.push({ tone: "secondary-btn", action: "live-step-next", label: "Next step" });
+
+  if (gameId === "cel-mai-bun-samsar") {
+    const flowComplete = isGameFlowComplete(gameId);
+    if (liveStep === "player-select") {
+      actions.push({ tone: "primary-btn", action: "live-step-bet-screen", label: "Confirm Players" });
+    } else if (liveStep === "bet-screen") {
+      actions.push({ tone: "primary-btn", action: "live-step-persona-intro", label: "Show Persona" });
+    } else if (liveStep === "persona-intro") {
+      actions.push({ tone: "primary-btn", action: "live-step-live-duel", label: "Start Duel" });
+    } else if (liveStep === "live-duel") {
+      actions.push({ tone: "primary-btn", action: "live-step-score-entry", label: "Go to Score Entry" });
+    } else if (liveStep === "score-entry") {
+      actions.push({ tone: "primary-btn", action: "samsar-apply", label: "Apply Result" });
+    } else if (liveStep === "result-screen") {
+      actions.push({
+        tone: "primary-btn",
+        action: flowComplete ? "finish-game-return" : "next-round",
+        label: flowComplete ? "Finish Samsar" : "Next Round"
+      });
+    }
+    if (!["live-duel", "score-entry", "result-screen"].includes(liveStep)) {
+      actions.push({ tone: "secondary-btn", action: "go-game-intro", label: "Lineup substitution" });
+    }
+    return renderFlowActionButtons(actions);
+  }
+
+  if (gameId === "guess-right-order" || gameId === "beer-pong") {
+    if (liveStep === "bet-screen") {
+      actions.push({ tone: "primary-btn", action: "live-step-live-round", label: "Start Live Round" });
+    } else if (liveStep === "live-round") {
+      actions.push({ tone: "primary-btn", action: "live-step-result-screen", label: "Open Result" });
+    } else if (liveStep === "result-screen") {
+      actions.push({ tone: "primary-btn", action: "manual-apply", label: "Apply Result" });
+      actions.push({ tone: "secondary-btn", action: "next-round", label: "Next Round" });
+      actions.push({ tone: "secondary-btn", action: "go-end-of-game", label: "End This Game" });
+    }
+    if (!["live-round", "result-screen"].includes(liveStep)) {
+      actions.push({ tone: "secondary-btn", action: "go-game-intro", label: "Lineup substitution" });
+    }
+    return renderFlowActionButtons(actions);
+  }
+
+  if (gameId === "shot-fake") {
+    if (liveStep === "sidebet-setup") {
+      actions.push({ tone: "primary-btn", action: "live-step-live-round", label: "Start Live Round" });
+    } else if (liveStep === "live-round") {
+      actions.push({ tone: "primary-btn", action: "live-step-result-screen", label: "Open Settlement" });
+    } else if (liveStep === "result-screen") {
+      actions.push({ tone: "primary-btn", action: "manual-apply", label: "Apply Settlement" });
+      actions.push({ tone: "secondary-btn", action: "next-round", label: "Next Round" });
+      actions.push({ tone: "secondary-btn", action: "go-end-of-game", label: "End This Game" });
+    }
+    if (liveStep === "sidebet-setup") {
+      actions.push({ tone: "secondary-btn", action: "go-game-intro", label: "Lineup substitution" });
+    }
+    return renderFlowActionButtons(actions);
+  }
+
+  if (gameId === "curse-de-cai") {
+    if (liveStep === "race-intro") {
+      actions.push({ tone: "primary-btn", action: "live-step-bet-screen", label: "Go to Bets" });
+    } else if (liveStep === "bet-screen") {
+      actions.push({ tone: "primary-btn", action: "live-step-race-screen", label: "Start Race" });
+    } else if (liveStep === "race-screen") {
+      actions.push({ tone: "primary-btn", action: "curse-move", label: "Move Horse" });
+      actions.push({ tone: "secondary-btn", action: "live-step-winner-screen", label: "Check Winner" });
+      actions.push({ tone: "secondary-btn", action: "curse-reset", label: "Reset Race" });
+    } else if (liveStep === "winner-screen") {
+      actions.push({ tone: "primary-btn", action: "live-step-payout-screen", label: "Continue to Payout" });
+      actions.push({ tone: "secondary-btn", action: "live-step-race-screen", label: "Back to Race" });
+    } else if (liveStep === "payout-screen") {
+      actions.push({ tone: "primary-btn", action: "curse-apply", label: "Apply Payout" });
+      actions.push({ tone: "secondary-btn", action: "next-round", label: "Next Race" });
+      actions.push({ tone: "secondary-btn", action: "go-end-of-game", label: "End This Game" });
+    }
+    if (!["race-screen", "winner-screen", "payout-screen"].includes(liveStep)) {
+      actions.push({ tone: "secondary-btn", action: "go-game-intro", label: "Lineup substitution" });
+    }
+    return renderFlowActionButtons(actions);
+  }
+
+  const flowStates = getGameFlowStates(gameId);
+  const firstStateId = flowStates[0]?.id;
+  const lastStateId = flowStates[flowStates.length - 1]?.id;
+  if (liveStep === firstStateId) {
+    actions.push({ tone: "primary-btn", action: "live-step-next", label: "Start Round" });
+  } else if (liveStep !== lastStateId) {
+    actions.push({ tone: "primary-btn", action: "live-step-next", label: "Next Step" });
+  } else {
+    actions.push({ tone: "primary-btn", action: "next-round", label: "Next Round" });
   }
   actions.push({ tone: "secondary-btn", action: "go-game-intro", label: "Lineup substitution" });
   return renderFlowActionButtons(actions);
@@ -5001,7 +5649,9 @@ function buildLiveRoundContent(gameId) {
   const stageExperience = buildLiveRoundExperienceContent(gameId, liveStep);
   const stageActions = buildLiveRoundQuickActions(gameId, liveStep);
   return `
-    <section class="show-live-screen show-shared-game-stage" data-game-stage="${escapeHtml(gameId)}">
+    <section class="show-live-screen show-shared-game-stage" data-game-stage="${escapeHtml(gameId)}" data-live-step="${escapeHtml(
+      liveStep
+    )}">
       <div class="show-live-top-layout">
         ${renderLiveRoundTeamSummary("teamA")}
         <section class="show-live-control-hub">
@@ -5858,6 +6508,26 @@ function handleShowOverlayAction(action, trigger) {
     advanceTriviaToNextTopic();
     return;
   }
+  if (action === "pretul-next-topic") {
+    if (isGameFlowComplete("pretul-corect")) {
+      finishCurrentGameAndReturn();
+      return;
+    }
+    setCurrentRound(state.progress.currentRound + 1);
+    setShowScreen("live-round", { persist: false });
+    saveState("Pretul corect next topic.");
+    return;
+  }
+  if (action === "film-next-round") {
+    if (isGameFlowComplete("film-joc-franciza-fun-fact")) {
+      finishCurrentGameAndReturn();
+      return;
+    }
+    setCurrentRound(state.progress.currentRound + 1);
+    setShowScreen("live-round", { persist: false });
+    saveState("Film/Joc next round.");
+    return;
+  }
   if (action === "live-step-next") {
     const currentGameId = state.progress.currentGame;
     setLiveRoundStep(getNextLiveRoundStep(currentGameId, getLiveRoundStep(currentGameId)));
@@ -5930,7 +6600,8 @@ function handleShowOverlayAction(action, trigger) {
     syncPretulOverlayIntoState();
     applyPretulRoundResult();
     setOverlayAnswerLocked(false, { persist: false });
-    setShowScreen("reveal-result", { persist: false });
+    setLiveRoundStep("auto-winner", { persist: false });
+    setShowScreen("live-round", { persist: false });
     return;
   }
   if (action === "pretul-reset-used") {
@@ -5940,7 +6611,8 @@ function handleShowOverlayAction(action, trigger) {
   if (action === "film-apply") {
     applyFilmRoundResult();
     setOverlayAnswerLocked(false, { persist: false });
-    setShowScreen("reveal-result", { persist: false });
+    setLiveRoundStep("breakdown-result", { persist: false });
+    setShowScreen("live-round", { persist: false });
     return;
   }
   if (action === "film-reset-used") {
@@ -5951,14 +6623,16 @@ function handleShowOverlayAction(action, trigger) {
     syncSamsarOverlayIntoHostInputs();
     applySamsarRoundResult();
     setOverlayAnswerLocked(false, { persist: false });
-    setShowScreen("reveal-result", { persist: false });
+    setLiveRoundStep("result-screen", { persist: false });
+    setShowScreen("live-round", { persist: false });
     return;
   }
   if (action === "manual-apply") {
     syncManualOverlayIntoHostInputs();
     applyManualMatchRoundResult();
     setOverlayAnswerLocked(false, { persist: false });
-    setShowScreen("reveal-result", { persist: false });
+    setLiveRoundStep("result-screen", { persist: false });
+    setShowScreen("live-round", { persist: false });
     return;
   }
   if (action === "manual-sidebet-add") {
@@ -5979,7 +6653,8 @@ function handleShowOverlayAction(action, trigger) {
   if (action === "curse-apply") {
     applyCurseRacePayout();
     setOverlayAnswerLocked(false, { persist: false });
-    setShowScreen("reveal-result", { persist: false });
+    setLiveRoundStep("payout-screen", { persist: false });
+    setShowScreen("live-round", { persist: false });
     return;
   }
   if (action === "curse-reset") {
@@ -6255,6 +6930,15 @@ function handleShowOverlayClick(event) {
     return;
   }
 
+  const pretulTopicButton = event.target.closest("[data-show-pretul-item]");
+  if (pretulTopicButton) {
+    const itemId = pretulTopicButton.getAttribute("data-show-pretul-item");
+    if (itemId) {
+      setPretulSelectedItem(itemId);
+    }
+    return;
+  }
+
   const revealButton = event.target.closest("[data-show-film-reveal]");
   if (revealButton) {
     const componentKey = revealButton.getAttribute("data-show-film-reveal");
@@ -6270,6 +6954,31 @@ function handleShowOverlayClick(event) {
       return;
     }
     setFilmComponentOutcome(componentKey, outcome === "correct" ? "correct" : "wrong");
+    return;
+  }
+
+  const manualWinnerButton = event.target.closest("[data-show-manual-winner]");
+  if (manualWinnerButton) {
+    const winner = manualWinnerButton.getAttribute("data-show-manual-winner");
+    const gameId = getCurrentManualMatchGame();
+    const roundState = getOrCreateManualMatchRoundState(gameId, state.progress.currentRound);
+    if (winner === "teamA") {
+      const nextScore = Math.max(1, roundState.scoreTeamB + 1);
+      setManualRoundScore("teamA", nextScore);
+      setManualRoundScore("teamB", roundState.scoreTeamB);
+      setLastResultSummary(`${state.teams.teamA.name} marked as winner preview.`);
+    } else if (winner === "teamB") {
+      const nextScore = Math.max(1, roundState.scoreTeamA + 1);
+      setManualRoundScore("teamA", roundState.scoreTeamA);
+      setManualRoundScore("teamB", nextScore);
+      setLastResultSummary(`${state.teams.teamB.name} marked as winner preview.`);
+    } else if (winner === "draw") {
+      const drawScore = Math.max(roundState.scoreTeamA, roundState.scoreTeamB);
+      setManualRoundScore("teamA", drawScore);
+      setManualRoundScore("teamB", drawScore);
+      setLastResultSummary("Draw preview selected.");
+    }
+    renderShowUi();
     return;
   }
 
@@ -7417,9 +8126,6 @@ function setSamsarActivePlayer(teamKey, playerId) {
 
   if (!playerId) {
     roundState[playerField] = "";
-    state.roundSelection.activeByTeam[teamKey] = [];
-    saveCurrentRoundSnapshot();
-    renderRoundSelection();
     renderSamsarControls();
     saveState("Samsar active player cleared.");
     return;
@@ -7434,9 +8140,6 @@ function setSamsarActivePlayer(teamKey, playerId) {
   }
 
   roundState[playerField] = player.id;
-  state.roundSelection.activeByTeam[teamKey] = [player.id];
-  saveCurrentRoundSnapshot();
-  renderRoundSelection();
   renderSamsarControls();
   saveState("Samsar active player updated.");
 }
@@ -7512,17 +8215,35 @@ function applySamsarRoundResult() {
   const teamBOutcome = getOutcomeForTeamFromWinner(winnerTeam, "teamB");
   const teamABetOutcome = stakeA > 0 ? teamAOutcome : "draw";
   const teamBBetOutcome = stakeB > 0 ? teamBOutcome : "draw";
+  const getDuelParticipants = (teamKey, playerId) => {
+    if (!playerId) {
+      return [];
+    }
+    const player = state.teams[teamKey].players.find((entry) => entry.id === playerId && entry.status === "available");
+    if (!player) {
+      return [];
+    }
+    return [
+      {
+        id: player.id,
+        displayName: player.name,
+        teamKey
+      }
+    ];
+  };
+  const participantsA = getDuelParticipants("teamA", roundState.activePlayerTeamAId);
+  const participantsB = getDuelParticipants("teamB", roundState.activePlayerTeamBId);
   applyRoundPlayerStats({
     gameId: "cel-mai-bun-samsar",
     teamA: {
-      participants: getActiveParticipantsForTeam("teamA"),
+      participants: participantsA.length > 0 ? participantsA : getActiveParticipantsForTeam("teamA"),
       roundOutcome: teamAOutcome,
       teamNetDelta: deltaA,
       teamBetAmount: stakeA,
       betOutcome: teamABetOutcome
     },
     teamB: {
-      participants: getActiveParticipantsForTeam("teamB"),
+      participants: participantsB.length > 0 ? participantsB : getActiveParticipantsForTeam("teamB"),
       roundOutcome: teamBOutcome,
       teamNetDelta: deltaB,
       teamBetAmount: stakeB,
@@ -9207,6 +9928,18 @@ function switchRoundContext(nextGameId, nextRound, options = {}) {
   state.showUi.answerLocked = false;
 
   loadCurrentRoundSnapshot();
+  if (!isGameLineupReady(nextGameId)) {
+    state.roundSelection.activeByTeam.teamA = [];
+    state.roundSelection.activeByTeam.teamB = [];
+    state.roundSelection.jokerAssignment = "out";
+    state.roundSelection.history[getGameLineupKey(nextGameId)] = sanitizeHistorySnapshot({
+      activeByTeam: {
+        teamA: [],
+        teamB: []
+      },
+      jokerAssignment: "out"
+    });
+  }
 
   if (navigateToSection) {
     setActiveSection(getGameSection(nextGameId), { persist: false });
