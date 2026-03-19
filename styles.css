@@ -2532,10 +2532,24 @@ button.show-leader-row {
   display: grid;
   gap: 8px;
   text-align: left;
+  cursor: pointer;
+  transition: transform 0.14s ease, border-color 0.14s ease, box-shadow 0.14s ease;
+}
+
+.show-stage-topic-card:hover:not(:disabled) {
+  border-color: #9fb1e4;
+  box-shadow: 0 12px 24px rgba(18, 31, 68, 0.09);
+  transform: translateY(-2px);
+}
+
+.show-stage-topic-card.is-selected {
+  border-color: #dfba4f;
+  box-shadow: 0 0 0 2px rgba(223, 186, 79, 0.28) inset;
 }
 
 .show-stage-topic-card.is-used {
   opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .show-stage-topic-status {
@@ -2716,6 +2730,39 @@ button.show-leader-row {
   align-items: center;
 }
 
+.show-participant-picker {
+  gap: 8px;
+}
+
+.show-participant-picker-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.show-participant-picker-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.show-participant-picker-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.show-participant-chip {
+  min-height: 34px;
+  padding-inline: 12px;
+}
+
+.show-participant-chip.is-active {
+  background: linear-gradient(120deg, var(--accent), #ffd986);
+  border-color: transparent;
+  color: var(--ink);
+}
+
 .show-stage-horse-grid {
   display: grid;
   gap: 10px;
@@ -2821,6 +2868,59 @@ button.show-leader-row {
   display: block;
   height: 100%;
   background: linear-gradient(120deg, var(--accent), #ffd986);
+}
+
+.show-pretul-scale {
+  position: relative;
+  padding-top: 34px;
+  min-height: 84px;
+}
+
+.show-pretul-scale-track {
+  height: 12px;
+  border-radius: 999px;
+  background: #e7edff;
+}
+
+.show-pretul-scale-marker {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  border: 1px solid #d2dcff;
+  background: #ffffff;
+  color: #20345f;
+  padding: 5px 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.show-pretul-scale-marker::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  width: 2px;
+  height: 20px;
+  transform: translateX(-50%);
+  background: currentColor;
+  opacity: 0.6;
+}
+
+.show-pretul-scale-marker.is-real {
+  border-color: #dfba4f;
+  color: #8b6500;
+}
+
+.show-pretul-scale-marker.is-team-a {
+  border-color: #42a5f5;
+  color: #0f5da6;
+}
+
+.show-pretul-scale-marker.is-team-b {
+  border-color: #ff8a65;
+  color: #a44524;
 }
 
 .show-assignment-lane-body {

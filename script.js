@@ -451,65 +451,91 @@ const DEFAULT_TRIVIA_CATEGORIES = [
     answer: "Taxa pe valoare adaugata"
   }
 ];
+const PRETUL_PRODUCT_PLACEHOLDER =
+  "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 960 540'><defs><linearGradient id='g' x1='0' x2='1' y1='0' y2='1'><stop offset='0' stop-color='%23131f43'/><stop offset='1' stop-color='%232b3c7c'/></linearGradient></defs><rect width='960' height='540' fill='url(%23g)'/><text x='50%25' y='46%25' fill='%23f5f7ff' font-size='40' font-family='Arial' text-anchor='middle'>PRETUL CORECT</text><text x='50%25' y='57%25' fill='%23d4dcff' font-size='24' font-family='Arial' text-anchor='middle'>Product reveal placeholder</text></svg>";
 const DEFAULT_PRETUL_ITEMS = [
   {
     id: "pretul-item-1",
-    name: "HyperX Cloud III (casti gaming)",
+    categoryTitle: "Audio Essentials",
+    name: "HyperX Cloud III (gaming headset)",
+    imageUrl: PRETUL_PRODUCT_PLACEHOLDER,
     referencePrice: 120
   },
   {
     id: "pretul-item-2",
-    name: "Philips 2200 (espressor automat)",
+    categoryTitle: "Coffee Corner",
+    name: "Philips 2200 (automatic espresso machine)",
+    imageUrl: PRETUL_PRODUCT_PLACEHOLDER,
     referencePrice: 420
   },
   {
     id: "pretul-item-3",
-    name: "Anker Nebula Capsule (mini proiector)",
+    categoryTitle: "Home Cinema",
+    name: "Anker Nebula Capsule (mini projector)",
+    imageUrl: PRETUL_PRODUCT_PLACEHOLDER,
     referencePrice: 520
   },
   {
     id: "pretul-item-4",
+    categoryTitle: "Smart Fitness",
     name: "Garmin Venu Sq 2 (smartwatch)",
+    imageUrl: PRETUL_PRODUCT_PLACEHOLDER,
     referencePrice: 260
   },
   {
     id: "pretul-item-5",
+    categoryTitle: "Collector Build",
     name: "LEGO Icons Corvette",
+    imageUrl: PRETUL_PRODUCT_PLACEHOLDER,
     referencePrice: 150
   },
   {
     id: "pretul-item-6",
-    name: "IKEA Markus (scaun birou)",
+    categoryTitle: "Office Comfort",
+    name: "IKEA Markus (office chair)",
+    imageUrl: PRETUL_PRODUCT_PLACEHOLDER,
     referencePrice: 230
   },
   {
     id: "pretul-item-7",
+    categoryTitle: "Travel Speaker",
     name: "Bose SoundLink Flex",
+    imageUrl: PRETUL_PRODUCT_PLACEHOLDER,
     referencePrice: 170
   },
   {
     id: "pretul-item-8",
+    categoryTitle: "Reading Tech",
     name: "Kindle Paperwhite 11th Gen",
+    imageUrl: PRETUL_PRODUCT_PLACEHOLDER,
     referencePrice: 160
   },
   {
     id: "pretul-item-9",
+    categoryTitle: "Pro Controller",
     name: "PlayStation DualSense Edge",
+    imageUrl: PRETUL_PRODUCT_PLACEHOLDER,
     referencePrice: 250
   },
   {
     id: "pretul-item-10",
+    categoryTitle: "Kitchen Upgrade",
     name: "Ninja Foodi Air Fryer",
+    imageUrl: PRETUL_PRODUCT_PLACEHOLDER,
     referencePrice: 190
   },
   {
     id: "pretul-item-11",
+    categoryTitle: "Storage Speed",
     name: "Samsung 980 Pro 1TB SSD",
+    imageUrl: PRETUL_PRODUCT_PLACEHOLDER,
     referencePrice: 140
   },
   {
     id: "pretul-item-12",
+    categoryTitle: "Action Camera",
     name: "GoPro Hero 12 Black",
+    imageUrl: PRETUL_PRODUCT_PLACEHOLDER,
     referencePrice: 380
   }
 ];
@@ -935,7 +961,6 @@ const elements = {
   adminImportSaveBtn: document.getElementById("adminImportSaveBtn"),
   showStageGameLabel: document.getElementById("showStageGameLabel"),
   showStageRoundLabel: document.getElementById("showStageRoundLabel"),
-  showStageTimer: document.getElementById("showStageTimer"),
   showActivePlayersTeamA: document.getElementById("showActivePlayersTeamA"),
   showActivePlayersTeamB: document.getElementById("showActivePlayersTeamB"),
   showScreenTitle: document.getElementById("showScreenTitle"),
@@ -1683,6 +1708,8 @@ function sanitizeTriviaRoundState(rawRoundState) {
     lockedOptionIndex: -1,
     resultChecked: false,
     isCorrect: null,
+    betDelta: 0,
+    bonusDelta: 0,
     lastDelta: 0,
     resultCategoryId: "",
     lastResult: ""
@@ -1709,6 +1736,8 @@ function sanitizeTriviaRoundState(rawRoundState) {
   safeState.resultChecked = Boolean(rawRoundState.resultChecked);
   safeState.isCorrect =
     rawRoundState.isCorrect === true ? true : rawRoundState.isCorrect === false ? false : null;
+  safeState.betDelta = Math.round(sanitizeNumber(rawRoundState.betDelta, 0));
+  safeState.bonusDelta = Math.round(sanitizeNumber(rawRoundState.bonusDelta, 0));
   safeState.lastDelta = Math.round(sanitizeNumber(rawRoundState.lastDelta, 0));
   safeState.resultCategoryId = sanitizeString(rawRoundState.resultCategoryId, "");
   safeState.lastResult = sanitizeString(rawRoundState.lastResult, "");
@@ -1741,6 +1770,8 @@ function getOrCreateTriviaRoundState(roundNumber = state.progress.currentRound) 
       lockedOptionIndex: -1,
       resultChecked: false,
       isCorrect: null,
+      betDelta: 0,
+      bonusDelta: 0,
       lastDelta: 0,
       resultCategoryId: "",
       lastResult: ""
@@ -1765,8 +1796,9 @@ function sanitizePretulItems(rawItems) {
   const sanitized = [];
 
   for (const rawItem of rawItems) {
+    const categoryTitle = sanitizeString(rawItem?.categoryTitle, "").trim();
     const name = sanitizeString(rawItem?.name, "").trim();
-    if (!name) {
+    if (!categoryTitle || !name) {
       continue;
     }
 
@@ -1779,7 +1811,9 @@ function sanitizePretulItems(rawItems) {
     const referencePrice = Math.max(0, Math.round(sanitizeNumber(rawItem?.referencePrice, 0)));
     sanitized.push({
       id,
+      categoryTitle,
       name,
+      imageUrl: sanitizeString(rawItem?.imageUrl, PRETUL_PRODUCT_PLACEHOLDER).trim() || PRETUL_PRODUCT_PLACEHOLDER,
       referencePrice
     });
   }
@@ -1791,11 +1825,15 @@ function sanitizePretulRoundState(rawRoundState) {
   const safeState = {
     selectedItemId: "",
     usedItemIds: [],
+    chooserTeamKey: "teamA",
+    participantsTeamA: [],
+    participantsTeamB: [],
     answerTeamA: 0,
     answerTeamB: 0,
     realPrice: 0,
     betTeamA: 100,
     betTeamB: 100,
+    payoutApplied: false,
     lastResult: ""
   };
 
@@ -1807,11 +1845,17 @@ function sanitizePretulRoundState(rawRoundState) {
   safeState.usedItemIds = Array.isArray(rawRoundState.usedItemIds)
     ? Array.from(new Set(rawRoundState.usedItemIds.filter((id) => typeof id === "string")))
     : [];
+  safeState.chooserTeamKey = ["teamA", "teamB"].includes(rawRoundState.chooserTeamKey)
+    ? rawRoundState.chooserTeamKey
+    : "teamA";
+  safeState.participantsTeamA = sanitizeRoundParticipantIds(rawRoundState.participantsTeamA, "teamA");
+  safeState.participantsTeamB = sanitizeRoundParticipantIds(rawRoundState.participantsTeamB, "teamB");
   safeState.answerTeamA = Math.max(0, Math.round(sanitizeNumber(rawRoundState.answerTeamA, 0)));
   safeState.answerTeamB = Math.max(0, Math.round(sanitizeNumber(rawRoundState.answerTeamB, 0)));
   safeState.realPrice = Math.max(0, Math.round(sanitizeNumber(rawRoundState.realPrice, 0)));
   safeState.betTeamA = normalizeBetAmount(rawRoundState.betTeamA);
   safeState.betTeamB = normalizeBetAmount(rawRoundState.betTeamB);
+  safeState.payoutApplied = Boolean(rawRoundState.payoutApplied);
   safeState.lastResult = sanitizeString(rawRoundState.lastResult, "");
   return safeState;
 }
@@ -1827,14 +1871,20 @@ function getOrCreatePretulRoundState(roundNumber = state.progress.currentRound) 
     const previousRound = sanitizePretulRoundState(state.pretul.rounds[previousRoundKey]);
     const carryUsed = Array.isArray(previousRound.usedItemIds) ? [...previousRound.usedItemIds] : [];
     const nextAvailable = state.pretul.items.find((item) => !carryUsed.includes(item.id));
+    const defaultParticipantsA = getAvailablePlayersForTeam("teamA").map((player) => player.id);
+    const defaultParticipantsB = getAvailablePlayersForTeam("teamB").map((player) => player.id);
     state.pretul.rounds[roundKey] = sanitizePretulRoundState({
       selectedItemId: nextAvailable?.id || state.pretul.items[0]?.id || "",
       usedItemIds: carryUsed,
+      chooserTeamKey: Math.max(1, Math.round(sanitizeNumber(roundNumber, 1))) % 2 === 0 ? "teamB" : "teamA",
+      participantsTeamA: previousRound.participantsTeamA.length > 0 ? previousRound.participantsTeamA : defaultParticipantsA,
+      participantsTeamB: previousRound.participantsTeamB.length > 0 ? previousRound.participantsTeamB : defaultParticipantsB,
       answerTeamA: 0,
       answerTeamB: 0,
       realPrice: nextAvailable?.referencePrice || state.pretul.items[0]?.referencePrice || 0,
       betTeamA: previousRound.betTeamA || 100,
       betTeamB: previousRound.betTeamB || 100,
+      payoutApplied: false,
       lastResult: ""
     });
   }
@@ -1889,6 +1939,8 @@ function sanitizeFilmRoundState(rawRoundState) {
     teamKey: "teamA",
     selectedItemId: "",
     usedItemIds: [],
+    participantsTeamA: [],
+    participantsTeamB: [],
     betAmount: 100,
     betTeamA: 100,
     betTeamB: 100,
@@ -1914,6 +1966,7 @@ function sanitizeFilmRoundState(rawRoundState) {
         funFact: null
       }
     },
+    payoutApplied: false,
     lastResult: ""
   };
 
@@ -1929,10 +1982,13 @@ function sanitizeFilmRoundState(rawRoundState) {
   safeState.usedItemIds = Array.isArray(rawRoundState.usedItemIds)
     ? Array.from(new Set(rawRoundState.usedItemIds.filter((id) => typeof id === "string")))
     : [];
+  safeState.participantsTeamA = sanitizeRoundParticipantIds(rawRoundState.participantsTeamA, "teamA");
+  safeState.participantsTeamB = sanitizeRoundParticipantIds(rawRoundState.participantsTeamB, "teamB");
   const rawBetTeamA = rawRoundState.betTeamA ?? (safeState.teamKey === "teamA" ? rawRoundState.betAmount : 100);
   const rawBetTeamB = rawRoundState.betTeamB ?? (safeState.teamKey === "teamB" ? rawRoundState.betAmount : 100);
   safeState.betTeamA = normalizeBetAmount(rawBetTeamA);
   safeState.betTeamB = normalizeBetAmount(rawBetTeamB);
+  safeState.payoutApplied = Boolean(rawRoundState.payoutApplied);
   safeState.lastResult = sanitizeString(rawRoundState.lastResult, "");
 
   for (const key of FILM_COMPONENT_KEYS) {
@@ -1968,10 +2024,14 @@ function getOrCreateFilmRoundState(roundNumber = state.progress.currentRound) {
     const previousRound = sanitizeFilmRoundState(state.filmGame.rounds[previousRoundKey]);
     const carryUsed = Array.isArray(previousRound.usedItemIds) ? [...previousRound.usedItemIds] : [];
     const nextAvailable = state.filmGame.items.find((item) => !carryUsed.includes(item.id));
+    const defaultParticipantsA = getAvailablePlayersForTeam("teamA").map((player) => player.id);
+    const defaultParticipantsB = getAvailablePlayersForTeam("teamB").map((player) => player.id);
     state.filmGame.rounds[roundKey] = sanitizeFilmRoundState({
       teamKey: previousRound.teamKey || "teamA",
       selectedItemId: nextAvailable?.id || state.filmGame.items[0]?.id || "",
       usedItemIds: carryUsed,
+      participantsTeamA: previousRound.participantsTeamA?.length > 0 ? previousRound.participantsTeamA : defaultParticipantsA,
+      participantsTeamB: previousRound.participantsTeamB?.length > 0 ? previousRound.participantsTeamB : defaultParticipantsB,
       betTeamA: previousRound.betTeamA || 100,
       betTeamB: previousRound.betTeamB || 100,
       revealed: {
@@ -1996,10 +2056,17 @@ function getOrCreateFilmRoundState(roundNumber = state.progress.currentRound) {
         franchise: null,
         funFact: null
       },
+      payoutApplied: false,
       lastResult: ""
     });
   }
   const roundState = sanitizeFilmRoundState(state.filmGame.rounds[roundKey]);
+  if (roundState.participantsTeamA.length === 0) {
+    roundState.participantsTeamA = getAvailablePlayersForTeam("teamA").map((player) => player.id);
+  }
+  if (roundState.participantsTeamB.length === 0) {
+    roundState.participantsTeamB = getAvailablePlayersForTeam("teamB").map((player) => player.id);
+  }
   state.filmGame.rounds[roundKey] = roundState;
   return roundState;
 }
@@ -2042,6 +2109,7 @@ function sanitizeSamsarRoundState(rawRoundState) {
     activePlayerTeamBId: "",
     scoreTeamA: 0,
     scoreTeamB: 0,
+    payoutApplied: false,
     lastResult: ""
   };
 
@@ -2053,6 +2121,7 @@ function sanitizeSamsarRoundState(rawRoundState) {
   safeState.activePlayerTeamBId = sanitizeString(rawRoundState.activePlayerTeamBId, "");
   safeState.scoreTeamA = Math.max(0, Math.round(sanitizeNumber(rawRoundState.scoreTeamA, 0)));
   safeState.scoreTeamB = Math.max(0, Math.round(sanitizeNumber(rawRoundState.scoreTeamB, 0)));
+  safeState.payoutApplied = Boolean(rawRoundState.payoutApplied);
   safeState.lastResult = sanitizeString(rawRoundState.lastResult, "");
   return safeState;
 }
@@ -2075,6 +2144,7 @@ function getOrCreateSamsarRoundState(roundNumber = state.progress.currentRound) 
       activePlayerTeamBId: "",
       scoreTeamA: 0,
       scoreTeamB: 0,
+      payoutApplied: false,
       lastResult: ""
     });
   }
@@ -2104,8 +2174,12 @@ function sanitizeManualMatchRoundState(rawRoundState) {
   const safeState = {
     scoreTeamA: 0,
     scoreTeamB: 0,
+    winner: "draw",
     betTeamA: 100,
     betTeamB: 100,
+    participantsTeamA: [],
+    participantsTeamB: [],
+    payoutApplied: false,
     lastResult: "",
     shotFake: {
       multiplier: 10,
@@ -2121,8 +2195,12 @@ function sanitizeManualMatchRoundState(rawRoundState) {
 
   safeState.scoreTeamA = Math.max(0, Math.round(sanitizeNumber(rawRoundState.scoreTeamA, 0)));
   safeState.scoreTeamB = Math.max(0, Math.round(sanitizeNumber(rawRoundState.scoreTeamB, 0)));
+  safeState.winner = ["teamA", "teamB", "draw"].includes(rawRoundState.winner) ? rawRoundState.winner : "draw";
   safeState.betTeamA = normalizeBetAmount(rawRoundState.betTeamA);
   safeState.betTeamB = normalizeBetAmount(rawRoundState.betTeamB);
+  safeState.participantsTeamA = sanitizeRoundParticipantIds(rawRoundState.participantsTeamA, "teamA");
+  safeState.participantsTeamB = sanitizeRoundParticipantIds(rawRoundState.participantsTeamB, "teamB");
+  safeState.payoutApplied = Boolean(rawRoundState.payoutApplied);
   safeState.lastResult = sanitizeString(rawRoundState.lastResult, "");
   safeState.shotFake.multiplier = Math.max(0, Math.round(sanitizeNumber(rawRoundState.shotFake?.multiplier, 10)));
   safeState.shotFake.manualAdjustTeamA = Math.round(sanitizeNumber(rawRoundState.shotFake?.manualAdjustTeamA, 0));
@@ -2150,11 +2228,17 @@ function getOrCreateManualMatchRoundState(gameId = state.progress.currentGame, r
   const safeGameId = isManualMatchGame(gameId) ? gameId : "guess-right-order";
   const roundKey = getManualMatchRoundKey(safeGameId, roundNumber);
   if (!state.manualMatch.rounds[roundKey]) {
+    const defaultParticipantsA = getAvailablePlayersForTeam("teamA").map((player) => player.id);
+    const defaultParticipantsB = getAvailablePlayersForTeam("teamB").map((player) => player.id);
     state.manualMatch.rounds[roundKey] = sanitizeManualMatchRoundState({
       scoreTeamA: 0,
       scoreTeamB: 0,
+      winner: "draw",
       betTeamA: 100,
       betTeamB: 100,
+      participantsTeamA: defaultParticipantsA,
+      participantsTeamB: defaultParticipantsB,
+      payoutApplied: false,
       lastResult: "",
       shotFake: {
         multiplier: 10,
@@ -2244,6 +2328,8 @@ function sanitizeCurseRoundState(rawRoundState, horseIds = state.curseRace?.hors
     winnerHorseId: "",
     payoutApplied: false,
     lastResult: "",
+    participantsTeamA: [],
+    participantsTeamB: [],
     bets: {
       teamA: sanitizeCurseTeamBetState(null, safeHorseIds),
       teamB: sanitizeCurseTeamBetState(null, safeHorseIds)
@@ -2262,6 +2348,8 @@ function sanitizeCurseRoundState(rawRoundState, horseIds = state.curseRace?.hors
   safe.winnerHorseId = safeHorseIds.includes(rawRoundState.winnerHorseId) ? rawRoundState.winnerHorseId : "";
   safe.payoutApplied = Boolean(rawRoundState.payoutApplied) && Boolean(safe.winnerHorseId);
   safe.lastResult = sanitizeString(rawRoundState.lastResult, "");
+  safe.participantsTeamA = sanitizeRoundParticipantIds(rawRoundState.participantsTeamA, "teamA");
+  safe.participantsTeamB = sanitizeRoundParticipantIds(rawRoundState.participantsTeamB, "teamB");
   safe.bets.teamA = sanitizeCurseTeamBetState(rawRoundState.bets?.teamA, safeHorseIds);
   safe.bets.teamB = sanitizeCurseTeamBetState(rawRoundState.bets?.teamB, safeHorseIds);
   return safe;
@@ -2275,6 +2363,8 @@ function getOrCreateCurseRoundState(roundNumber = state.progress.currentRound) {
   const roundKey = getCurseRoundKey(roundNumber);
   const horseIds = state.curseRace.horses.map((horse) => horse.id);
   if (!state.curseRace.rounds[roundKey]) {
+    const defaultParticipantsA = getAvailablePlayersForTeam("teamA").map((player) => player.id);
+    const defaultParticipantsB = getAvailablePlayersForTeam("teamB").map((player) => player.id);
     state.curseRace.rounds[roundKey] = sanitizeCurseRoundState(
       {
         positions: {},
@@ -2283,6 +2373,8 @@ function getOrCreateCurseRoundState(roundNumber = state.progress.currentRound) {
         winnerHorseId: "",
         payoutApplied: false,
         lastResult: "",
+        participantsTeamA: defaultParticipantsA,
+        participantsTeamB: defaultParticipantsB,
         bets: {
           teamA: { bettorId: "", horseBets: {} },
           teamB: { bettorId: "", horseBets: {} }
@@ -2292,6 +2384,12 @@ function getOrCreateCurseRoundState(roundNumber = state.progress.currentRound) {
     );
   }
   const safe = sanitizeCurseRoundState(state.curseRace.rounds[roundKey], horseIds);
+  if (safe.participantsTeamA.length === 0) {
+    safe.participantsTeamA = getAvailablePlayersForTeam("teamA").map((player) => player.id);
+  }
+  if (safe.participantsTeamB.length === 0) {
+    safe.participantsTeamB = getAvailablePlayersForTeam("teamB").map((player) => player.id);
+  }
   state.curseRace.rounds[roundKey] = safe;
   return safe;
 }
@@ -2616,6 +2714,39 @@ function getActiveParticipantsForTeam(teamKey) {
   }
 
   return participants;
+}
+
+function getAvailablePlayersForTeam(teamKey) {
+  if (!["teamA", "teamB"].includes(teamKey)) {
+    return [];
+  }
+  return state.teams[teamKey].players.filter((player) => player.status === "available");
+}
+
+function sanitizeRoundParticipantIds(rawIds, teamKey) {
+  const availableIds = new Set(getAvailablePlayersForTeam(teamKey).map((player) => player.id));
+  if (!Array.isArray(rawIds)) {
+    return [];
+  }
+  return Array.from(
+    new Set(
+      rawIds.filter((playerId) => typeof playerId === "string" && availableIds.has(playerId))
+    )
+  );
+}
+
+function getSelectedParticipantsForTeam(teamKey, selectedIds = []) {
+  const selectedSet = new Set(sanitizeRoundParticipantIds(selectedIds, teamKey));
+  if (selectedSet.size === 0) {
+    return [];
+  }
+  return state.teams[teamKey].players
+    .filter((player) => selectedSet.has(player.id))
+    .map((player) => ({
+      id: player.id,
+      displayName: player.name,
+      teamKey
+    }));
 }
 
 function splitAmountAcrossParticipants(totalAmount, participantCount) {
@@ -3452,10 +3583,18 @@ function saveCurrentRoundSnapshot() {
 }
 
 function buildDefaultTeamLineupSnapshot() {
+  const defaultTeamA = state.teams.teamA.players
+    .filter((player) => player.status === "available")
+    .slice(0, MAX_ACTIVE_PER_TEAM)
+    .map((player) => player.id);
+  const defaultTeamB = state.teams.teamB.players
+    .filter((player) => player.status === "available")
+    .slice(0, MAX_ACTIVE_PER_TEAM)
+    .map((player) => player.id);
   return sanitizeHistorySnapshot({
     activeByTeam: {
-      teamA: [],
-      teamB: []
+      teamA: defaultTeamA,
+      teamB: defaultTeamB
     },
     jokerAssignment: "out"
   });
@@ -3471,6 +3610,13 @@ function loadCurrentRoundSnapshot() {
     state.roundSelection.activeByTeam.teamB = [...safe.activeByTeam.teamB];
     state.roundSelection.jokerAssignment = "out";
   } else {
+    const defaultSnapshot = buildDefaultTeamLineupSnapshot();
+    state.roundSelection.activeByTeam.teamA = [...defaultSnapshot.activeByTeam.teamA];
+    state.roundSelection.activeByTeam.teamB = [...defaultSnapshot.activeByTeam.teamB];
+    state.roundSelection.jokerAssignment = "out";
+    state.roundSelection.history[getRoundKey()] = sanitizeHistorySnapshot(defaultSnapshot);
+  }
+  if (state.roundSelection.activeByTeam.teamA.length === 0 && state.roundSelection.activeByTeam.teamB.length === 0) {
     const defaultSnapshot = buildDefaultTeamLineupSnapshot();
     state.roundSelection.activeByTeam.teamA = [...defaultSnapshot.activeByTeam.teamA];
     state.roundSelection.activeByTeam.teamB = [...defaultSnapshot.activeByTeam.teamB];
@@ -4920,6 +5066,49 @@ function buildLiveRoundExperienceContent(gameId, liveStep) {
   `;
 }
 
+function renderSetupParticipantPicker(contextKey, teamKey, selectedIds = []) {
+  const team = state.teams[teamKey];
+  const availablePlayers = getAvailablePlayersForTeam(teamKey);
+  const selectedSet = new Set(sanitizeRoundParticipantIds(selectedIds, teamKey));
+  const selectedCount = selectedSet.size;
+  const totalCount = availablePlayers.length;
+
+  return `
+    <article class="show-stage-mini-card show-participant-picker">
+      <div class="show-participant-picker-head">
+        <p class="show-info-label">${escapeHtml(team.name)} participants</p>
+        <p class="show-info-sub">${selectedCount}/${totalCount} selected</p>
+      </div>
+      <div class="show-participant-picker-actions">
+        <button class="pill-btn" type="button" data-show-participant-all data-context="${escapeHtml(
+          contextKey
+        )}" data-team="${teamKey}">
+          All team
+        </button>
+      </div>
+      <div class="show-participant-picker-grid">
+        ${availablePlayers
+          .map((player) => {
+            const selected = selectedSet.has(player.id);
+            return `
+              <button
+                class="pill-btn show-participant-chip ${selected ? "is-active" : ""}"
+                type="button"
+                data-show-participant-toggle
+                data-context="${escapeHtml(contextKey)}"
+                data-team="${teamKey}"
+                data-player-id="${player.id}"
+              >
+                ${escapeHtml(player.name)}
+              </button>
+            `;
+          })
+          .join("")}
+      </div>
+    </article>
+  `;
+}
+
 function buildLiveRoundFocusContent(gameId, liveStep) {
   if (gameId === "trivia") {
     const roundState = getOrCreateTriviaRoundState();
@@ -5039,6 +5228,9 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
           : "RESULT PENDING";
     const verdictTone = roundState.isCorrect === true ? "is-correct" : roundState.isCorrect === false ? "is-wrong" : "";
     const deltaTone = roundState.lastDelta >= 0 ? "is-positive" : "is-negative";
+    const betDeltaLabel = roundState.betDelta >= 0 ? `+${formatMoney(roundState.betDelta)}` : `-${formatMoney(Math.abs(roundState.betDelta))}`;
+    const bonusDeltaLabel =
+      roundState.bonusDelta >= 0 ? `+${formatMoney(roundState.bonusDelta)}` : `-${formatMoney(Math.abs(roundState.bonusDelta))}`;
     return `
       <div class="show-round-card show-trivia-result-stage ${verdictTone}">
         <p class="show-trivia-verdict">${verdictLabel}</p>
@@ -5050,6 +5242,8 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
           <p class="show-info-label">Correct</p>
           <p class="show-round-copy">${escapeHtml(options[correctIndex] || category?.answer || "N/A")}</p>
         </div>
+        <p class="show-round-copy">Bet impact: <strong>${betDeltaLabel}</strong></p>
+        <p class="show-round-copy">Fixed bonus impact: <strong>${bonusDeltaLabel}</strong></p>
         <p class="show-trivia-delta ${deltaTone}">${deltaLabel}</p>
         <p class="show-round-copy">${escapeHtml(playingTeam.name)} now has ${formatMoney(playingTeam.money)}.</p>
       </div>
@@ -5060,21 +5254,45 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
     const item = state.pretul.items.find((entry) => entry.id === roundState.selectedItemId) || state.pretul.items[0];
     const maxBetA = getMaxBetAmount(state.teams.teamA.money, "pretul-corect");
     const maxBetB = getMaxBetAmount(state.teams.teamB.money, "pretul-corect");
+    if (roundState.participantsTeamA.length === 0) {
+      roundState.participantsTeamA = getAvailablePlayersForTeam("teamA").map((player) => player.id);
+    }
+    if (roundState.participantsTeamB.length === 0) {
+      roundState.participantsTeamB = getAvailablePlayersForTeam("teamB").map((player) => player.id);
+    }
+    roundState.chooserTeamKey = ["teamA", "teamB"].includes(roundState.chooserTeamKey) ? roundState.chooserTeamKey : "teamA";
     const diffA = Math.abs(roundState.answerTeamA - roundState.realPrice);
     const diffB = Math.abs(roundState.answerTeamB - roundState.realPrice);
     const winnerLabel =
       diffA < diffB ? state.teams.teamA.name : diffB < diffA ? state.teams.teamB.name : "Tie (equal distance)";
+    const chooserTeam = state.teams[roundState.chooserTeamKey];
+    const hiddenTeamKey = roundState.chooserTeamKey === "teamA" ? "teamB" : "teamA";
+    const scaleMin = Math.max(
+      0,
+      Math.min(roundState.answerTeamA, roundState.answerTeamB, roundState.realPrice) - 50
+    );
+    const scaleMax =
+      Math.max(roundState.answerTeamA, roundState.answerTeamB, roundState.realPrice) + 50;
+    const scaleSpan = Math.max(1, scaleMax - scaleMin);
+    const markerPosition = (value) =>
+      Math.max(0, Math.min(100, Math.round(((value - scaleMin) / scaleSpan) * 100)));
+    const realPos = markerPosition(roundState.realPrice);
+    const guessPosA = markerPosition(roundState.answerTeamA);
+    const guessPosB = markerPosition(roundState.answerTeamB);
 
     if (liveStep === "topic-select") {
       const cards = state.pretul.items
         .map((entry) => {
           const isUsed = roundState.usedItemIds.includes(entry.id);
+          const isSelected = entry.id === roundState.selectedItemId;
           return `
-            <button class="show-stage-topic-card ${isUsed ? "is-used" : ""}" type="button" data-show-pretul-item="${entry.id}" ${
+            <button class="show-stage-topic-card ${isUsed ? "is-used" : ""} ${isSelected ? "is-selected" : ""}" type="button" data-show-pretul-item="${
+              entry.id
+            }" ${
               isUsed ? "disabled" : ""
             }>
               <span class="show-stage-topic-status">${isUsed ? "USED" : "TOPIC"}</span>
-              <span class="show-stage-topic-title">${escapeHtml(entry.name)}</span>
+              <span class="show-stage-topic-title">${escapeHtml(entry.categoryTitle || entry.name)}</span>
             </button>
           `;
         })
@@ -5082,7 +5300,7 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
       return `
         <section class="show-stage-stack">
           <p class="show-info-label">Pretul Corect / Topic Select</p>
-          <p class="show-round-title">Pick the next product</p>
+          <p class="show-round-title">Pick the next category</p>
           <div class="show-stage-topic-grid">${cards}</div>
         </section>
       `;
@@ -5092,7 +5310,19 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
       return `
         <section class="show-stage-stack">
           <p class="show-info-label">Bet Screen</p>
-          <p class="show-round-title">${escapeHtml(item?.name || "Select product first")}</p>
+          <p class="show-round-title">${escapeHtml(item?.categoryTitle || "Select category first")}</p>
+          <article class="show-stage-mini-card">
+            <p class="show-info-label">Category chooser</p>
+            <select class="text-input" data-show-pretul-chooser-team>
+              <option value="teamA" ${roundState.chooserTeamKey === "teamA" ? "selected" : ""}>${escapeHtml(
+                state.teams.teamA.name
+              )}</option>
+              <option value="teamB" ${roundState.chooserTeamKey === "teamB" ? "selected" : ""}>${escapeHtml(
+                state.teams.teamB.name
+              )}</option>
+            </select>
+            <p class="show-info-sub">${escapeHtml(chooserTeam.name)} chose this category.</p>
+          </article>
           <div class="show-vs-input-grid">
             <article class="show-stage-mini-card">
               <p class="show-info-label">${escapeHtml(state.teams.teamA.name)} Bet</p>
@@ -5105,6 +5335,10 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
               <p class="show-info-sub">Max: ${formatMoney(maxBetB)}</p>
             </article>
           </div>
+          <div class="show-vs-input-grid">
+            ${renderSetupParticipantPicker("pretul-corect", "teamA", roundState.participantsTeamA)}
+            ${renderSetupParticipantPicker("pretul-corect", "teamB", roundState.participantsTeamB)}
+          </div>
         </section>
       `;
     }
@@ -5114,6 +5348,13 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
         <section class="show-stage-stack show-stage-focus-card">
           <p class="show-info-label">Product Reveal</p>
           <p class="show-round-title">${escapeHtml(item?.name || "No product selected")}</p>
+          <p class="show-round-copy">Category: ${escapeHtml(item?.categoryTitle || "N/A")}</p>
+          <figure class="show-film-stage-figure">
+            <img src="${escapeHtml(item?.imageUrl || PRETUL_PRODUCT_PLACEHOLDER)}" alt="${escapeHtml(
+              item?.name || "Product reveal"
+            )}">
+            <figcaption>${escapeHtml(item?.name || "No product selected")}</figcaption>
+          </figure>
           <p class="show-round-copy">Teams now lock their estimates.</p>
         </section>
       `;
@@ -5123,14 +5364,21 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
       return `
         <section class="show-stage-stack">
           <p class="show-info-label">Answer Entry</p>
+          <p class="show-round-copy">${escapeHtml(chooserTeam.name)} enters openly. ${escapeHtml(
+            state.teams[hiddenTeamKey].name
+          )} input is masked until reveal.</p>
           <div class="show-vs-input-grid">
             <article class="show-stage-mini-card">
               <p class="show-info-label">${escapeHtml(state.teams.teamA.name)} Estimate</p>
-              <input class="text-input show-stage-money-input" type="number" min="0" step="1" value="${roundState.answerTeamA}" data-show-pretul-answer-teama>
+              <input class="text-input show-stage-money-input" type="${
+                roundState.chooserTeamKey === "teamA" ? "number" : "password"
+              }" min="0" step="1" value="${roundState.answerTeamA}" data-show-pretul-answer-teama>
             </article>
             <article class="show-stage-mini-card">
               <p class="show-info-label">${escapeHtml(state.teams.teamB.name)} Estimate</p>
-              <input class="text-input show-stage-money-input" type="number" min="0" step="1" value="${roundState.answerTeamB}" data-show-pretul-answer-teamb>
+              <input class="text-input show-stage-money-input" type="${
+                roundState.chooserTeamKey === "teamB" ? "number" : "password"
+              }" min="0" step="1" value="${roundState.answerTeamB}" data-show-pretul-answer-teamb>
             </article>
           </div>
         </section>
@@ -5157,7 +5405,19 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
       <section class="show-stage-stack show-stage-result-card">
         <p class="show-info-label">Auto Winner</p>
         <p class="show-stage-result-headline">${escapeHtml(winnerLabel)}</p>
-        <p class="show-round-copy">${escapeHtml(item?.name || "Selected product")}</p>
+        <p class="show-round-copy">${escapeHtml(item?.name || "Selected product")} (${escapeHtml(
+          item?.categoryTitle || "Category"
+        )})</p>
+        <div class="show-pretul-scale">
+          <div class="show-pretul-scale-track"></div>
+          <div class="show-pretul-scale-marker is-real" style="left:${realPos}%;">Real ${formatMoney(roundState.realPrice)}</div>
+          <div class="show-pretul-scale-marker is-team-a" style="left:${guessPosA}%;">${escapeHtml(
+            state.teams.teamA.name
+          )}: ${formatMoney(roundState.answerTeamA)}</div>
+          <div class="show-pretul-scale-marker is-team-b" style="left:${guessPosB}%;">${escapeHtml(
+            state.teams.teamB.name
+          )}: ${formatMoney(roundState.answerTeamB)}</div>
+        </div>
         <p class="show-round-copy">${escapeHtml(state.teams.teamA.name)} distance ${formatMoney(diffA)} | ${escapeHtml(
           state.teams.teamB.name
         )} distance ${formatMoney(diffB)}</p>
@@ -5170,6 +5430,12 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
     const item = state.filmGame.items.find((entry) => entry.id === roundState.selectedItemId);
     const maxBetA = getMaxBetAmount(state.teams.teamA.money, "film-joc-franciza-fun-fact");
     const maxBetB = getMaxBetAmount(state.teams.teamB.money, "film-joc-franciza-fun-fact");
+    if (roundState.participantsTeamA.length === 0) {
+      roundState.participantsTeamA = getAvailablePlayersForTeam("teamA").map((player) => player.id);
+    }
+    if (roundState.participantsTeamB.length === 0) {
+      roundState.participantsTeamB = getAvailablePlayersForTeam("teamB").map((player) => player.id);
+    }
     roundState.betTeamA = maxBetA <= 0 ? 0 : Math.min(normalizeBetAmount(roundState.betTeamA), maxBetA);
     roundState.betTeamB = maxBetB <= 0 ? 0 : Math.min(normalizeBetAmount(roundState.betTeamB), maxBetB);
     const breakdownA = getFilmRoundBreakdown(roundState, roundState.betTeamA, "teamA");
@@ -5212,6 +5478,10 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
               >
               <p class="show-info-sub">Max: ${formatMoney(maxBetB)}</p>
             </article>
+          </div>
+          <div class="show-vs-input-grid">
+            ${renderSetupParticipantPicker("film-joc-franciza-fun-fact", "teamA", roundState.participantsTeamA)}
+            ${renderSetupParticipantPicker("film-joc-franciza-fun-fact", "teamB", roundState.participantsTeamB)}
           </div>
           <article class="show-stage-mini-card">
             <p class="show-info-label">Round Card</p>
@@ -5398,9 +5668,21 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
   if (isManualMatchGame(gameId)) {
     const manualGameId = gameId;
     const roundState = getOrCreateManualMatchRoundState(manualGameId, state.progress.currentRound);
+    if (roundState.participantsTeamA.length === 0) {
+      roundState.participantsTeamA = getAvailablePlayersForTeam("teamA").map((player) => player.id);
+    }
+    if (roundState.participantsTeamB.length === 0) {
+      roundState.participantsTeamB = getAvailablePlayersForTeam("teamB").map((player) => player.id);
+    }
     const settlement = calculateManualMatchSettlement(manualGameId, roundState);
     const maxBetA = settlement.maxBetA;
     const maxBetB = settlement.maxBetB;
+    const winnerPreview =
+      roundState.winner === "teamA"
+        ? `${state.teams.teamA.name} preview`
+        : roundState.winner === "teamB"
+          ? `${state.teams.teamB.name} preview`
+          : "Draw preview";
     const resultHeadline =
       settlement.winner === "teamA"
         ? `${state.teams.teamA.name} wins`
@@ -5424,6 +5706,10 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
               <p class="show-info-sub">Max: ${formatMoney(maxBetB)}</p>
             </article>
           </div>
+          <div class="show-vs-input-grid">
+            ${renderSetupParticipantPicker("manual", "teamA", roundState.participantsTeamA)}
+            ${renderSetupParticipantPicker("manual", "teamB", roundState.participantsTeamB)}
+          </div>
         </section>
       `;
     }
@@ -5443,6 +5729,10 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
               <input class="text-input show-stage-money-input" type="number" min="0" step="10" value="${roundState.betTeamB}" data-show-manual-bet-teamb>
               <p class="show-info-sub">Max: ${formatMoney(maxBetB)}</p>
             </article>
+          </div>
+          <div class="show-vs-input-grid">
+            ${renderSetupParticipantPicker("manual", "teamA", roundState.participantsTeamA)}
+            ${renderSetupParticipantPicker("manual", "teamB", roundState.participantsTeamB)}
           </div>
           <article class="show-stage-mini-card">
             <p class="show-info-label">Multiplier (x)</p>
@@ -5492,6 +5782,10 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
       <section class="show-stage-stack show-stage-result-card">
         <p class="show-info-label">${escapeHtml(getGameLabel(manualGameId))} / Result Screen</p>
         <p class="show-stage-result-headline">${escapeHtml(resultHeadline)}</p>
+        ${
+          manualGameId === "guess-right-order"
+            ? ""
+            : `
         <div class="show-vs-input-grid">
           <article class="show-stage-mini-card">
             <p class="show-info-label">${escapeHtml(state.teams.teamA.name)} Score</p>
@@ -5501,12 +5795,18 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
             <p class="show-info-label">${escapeHtml(state.teams.teamB.name)} Score</p>
             <input class="text-input show-stage-score-input" type="number" min="0" step="1" value="${roundState.scoreTeamB}" data-show-manual-score-teamb>
           </article>
-        </div>
+        </div>`
+        }
         <div class="show-result-choice-row">
-          <button class="pill-btn" type="button" data-show-manual-winner="teamA">${escapeHtml(state.teams.teamA.name)} won</button>
-          <button class="pill-btn" type="button" data-show-manual-winner="draw">Draw</button>
-          <button class="pill-btn" type="button" data-show-manual-winner="teamB">${escapeHtml(state.teams.teamB.name)} won</button>
+          <button class="pill-btn ${roundState.winner === "teamA" ? "is-active" : ""}" type="button" data-show-manual-winner="teamA">${escapeHtml(
+            state.teams.teamA.name
+          )} won</button>
+          <button class="pill-btn ${roundState.winner === "draw" ? "is-active" : ""}" type="button" data-show-manual-winner="draw">Draw</button>
+          <button class="pill-btn ${roundState.winner === "teamB" ? "is-active" : ""}" type="button" data-show-manual-winner="teamB">${escapeHtml(
+            state.teams.teamB.name
+          )} won</button>
         </div>
+        <p class="show-round-copy">${escapeHtml(winnerPreview)}</p>
         <p class="show-round-copy">Net preview: ${escapeHtml(state.teams.teamA.name)} ${formatSignedMoney(settlement.deltaA)} | ${escapeHtml(
           state.teams.teamB.name
         )} ${formatSignedMoney(settlement.deltaB)}.</p>
@@ -5516,6 +5816,12 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
   }
   if (gameId === "curse-de-cai") {
     const roundState = getOrCreateCurseRoundState(state.progress.currentRound);
+    if (roundState.participantsTeamA.length === 0) {
+      roundState.participantsTeamA = getAvailablePlayersForTeam("teamA").map((player) => player.id);
+    }
+    if (roundState.participantsTeamB.length === 0) {
+      roundState.participantsTeamB = getAvailablePlayersForTeam("teamB").map((player) => player.id);
+    }
     if (!roundState.winnerHorseId) {
       detectCurseWinner(roundState);
     }
@@ -5531,8 +5837,8 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
     const totalBetA = getCurseTeamBetTotal(roundState, "teamA");
     const totalBetB = getCurseTeamBetTotal(roundState, "teamB");
     const settlement = winnerHorse ? calculateCursePayout(roundState) : null;
-    const bettorOptionsA = getCurseBettorOptions("teamA");
-    const bettorOptionsB = getCurseBettorOptions("teamB");
+    const bettorOptionsA = getCurseBettorOptions("teamA", roundState);
+    const bettorOptionsB = getCurseBettorOptions("teamB", roundState);
     const trackLength = state.curseRace.trackLength;
 
     if (liveStep === "race-intro") {
@@ -5593,6 +5899,10 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
               </select>
               <p class="show-info-sub">Total: ${formatMoney(totalBetB)} / max ${formatMoney(maxBetB)}</p>
             </article>
+          </div>
+          <div class="show-vs-input-grid">
+            ${renderSetupParticipantPicker("curse-de-cai", "teamA", roundState.participantsTeamA)}
+            ${renderSetupParticipantPicker("curse-de-cai", "teamB", roundState.participantsTeamB)}
           </div>
           <div class="show-stage-race-bets">
             ${state.curseRace.horses
@@ -5751,6 +6061,7 @@ function buildLiveRoundQuickActions(gameId, liveStep) {
   }
 
   if (gameId === "pretul-corect") {
+    const roundState = getOrCreatePretulRoundState();
     const flowComplete = isGameFlowComplete(gameId);
     if (liveStep === "topic-select") {
       actions.push({ tone: "primary-btn", action: "live-step-bet-screen", label: "Lock Topic" });
@@ -5763,7 +6074,9 @@ function buildLiveRoundQuickActions(gameId, liveStep) {
     } else if (liveStep === "answer-entry") {
       actions.push({ tone: "primary-btn", action: "live-step-price-reveal", label: "Reveal Price" });
     } else if (liveStep === "price-reveal") {
-      actions.push({ tone: "primary-btn", action: "pretul-evaluate", label: "Auto Winner + Payout" });
+      if (!roundState.payoutApplied) {
+        actions.push({ tone: "primary-btn", action: "pretul-evaluate", label: "Auto Winner + Payout" });
+      }
     } else if (liveStep === "auto-winner") {
       actions.push({
         tone: "primary-btn",
@@ -5778,11 +6091,14 @@ function buildLiveRoundQuickActions(gameId, liveStep) {
   }
 
   if (gameId === "film-joc-franciza-fun-fact") {
+    const roundState = getOrCreateFilmRoundState();
     const flowComplete = isGameFlowComplete(gameId);
     if (liveStep === "bet-screen") {
       actions.push({ tone: "primary-btn", action: "live-step-card-reveal", label: "Open Round" });
     } else if (liveStep === "card-reveal") {
-      actions.push({ tone: "primary-btn", action: "film-apply", label: "Calculate Result" });
+      if (!roundState.payoutApplied) {
+        actions.push({ tone: "primary-btn", action: "film-apply", label: "Calculate Result" });
+      }
     } else if (liveStep === "breakdown-result") {
       actions.push({
         tone: "primary-btn",
@@ -5798,14 +6114,16 @@ function buildLiveRoundQuickActions(gameId, liveStep) {
 
   if (gameId === "cel-mai-bun-samsar") {
     const roundState = getOrCreateSamsarRoundState(getSamsarRoundNumber());
-    const roundSettled = Boolean((roundState.lastResult || "").trim());
+    const roundSettled = Boolean(roundState.payoutApplied);
     const flowComplete = isGameFlowComplete(gameId);
     if (liveStep === "bet-screen") {
       actions.push({ tone: "primary-btn", action: "live-step-live-duel", label: "Start Live Duel" });
     } else if (liveStep === "live-duel") {
       actions.push({ tone: "primary-btn", action: "live-step-result-screen", label: "Go to Result" });
     } else if (liveStep === "result-screen") {
-      actions.push({ tone: "primary-btn", action: "samsar-apply", label: "Apply Result" });
+      if (!roundSettled) {
+        actions.push({ tone: "primary-btn", action: "samsar-apply", label: "Apply Result" });
+      }
       if (roundSettled) {
         actions.push({
           tone: "secondary-btn",
@@ -5822,14 +6140,16 @@ function buildLiveRoundQuickActions(gameId, liveStep) {
 
   if (gameId === "guess-right-order" || gameId === "beer-pong") {
     const roundState = getOrCreateManualMatchRoundState(gameId, state.progress.currentRound);
-    const roundSettled = Boolean((roundState.lastResult || "").trim());
+    const roundSettled = Boolean(roundState.payoutApplied);
     const flowComplete = isGameFlowComplete(gameId);
     if (liveStep === "bet-screen") {
       actions.push({ tone: "primary-btn", action: "live-step-live-round", label: "Start Live Round" });
     } else if (liveStep === "live-round") {
       actions.push({ tone: "primary-btn", action: "live-step-result-screen", label: "Open Result" });
     } else if (liveStep === "result-screen") {
-      actions.push({ tone: "primary-btn", action: "manual-apply", label: "Apply Result" });
+      if (!roundSettled) {
+        actions.push({ tone: "primary-btn", action: "manual-apply", label: "Apply Result" });
+      }
       if (roundSettled) {
         actions.push({
           tone: "secondary-btn",
@@ -5846,14 +6166,16 @@ function buildLiveRoundQuickActions(gameId, liveStep) {
 
   if (gameId === "shot-fake") {
     const roundState = getOrCreateManualMatchRoundState(gameId, state.progress.currentRound);
-    const roundSettled = Boolean((roundState.lastResult || "").trim());
+    const roundSettled = Boolean(roundState.payoutApplied);
     const flowComplete = isGameFlowComplete(gameId);
     if (liveStep === "sidebet-setup") {
       actions.push({ tone: "primary-btn", action: "live-step-live-round", label: "Start Live Round" });
     } else if (liveStep === "live-round") {
       actions.push({ tone: "primary-btn", action: "live-step-result-screen", label: "Open Settlement" });
     } else if (liveStep === "result-screen") {
-      actions.push({ tone: "primary-btn", action: "manual-apply", label: "Apply Settlement" });
+      if (!roundSettled) {
+        actions.push({ tone: "primary-btn", action: "manual-apply", label: "Apply Settlement" });
+      }
       if (roundSettled) {
         actions.push({
           tone: "secondary-btn",
@@ -5884,7 +6206,9 @@ function buildLiveRoundQuickActions(gameId, liveStep) {
       actions.push({ tone: "primary-btn", action: "live-step-payout-screen", label: "Continue to Payout" });
       actions.push({ tone: "secondary-btn", action: "live-step-race-screen", label: "Back to Race" });
     } else if (liveStep === "payout-screen") {
-      actions.push({ tone: "primary-btn", action: "curse-apply", label: "Apply Payout" });
+      if (!raceSettled) {
+        actions.push({ tone: "primary-btn", action: "curse-apply", label: "Apply Payout" });
+      }
       if (raceSettled) {
         actions.push({
           tone: "secondary-btn",
@@ -6862,7 +7186,10 @@ function handleShowOverlayAction(action, trigger) {
   }
   if (action === "trivia-correct") {
     const triviaRoundState = getOrCreateTriviaRoundState();
-    applyTriviaRoundResult(true, { selectedOptionIndex: triviaRoundState.selectedOptionIndex });
+    const applied = applyTriviaRoundResult(true, { selectedOptionIndex: triviaRoundState.selectedOptionIndex });
+    if (!applied) {
+      return;
+    }
     setOverlayAnswerLocked(false, { persist: false });
     setLiveRoundStep("result-screen", { persist: false });
     setShowScreen("live-round", { persist: false });
@@ -6870,7 +7197,10 @@ function handleShowOverlayAction(action, trigger) {
   }
   if (action === "trivia-wrong") {
     const triviaRoundState = getOrCreateTriviaRoundState();
-    applyTriviaRoundResult(false, { selectedOptionIndex: triviaRoundState.selectedOptionIndex });
+    const applied = applyTriviaRoundResult(false, { selectedOptionIndex: triviaRoundState.selectedOptionIndex });
+    if (!applied) {
+      return;
+    }
     setOverlayAnswerLocked(false, { persist: false });
     setLiveRoundStep("result-screen", { persist: false });
     setShowScreen("live-round", { persist: false });
@@ -6911,7 +7241,10 @@ function handleShowOverlayAction(action, trigger) {
   }
   if (action === "samsar-apply") {
     syncSamsarOverlayIntoHostInputs();
-    applySamsarRoundResult();
+    const applied = applySamsarRoundResult();
+    if (!applied) {
+      return;
+    }
     setOverlayAnswerLocked(false, { persist: false });
     setLiveRoundStep("result-screen", { persist: false });
     setShowScreen("live-round", { persist: false });
@@ -6919,8 +7252,23 @@ function handleShowOverlayAction(action, trigger) {
   }
   if (action === "manual-apply") {
     syncManualOverlayIntoHostInputs();
-    applyManualMatchRoundResult();
+    const applied = applyManualMatchRoundResult();
+    if (!applied) {
+      return;
+    }
     setOverlayAnswerLocked(false, { persist: false });
+    const currentManualGame = getCurrentManualMatchGame();
+    if (currentManualGame === "guess-right-order") {
+      if (isGameFlowComplete(currentManualGame)) {
+        finishCurrentGameAndReturn();
+        return;
+      }
+      setCurrentRound(state.progress.currentRound + 1);
+      setLiveRoundStep("bet-screen", { persist: false });
+      setShowScreen("live-round", { persist: false });
+      saveState("Guess the Right Order auto-advanced to next round.");
+      return;
+    }
     setLiveRoundStep("result-screen", { persist: false });
     setShowScreen("live-round", { persist: false });
     return;
@@ -6941,7 +7289,10 @@ function handleShowOverlayAction(action, trigger) {
     return;
   }
   if (action === "curse-apply") {
-    applyCurseRacePayout();
+    const applied = applyCurseRacePayout();
+    if (!applied) {
+      return;
+    }
     setOverlayAnswerLocked(false, { persist: false });
     setLiveRoundStep("payout-screen", { persist: false });
     setShowScreen("live-round", { persist: false });
@@ -7035,6 +7386,10 @@ function handleShowOverlayChange(target) {
   }
   if (target.matches("[data-show-pretul-item]")) {
     setPretulSelectedItem(target.value);
+    return;
+  }
+  if (target.matches("[data-show-pretul-chooser-team]")) {
+    setPretulChooserTeam(target.value);
     return;
   }
   if (
@@ -7267,23 +7622,58 @@ function handleShowOverlayClick(event) {
     const winner = manualWinnerButton.getAttribute("data-show-manual-winner");
     const gameId = getCurrentManualMatchGame();
     const roundState = getOrCreateManualMatchRoundState(gameId, state.progress.currentRound);
-    if (winner === "teamA") {
-      const nextScore = Math.max(1, roundState.scoreTeamB + 1);
-      setManualRoundScore("teamA", nextScore);
-      setManualRoundScore("teamB", roundState.scoreTeamB);
-      setLastResultSummary(`${state.teams.teamA.name} marked as winner preview.`);
-    } else if (winner === "teamB") {
-      const nextScore = Math.max(1, roundState.scoreTeamA + 1);
-      setManualRoundScore("teamA", roundState.scoreTeamA);
-      setManualRoundScore("teamB", nextScore);
-      setLastResultSummary(`${state.teams.teamB.name} marked as winner preview.`);
-    } else if (winner === "draw") {
-      const drawScore = Math.max(roundState.scoreTeamA, roundState.scoreTeamB);
-      setManualRoundScore("teamA", drawScore);
-      setManualRoundScore("teamB", drawScore);
-      setLastResultSummary("Draw preview selected.");
+    if (winner === "teamA" || winner === "teamB" || winner === "draw") {
+      if (gameId !== "guess-right-order") {
+        if (winner === "teamA") {
+          const nextScore = Math.max(1, roundState.scoreTeamB + 1);
+          setManualRoundScore("teamA", nextScore);
+          setManualRoundScore("teamB", roundState.scoreTeamB);
+        } else if (winner === "teamB") {
+          const nextScore = Math.max(1, roundState.scoreTeamA + 1);
+          setManualRoundScore("teamA", roundState.scoreTeamA);
+          setManualRoundScore("teamB", nextScore);
+        } else {
+          const drawScore = Math.max(roundState.scoreTeamA, roundState.scoreTeamB);
+          setManualRoundScore("teamA", drawScore);
+          setManualRoundScore("teamB", drawScore);
+        }
+      }
+      setManualRoundWinner(winner);
     }
     renderShowUi();
+    return;
+  }
+
+  const participantToggleButton = event.target.closest("[data-show-participant-toggle]");
+  if (participantToggleButton) {
+    const contextKey = participantToggleButton.getAttribute("data-context");
+    const teamKey = participantToggleButton.getAttribute("data-team");
+    const playerId = participantToggleButton.getAttribute("data-player-id");
+    if (contextKey === "manual") {
+      toggleManualRoundParticipant(teamKey, playerId);
+    } else if (contextKey === "pretul-corect") {
+      togglePretulRoundParticipant(teamKey, playerId);
+    } else if (contextKey === "film-joc-franciza-fun-fact") {
+      toggleFilmRoundParticipant(teamKey, playerId);
+    } else if (contextKey === "curse-de-cai") {
+      toggleCurseRoundParticipant(teamKey, playerId);
+    }
+    return;
+  }
+
+  const participantAllButton = event.target.closest("[data-show-participant-all]");
+  if (participantAllButton) {
+    const contextKey = participantAllButton.getAttribute("data-context");
+    const teamKey = participantAllButton.getAttribute("data-team");
+    if (contextKey === "manual") {
+      selectAllManualParticipants(teamKey);
+    } else if (contextKey === "pretul-corect") {
+      selectAllPretulParticipants(teamKey);
+    } else if (contextKey === "film-joc-franciza-fun-fact") {
+      selectAllFilmParticipants(teamKey);
+    } else if (contextKey === "curse-de-cai") {
+      selectAllCurseParticipants(teamKey);
+    }
     return;
   }
 
@@ -7698,6 +8088,15 @@ function renderPretulControls() {
 
   roundState.betTeamA = maxBetA <= 0 ? 0 : Math.min(normalizeBetAmount(roundState.betTeamA), maxBetA);
   roundState.betTeamB = maxBetB <= 0 ? 0 : Math.min(normalizeBetAmount(roundState.betTeamB), maxBetB);
+  roundState.chooserTeamKey = ["teamA", "teamB"].includes(roundState.chooserTeamKey) ? roundState.chooserTeamKey : "teamA";
+  roundState.participantsTeamA = sanitizeRoundParticipantIds(roundState.participantsTeamA, "teamA");
+  roundState.participantsTeamB = sanitizeRoundParticipantIds(roundState.participantsTeamB, "teamB");
+  if (roundState.participantsTeamA.length === 0) {
+    roundState.participantsTeamA = getAvailablePlayersForTeam("teamA").map((player) => player.id);
+  }
+  if (roundState.participantsTeamB.length === 0) {
+    roundState.participantsTeamB = getAvailablePlayersForTeam("teamB").map((player) => player.id);
+  }
   roundState.answerTeamA = Math.max(0, Math.round(sanitizeNumber(roundState.answerTeamA, 0)));
   roundState.answerTeamB = Math.max(0, Math.round(sanitizeNumber(roundState.answerTeamB, 0)));
   roundState.realPrice = Math.max(0, Math.round(sanitizeNumber(roundState.realPrice, 0)));
@@ -7714,7 +8113,7 @@ function renderPretulControls() {
       const disabled = isUsed ? "disabled" : "";
       return `
         <option value="${item.id}" ${isSelected} ${disabled}>
-          ${escapeHtml(item.name)}${isUsed ? " (USED)" : ""}
+          ${escapeHtml(item.categoryTitle || item.name)}${isUsed ? " (USED)" : ""}
         </option>
       `;
     })
@@ -7741,7 +8140,8 @@ function renderPretulControls() {
       const isUsed = roundState.usedItemIds.includes(item.id);
       return `
         <article class="pretul-item-card ${isUsed ? "is-used" : ""}">
-          <h4>${escapeHtml(item.name)}</h4>
+          <h4>${escapeHtml(item.categoryTitle || item.name)}</h4>
+          <p class="muted">Product: <strong>${escapeHtml(item.name)}</strong></p>
           <p class="muted">Reference real price: <strong>${formatMoney(item.referencePrice)}</strong></p>
           <button
             class="pill-btn"
@@ -7768,6 +8168,8 @@ function setPretulSelectedItem(itemId) {
   }
 
   roundState.selectedItemId = itemId;
+  roundState.payoutApplied = false;
+  roundState.lastResult = "";
   const selectedItem = state.pretul.items.find((item) => item.id === itemId);
   if (selectedItem && roundState.realPrice === 0) {
     roundState.realPrice = selectedItem.referencePrice;
@@ -7775,6 +8177,55 @@ function setPretulSelectedItem(itemId) {
 
   renderPretulControls();
   saveState("Pretul item selected.");
+}
+
+function setPretulChooserTeam(teamKey) {
+  if (!["teamA", "teamB"].includes(teamKey)) {
+    return;
+  }
+  const roundState = getOrCreatePretulRoundState();
+  roundState.chooserTeamKey = teamKey;
+  roundState.payoutApplied = false;
+  roundState.lastResult = "";
+  renderPretulControls();
+  saveState("Pretul chooser team updated.");
+}
+
+function setPretulRoundParticipantSelection(teamKey, playerIds) {
+  if (!["teamA", "teamB"].includes(teamKey)) {
+    return;
+  }
+  const roundState = getOrCreatePretulRoundState();
+  const key = teamKey === "teamA" ? "participantsTeamA" : "participantsTeamB";
+  roundState[key] = sanitizeRoundParticipantIds(playerIds, teamKey);
+  roundState.payoutApplied = false;
+  roundState.lastResult = "";
+  renderShowUi();
+}
+
+function togglePretulRoundParticipant(teamKey, playerId) {
+  if (!["teamA", "teamB"].includes(teamKey)) {
+    return;
+  }
+  const roundState = getOrCreatePretulRoundState();
+  const key = teamKey === "teamA" ? "participantsTeamA" : "participantsTeamB";
+  const current = new Set(sanitizeRoundParticipantIds(roundState[key], teamKey));
+  if (current.has(playerId)) {
+    current.delete(playerId);
+  } else {
+    current.add(playerId);
+  }
+  setPretulRoundParticipantSelection(teamKey, Array.from(current));
+  saveState("Pretul participants updated.");
+}
+
+function selectAllPretulParticipants(teamKey) {
+  if (!["teamA", "teamB"].includes(teamKey)) {
+    return;
+  }
+  const allIds = getAvailablePlayersForTeam(teamKey).map((player) => player.id);
+  setPretulRoundParticipantSelection(teamKey, allIds);
+  saveState("Pretul participants set to all available players.");
 }
 
 function updatePretulRoundInputs(roundStateInput = null) {
@@ -7789,6 +8240,8 @@ function updatePretulRoundInputs(roundStateInput = null) {
   roundState.realPrice = Math.max(0, Math.round(sanitizeNumber(elements.pretulRealPriceInput.value, roundState.realPrice)));
   roundState.betTeamA = maxBetA <= 0 ? 0 : Math.min(normalizeBetAmount(elements.pretulBetTeamAInput.value), maxBetA);
   roundState.betTeamB = maxBetB <= 0 ? 0 : Math.min(normalizeBetAmount(elements.pretulBetTeamBInput.value), maxBetB);
+  roundState.payoutApplied = false;
+  roundState.lastResult = "";
 }
 
 function markPretulItemUsed(itemId) {
@@ -7803,6 +8256,8 @@ function markPretulItemUsed(itemId) {
     const firstAvailable = state.pretul.items.find((item) => !roundState.usedItemIds.includes(item.id));
     roundState.selectedItemId = firstAvailable?.id || "";
   }
+  roundState.payoutApplied = false;
+  roundState.lastResult = "";
   renderPretulControls();
   saveState("Pretul item marked used.");
 }
@@ -7811,6 +8266,10 @@ function resetPretulUsedItems() {
   const roundState = getOrCreatePretulRoundState();
   roundState.usedItemIds = [];
   roundState.selectedItemId = state.pretul.items[0]?.id || "";
+  roundState.chooserTeamKey = "teamA";
+  roundState.participantsTeamA = getAvailablePlayersForTeam("teamA").map((player) => player.id);
+  roundState.participantsTeamB = getAvailablePlayersForTeam("teamB").map((player) => player.id);
+  roundState.payoutApplied = false;
   roundState.lastResult = "";
   renderPretulControls();
   setLastResultSummary("Pretul corect used items reset for current round.");
@@ -7839,6 +8298,12 @@ function applyPretulRoundResult() {
 
   const roundState = getOrCreatePretulRoundState();
   updatePretulRoundInputs(roundState);
+  if (roundState.payoutApplied) {
+    setLastResultSummary("Pretul result already applied for this round.");
+    renderPretulControls();
+    saveState("Pretul apply blocked: payout already applied.");
+    return false;
+  }
 
   const selectedItemId = roundState.selectedItemId;
   if (!selectedItemId) {
@@ -7901,17 +8366,19 @@ function applyPretulRoundResult() {
   const teamBOutcome = getOutcomeForTeamFromWinner(winnerTeam, "teamB");
   const teamABetOutcome = betA > 0 ? teamAOutcome : "draw";
   const teamBBetOutcome = betB > 0 ? teamBOutcome : "draw";
+  const selectedParticipantsA = getSelectedParticipantsForTeam("teamA", roundState.participantsTeamA);
+  const selectedParticipantsB = getSelectedParticipantsForTeam("teamB", roundState.participantsTeamB);
   applyRoundPlayerStats({
     gameId: "pretul-corect",
     teamA: {
-      participants: getActiveParticipantsForTeam("teamA"),
+      participants: selectedParticipantsA,
       roundOutcome: teamAOutcome,
       teamNetDelta: deltaA,
       teamBetAmount: betA,
       betOutcome: teamABetOutcome
     },
     teamB: {
-      participants: getActiveParticipantsForTeam("teamB"),
+      participants: selectedParticipantsB,
       roundOutcome: teamBOutcome,
       teamNetDelta: deltaB,
       teamBetAmount: betB,
@@ -7924,6 +8391,7 @@ function applyPretulRoundResult() {
   }
   const nextAvailable = state.pretul.items.find((entry) => !roundState.usedItemIds.includes(entry.id));
   roundState.selectedItemId = nextAvailable?.id || "";
+  roundState.payoutApplied = true;
   roundState.lastResult = resultText;
 
   saveCurrentRoundSnapshot();
@@ -8196,6 +8664,8 @@ function setFilmSelectedItem(itemId) {
     franchise: null,
     funFact: null
   };
+  roundState.payoutApplied = false;
+  roundState.lastResult = "";
 
   renderFilmControls();
   saveState("Film round item selected.");
@@ -8213,6 +8683,8 @@ function setFilmBetAmount(rawBetAmount) {
   }
   roundState.betAmount = normalized;
   roundState.outcomes = { ...roundState.outcomesByTeam[teamKey] };
+  roundState.payoutApplied = false;
+  roundState.lastResult = "";
   renderFilmControls();
   saveState("Film round bet adjusted.");
 }
@@ -8233,8 +8705,47 @@ function setFilmTeamBet(teamKey, rawBetAmount) {
     roundState.betAmount = normalized;
     roundState.outcomes = { ...roundState.outcomesByTeam[teamKey] };
   }
+  roundState.payoutApplied = false;
+  roundState.lastResult = "";
   renderFilmControls();
   saveState("Film round bet adjusted.");
+}
+
+function setFilmRoundParticipantSelection(teamKey, playerIds) {
+  if (!["teamA", "teamB"].includes(teamKey)) {
+    return;
+  }
+  const roundState = getOrCreateFilmRoundState();
+  const key = teamKey === "teamA" ? "participantsTeamA" : "participantsTeamB";
+  roundState[key] = sanitizeRoundParticipantIds(playerIds, teamKey);
+  roundState.payoutApplied = false;
+  roundState.lastResult = "";
+  renderShowUi();
+}
+
+function toggleFilmRoundParticipant(teamKey, playerId) {
+  if (!["teamA", "teamB"].includes(teamKey)) {
+    return;
+  }
+  const roundState = getOrCreateFilmRoundState();
+  const key = teamKey === "teamA" ? "participantsTeamA" : "participantsTeamB";
+  const current = new Set(sanitizeRoundParticipantIds(roundState[key], teamKey));
+  if (current.has(playerId)) {
+    current.delete(playerId);
+  } else {
+    current.add(playerId);
+  }
+  setFilmRoundParticipantSelection(teamKey, Array.from(current));
+  saveState("Film participants updated.");
+}
+
+function selectAllFilmParticipants(teamKey) {
+  if (!["teamA", "teamB"].includes(teamKey)) {
+    return;
+  }
+  const allIds = getAvailablePlayersForTeam(teamKey).map((player) => player.id);
+  setFilmRoundParticipantSelection(teamKey, allIds);
+  saveState("Film participants set to all available players.");
 }
 
 function toggleFilmReveal(componentKey) {
@@ -8243,6 +8754,8 @@ function toggleFilmReveal(componentKey) {
   }
   const roundState = getOrCreateFilmRoundState();
   roundState.revealed[componentKey] = !roundState.revealed[componentKey];
+  roundState.payoutApplied = false;
+  roundState.lastResult = "";
   renderFilmControls();
   saveState("Film component reveal toggled.");
 }
@@ -8260,6 +8773,8 @@ function setFilmComponentOutcome(componentKey, nextOutcome, teamKey = null) {
   if (targetTeam === roundState.teamKey) {
     roundState.outcomes[componentKey] = nextOutcome;
   }
+  roundState.payoutApplied = false;
+  roundState.lastResult = "";
   renderFilmControls();
   saveState("Film component outcome updated.");
 }
@@ -8310,6 +8825,7 @@ function resetFilmUsedItems() {
     franchise: null,
     funFact: null
   };
+  roundState.payoutApplied = false;
   roundState.lastResult = "";
   renderFilmControls();
   setLastResultSummary("Film/Joc/Franciza/Fun Fact used rounds reset for current round.");
@@ -8345,6 +8861,12 @@ function applyFilmRoundResult() {
     renderFilmControls();
     setLastResultSummary(roundState.lastResult);
     saveState("Film round blocked: no item.");
+    return false;
+  }
+  if (roundState.payoutApplied) {
+    setLastResultSummary("Film result already applied for this round.");
+    renderFilmControls();
+    saveState("Film apply blocked: payout already applied.");
     return false;
   }
 
@@ -8386,18 +8908,20 @@ function applyFilmRoundResult() {
   const roundOutcomeB = roundOutcomeA === "win" ? "loss" : roundOutcomeA === "loss" ? "win" : "draw";
   const betOutcomeA = roundState.betTeamA > 0 ? (breakdownA.betEligible ? "win" : "loss") : "draw";
   const betOutcomeB = roundState.betTeamB > 0 ? (breakdownB.betEligible ? "win" : "loss") : "draw";
+  const selectedParticipantsA = getSelectedParticipantsForTeam("teamA", roundState.participantsTeamA);
+  const selectedParticipantsB = getSelectedParticipantsForTeam("teamB", roundState.participantsTeamB);
 
   applyRoundPlayerStats({
     gameId: "film-joc-franciza-fun-fact",
     teamA: {
-      participants: getActiveParticipantsForTeam("teamA"),
+      participants: selectedParticipantsA,
       roundOutcome: roundOutcomeA,
       teamNetDelta: appliedDeltaA,
       teamBetAmount: roundState.betTeamA,
       betOutcome: betOutcomeA
     },
     teamB: {
-      participants: getActiveParticipantsForTeam("teamB"),
+      participants: selectedParticipantsB,
       roundOutcome: roundOutcomeB,
       teamNetDelta: appliedDeltaB,
       teamBetAmount: roundState.betTeamB,
@@ -8414,6 +8938,7 @@ function applyFilmRoundResult() {
     `(bet ${breakdownA.betEligible ? "ON" : "OFF"}) => ${formatSignedMoney(appliedDeltaA)} | ` +
     `${state.teams.teamB.name} ${breakdownB.totalPoints}/${breakdownB.maxPoints} ` +
     `(bet ${breakdownB.betEligible ? "ON" : "OFF"}) => ${formatSignedMoney(appliedDeltaB)}.`;
+  roundState.payoutApplied = true;
 
   saveCurrentRoundSnapshot();
   setLastResultSummary(roundState.lastResult);
@@ -8517,6 +9042,8 @@ function setSamsarActivePlayer(teamKey, playerId) {
 
   if (!playerId) {
     roundState[playerField] = "";
+    roundState.payoutApplied = false;
+    roundState.lastResult = "";
     renderSamsarControls();
     saveState("Samsar active player cleared.");
     return;
@@ -8532,6 +9059,8 @@ function setSamsarActivePlayer(teamKey, playerId) {
   }
 
   roundState[playerField] = player.id;
+  roundState.payoutApplied = false;
+  roundState.lastResult = "";
   renderSamsarControls();
   saveState("Samsar active player updated.");
 }
@@ -8546,6 +9075,8 @@ function setSamsarScore(teamKey, rawScore) {
   } else {
     return;
   }
+  roundState.payoutApplied = false;
+  roundState.lastResult = "";
   renderSamsarControls();
   saveState("Samsar score updated.");
 }
@@ -8571,11 +9102,18 @@ function applySamsarRoundResult() {
   const roundState = getOrCreateSamsarRoundState(roundNumber);
   roundState.scoreTeamA = Math.max(0, Math.round(sanitizeNumber(elements.samsarScoreTeamAInput.value, roundState.scoreTeamA)));
   roundState.scoreTeamB = Math.max(0, Math.round(sanitizeNumber(elements.samsarScoreTeamBInput.value, roundState.scoreTeamB)));
+  if (roundState.payoutApplied) {
+    setLastResultSummary("Samsar result already applied for this round.");
+    renderSamsarControls();
+    saveState("Samsar apply blocked: payout already applied.");
+    return false;
+  }
 
   const maxBetA = getMaxBetAmount(state.teams.teamA.money, "cel-mai-bun-samsar");
   const maxBetB = getMaxBetAmount(state.teams.teamB.money, "cel-mai-bun-samsar");
   const stakeA = maxBetA <= 0 ? 0 : Math.min(SAMSAR_STANDARD_BET, maxBetA);
   const stakeB = maxBetB <= 0 ? 0 : Math.min(SAMSAR_STANDARD_BET, maxBetB);
+  const fixedBonus = getStandardFixedBonus("cel-mai-bun-samsar");
 
   let resultText = "";
   let winnerTeam = "draw";
@@ -8650,6 +9188,7 @@ function applySamsarRoundResult() {
   });
 
   roundState.lastResult = resultText;
+  roundState.payoutApplied = true;
   saveCurrentRoundSnapshot();
   setLastResultSummary(resultText);
   renderProgress();
@@ -8658,6 +9197,7 @@ function applySamsarRoundResult() {
   renderRoundSelection();
   renderSamsarControls();
   saveState("Samsar round result applied.");
+  return true;
 }
 
 function normalizeManualMatchRoundState(gameId, roundState) {
@@ -8665,8 +9205,12 @@ function normalizeManualMatchRoundState(gameId, roundState) {
   const maxBetB = getMaxBetAmount(state.teams.teamB.money, gameId);
   roundState.scoreTeamA = Math.max(0, Math.round(sanitizeNumber(roundState.scoreTeamA, 0)));
   roundState.scoreTeamB = Math.max(0, Math.round(sanitizeNumber(roundState.scoreTeamB, 0)));
+  roundState.winner = ["teamA", "teamB", "draw"].includes(roundState.winner) ? roundState.winner : "draw";
   roundState.betTeamA = maxBetA <= 0 ? 0 : Math.min(normalizeBetAmount(roundState.betTeamA), maxBetA);
   roundState.betTeamB = maxBetB <= 0 ? 0 : Math.min(normalizeBetAmount(roundState.betTeamB), maxBetB);
+  roundState.participantsTeamA = sanitizeRoundParticipantIds(roundState.participantsTeamA, "teamA");
+  roundState.participantsTeamB = sanitizeRoundParticipantIds(roundState.participantsTeamB, "teamB");
+  roundState.payoutApplied = Boolean(roundState.payoutApplied);
   roundState.shotFake.multiplier = Math.max(0, Math.round(sanitizeNumber(roundState.shotFake.multiplier, 0)));
   roundState.shotFake.manualAdjustTeamA = Math.round(sanitizeNumber(roundState.shotFake.manualAdjustTeamA, 0));
   roundState.shotFake.manualAdjustTeamB = Math.round(sanitizeNumber(roundState.shotFake.manualAdjustTeamB, 0));
@@ -8687,12 +9231,9 @@ function calculateManualMatchSettlement(gameId, roundState) {
   const effectiveBetA = Math.min(normalizedRoundState.betTeamA, maxBetA);
   const effectiveBetB = Math.min(normalizedRoundState.betTeamB, maxBetB);
 
-  let winner = "draw";
-  if (normalizedRoundState.scoreTeamA > normalizedRoundState.scoreTeamB) {
-    winner = "teamA";
-  } else if (normalizedRoundState.scoreTeamB > normalizedRoundState.scoreTeamA) {
-    winner = "teamB";
-  }
+  let winner = ["teamA", "teamB", "draw"].includes(normalizedRoundState.winner)
+    ? normalizedRoundState.winner
+    : "draw";
 
   let simulatedMoneyA = state.teams.teamA.money;
   let simulatedMoneyB = state.teams.teamB.money;
@@ -8977,6 +9518,15 @@ function setManualRoundScore(teamKey, rawScore) {
   } else {
     return;
   }
+  if (roundState.scoreTeamA > roundState.scoreTeamB) {
+    roundState.winner = "teamA";
+  } else if (roundState.scoreTeamB > roundState.scoreTeamA) {
+    roundState.winner = "teamB";
+  } else {
+    roundState.winner = "draw";
+  }
+  roundState.payoutApplied = false;
+  roundState.lastResult = "";
   renderManualMatchControls();
   saveState("Manual score updated.");
 }
@@ -8993,8 +9543,67 @@ function setManualRoundBet(teamKey, rawBet) {
   } else {
     return;
   }
+  roundState.payoutApplied = false;
+  roundState.lastResult = "";
   renderManualMatchControls();
   saveState("Manual bet updated.");
+}
+
+function setManualRoundWinner(winner) {
+  const gameId = getCurrentManualMatchGame();
+  const roundState = getOrCreateManualMatchRoundState(gameId, state.progress.currentRound);
+  if (!["teamA", "teamB", "draw"].includes(winner)) {
+    return;
+  }
+  roundState.winner = winner;
+  roundState.payoutApplied = false;
+  roundState.lastResult = "";
+  setLastResultSummary(
+    winner === "draw"
+      ? "Draw preview selected."
+      : `${state.teams[winner].name} marked as winner preview.`
+  );
+  renderManualMatchControls();
+  saveState("Manual winner selected.");
+}
+
+function setManualRoundParticipantSelection(teamKey, playerIds) {
+  const gameId = getCurrentManualMatchGame();
+  const roundState = getOrCreateManualMatchRoundState(gameId, state.progress.currentRound);
+  if (!["teamA", "teamB"].includes(teamKey)) {
+    return;
+  }
+  const key = teamKey === "teamA" ? "participantsTeamA" : "participantsTeamB";
+  roundState[key] = sanitizeRoundParticipantIds(playerIds, teamKey);
+  roundState.payoutApplied = false;
+  roundState.lastResult = "";
+  renderShowUi();
+}
+
+function toggleManualRoundParticipant(teamKey, playerId) {
+  if (!["teamA", "teamB"].includes(teamKey)) {
+    return;
+  }
+  const gameId = getCurrentManualMatchGame();
+  const roundState = getOrCreateManualMatchRoundState(gameId, state.progress.currentRound);
+  const key = teamKey === "teamA" ? "participantsTeamA" : "participantsTeamB";
+  const current = new Set(sanitizeRoundParticipantIds(roundState[key], teamKey));
+  if (current.has(playerId)) {
+    current.delete(playerId);
+  } else {
+    current.add(playerId);
+  }
+  setManualRoundParticipantSelection(teamKey, Array.from(current));
+  saveState("Manual participants updated.");
+}
+
+function selectAllManualParticipants(teamKey) {
+  if (!["teamA", "teamB"].includes(teamKey)) {
+    return;
+  }
+  const allIds = getAvailablePlayersForTeam(teamKey).map((player) => player.id);
+  setManualRoundParticipantSelection(teamKey, allIds);
+  saveState("Manual participants set to all available players.");
 }
 
 function clearManualActiveTeam(teamKey) {
@@ -9023,6 +9632,8 @@ function addShotFakeSideBet() {
     amount: 50,
     winner: "draw"
   });
+  roundState.payoutApplied = false;
+  roundState.lastResult = "";
   renderManualMatchControls();
   saveState("Shot Fake side bet added.");
 }
@@ -9048,6 +9659,8 @@ function updateShotFakeSideBet(sideBetId, field, value) {
     return;
   }
 
+  roundState.payoutApplied = false;
+  roundState.lastResult = "";
   renderManualMatchControls();
   saveState("Shot Fake side bet updated.");
 }
@@ -9062,6 +9675,8 @@ function removeShotFakeSideBet(sideBetId) {
   if (roundState.shotFake.sideBets.length === 0) {
     roundState.shotFake.sideBets.push({ ...DEFAULT_MANUAL_SIDEBET, id: makeSideBetId() });
   }
+  roundState.payoutApplied = false;
+  roundState.lastResult = "";
   renderManualMatchControls();
   saveState("Shot Fake side bet removed.");
 }
@@ -9073,6 +9688,8 @@ function setShotFakeMultiplier(rawMultiplier) {
   }
   const roundState = getOrCreateManualMatchRoundState(gameId, state.progress.currentRound);
   roundState.shotFake.multiplier = Math.max(0, Math.round(sanitizeNumber(rawMultiplier, roundState.shotFake.multiplier)));
+  roundState.payoutApplied = false;
+  roundState.lastResult = "";
   renderManualMatchControls();
   saveState("Shot Fake multiplier updated.");
 }
@@ -9091,6 +9708,8 @@ function setShotFakeManualAdjust(teamKey, rawValue) {
   } else {
     return;
   }
+  roundState.payoutApplied = false;
+  roundState.lastResult = "";
   renderManualMatchControls();
   saveState("Shot Fake manual adjust updated.");
 }
@@ -9122,6 +9741,12 @@ function applyManualMatchRoundResult() {
   }
 
   normalizeManualMatchRoundState(gameId, roundState);
+  if (roundState.payoutApplied) {
+    setLastResultSummary("Result already applied for this round. Move to the next round.");
+    renderManualMatchControls();
+    saveState("Manual apply blocked: payout already applied.");
+    return false;
+  }
   const settlement = calculateManualMatchSettlement(gameId, roundState);
 
   pushResultUndoSnapshot(`${getGameLabel(gameId)} round result`);
@@ -9145,17 +9770,19 @@ function applyManualMatchRoundResult() {
 
   const teamAOutcome = getOutcomeForTeamFromWinner(settlement.winner, "teamA");
   const teamBOutcome = getOutcomeForTeamFromWinner(settlement.winner, "teamB");
+  const selectedParticipantsA = getSelectedParticipantsForTeam("teamA", roundState.participantsTeamA);
+  const selectedParticipantsB = getSelectedParticipantsForTeam("teamB", roundState.participantsTeamB);
   applyRoundPlayerStats({
     gameId,
     teamA: {
-      participants: getActiveParticipantsForTeam("teamA"),
+      participants: selectedParticipantsA,
       roundOutcome: teamAOutcome,
       teamNetDelta: settlement.deltaA,
       teamBetAmount: settlement.effectiveBetA,
       betOutcome: settlement.effectiveBetA > 0 ? teamAOutcome : "draw"
     },
     teamB: {
-      participants: getActiveParticipantsForTeam("teamB"),
+      participants: selectedParticipantsB,
       roundOutcome: teamBOutcome,
       teamNetDelta: settlement.deltaB,
       teamBetAmount: settlement.effectiveBetB,
@@ -9166,6 +9793,7 @@ function applyManualMatchRoundResult() {
   roundState.lastResult =
     `${getGameLabel(gameId)} round ${state.progress.currentRound}: ${winnerLabel} ` +
     `(${roundState.scoreTeamA}-${roundState.scoreTeamB}). Team 1 ${deltaLabelA}, Team 2 ${deltaLabelB}.${standardBonusSuffix}${shotFakeSuffix}`;
+  roundState.payoutApplied = true;
 
   saveCurrentRoundSnapshot();
   setLastResultSummary(roundState.lastResult);
@@ -9175,6 +9803,7 @@ function applyManualMatchRoundResult() {
   renderRoundSelection();
   renderManualMatchControls();
   saveState("Manual match round result applied.");
+  return true;
 }
 
 function ensureCurseRoundContext() {
@@ -9191,13 +9820,18 @@ function getCurseTeamBetTotal(roundState, teamKey) {
   return horseIds.reduce((sum, horseId) => sum + normalizeOptionalBetAmount(roundState.bets?.[teamKey]?.horseBets?.[horseId]), 0);
 }
 
-function getCurseBettorOptions(teamKey) {
-  const activeIds = new Set(state.roundSelection.activeByTeam[teamKey]);
-  const activePlayers = state.teams[teamKey].players.filter(
-    (player) => player.status === "available" && activeIds.has(player.id)
+function getCurseBettorOptions(teamKey, roundState = null) {
+  if (!["teamA", "teamB"].includes(teamKey)) {
+    return [];
+  }
+  const safeRoundState = roundState || getOrCreateCurseRoundState();
+  const participantKey = teamKey === "teamA" ? "participantsTeamA" : "participantsTeamB";
+  const selectedIds = new Set(sanitizeRoundParticipantIds(safeRoundState?.[participantKey], teamKey));
+  const selectedPlayers = state.teams[teamKey].players.filter(
+    (player) => player.status === "available" && selectedIds.has(player.id)
   );
   const fallbackPlayers = state.teams[teamKey].players.filter((player) => player.status === "available");
-  const base = (activePlayers.length > 0 ? activePlayers : fallbackPlayers).map((player) => ({
+  const base = (selectedPlayers.length > 0 ? selectedPlayers : fallbackPlayers).map((player) => ({
     id: player.id,
     label: player.name
   }));
@@ -9262,7 +9896,7 @@ function renderCurseBettorSelect(teamKey, selectElement, roundState) {
   if (!selectElement || !roundState?.bets?.[teamKey]) {
     return;
   }
-  const options = getCurseBettorOptions(teamKey);
+  const options = getCurseBettorOptions(teamKey, roundState);
   const current = roundState.bets[teamKey].bettorId;
   const isValidCurrent = options.some((option) => option.id === current);
   if (!isValidCurrent) {
@@ -9462,11 +10096,48 @@ function setCurseBettor(teamKey, bettorId) {
     return;
   }
   const roundState = getOrCreateCurseRoundState();
-  const options = getCurseBettorOptions(teamKey);
+  const options = getCurseBettorOptions(teamKey, roundState);
   const isValid = options.some((option) => option.id === bettorId);
   roundState.bets[teamKey].bettorId = isValid ? bettorId : "";
   renderCurseControls();
   saveState("Curse bettor updated.");
+}
+
+function setCurseRoundParticipantSelection(teamKey, playerIds) {
+  if (!["teamA", "teamB"].includes(teamKey)) {
+    return;
+  }
+  const roundState = getOrCreateCurseRoundState();
+  const key = teamKey === "teamA" ? "participantsTeamA" : "participantsTeamB";
+  roundState[key] = sanitizeRoundParticipantIds(playerIds, teamKey);
+  roundState.payoutApplied = false;
+  roundState.lastResult = "";
+  renderShowUi();
+}
+
+function toggleCurseRoundParticipant(teamKey, playerId) {
+  if (!["teamA", "teamB"].includes(teamKey)) {
+    return;
+  }
+  const roundState = getOrCreateCurseRoundState();
+  const key = teamKey === "teamA" ? "participantsTeamA" : "participantsTeamB";
+  const current = new Set(sanitizeRoundParticipantIds(roundState[key], teamKey));
+  if (current.has(playerId)) {
+    current.delete(playerId);
+  } else {
+    current.add(playerId);
+  }
+  setCurseRoundParticipantSelection(teamKey, Array.from(current));
+  saveState("Curse participants updated.");
+}
+
+function selectAllCurseParticipants(teamKey) {
+  if (!["teamA", "teamB"].includes(teamKey)) {
+    return;
+  }
+  const allIds = getAvailablePlayersForTeam(teamKey).map((player) => player.id);
+  setCurseRoundParticipantSelection(teamKey, allIds);
+  saveState("Curse participants set to all available players.");
 }
 
 function clearCurseActiveTeam(teamKey) {
@@ -9593,13 +10264,13 @@ function applyCurseRacePayout() {
     setLastResultSummary("No winner detected yet. Move horses first.");
     renderCurseControls();
     saveState("Curse payout blocked: no winner.");
-    return;
+    return false;
   }
   if (roundState.payoutApplied) {
     setLastResultSummary("Payout already applied for this race.");
     renderCurseControls();
     saveState("Curse payout blocked: already applied.");
-    return;
+    return false;
   }
 
   const maxBetA = getMaxBetAmount(state.teams.teamA.money, "curse-de-cai");
@@ -9610,7 +10281,7 @@ function applyCurseRacePayout() {
     setLastResultSummary("Adjust bets first. One or both teams are above max bet cap.");
     renderCurseControls();
     saveState("Curse payout blocked: over cap.");
-    return;
+    return false;
   }
 
   pushResultUndoSnapshot("Curse de cai payout");
@@ -9632,17 +10303,19 @@ function applyCurseRacePayout() {
         ? "win"
         : "loss"
       : "draw";
+  const selectedParticipantsA = getSelectedParticipantsForTeam("teamA", roundState.participantsTeamA);
+  const selectedParticipantsB = getSelectedParticipantsForTeam("teamB", roundState.participantsTeamB);
   applyRoundPlayerStats({
     gameId: "curse-de-cai",
     teamA: {
-      participants: getActiveParticipantsForTeam("teamA"),
+      participants: selectedParticipantsA,
       roundOutcome: teamAOutcome,
       teamNetDelta: settlement.netA,
       teamBetAmount: settlement.teamATotalBet,
       betOutcome: teamABetOutcome
     },
     teamB: {
-      participants: getActiveParticipantsForTeam("teamB"),
+      participants: selectedParticipantsB,
       roundOutcome: teamBOutcome,
       teamNetDelta: settlement.netB,
       teamBetAmount: settlement.teamBTotalBet,
@@ -9666,6 +10339,7 @@ function applyCurseRacePayout() {
   renderRoundSelection();
   renderCurseControls();
   saveState("Curse payout applied.");
+  return true;
 }
 
 function resetCurseRace() {
@@ -9715,6 +10389,8 @@ function setTriviaSelectedCategory(categoryId) {
   triviaRoundState.lockedOptionIndex = -1;
   triviaRoundState.resultChecked = false;
   triviaRoundState.isCorrect = null;
+  triviaRoundState.betDelta = 0;
+  triviaRoundState.bonusDelta = 0;
   triviaRoundState.lastDelta = 0;
   triviaRoundState.resultCategoryId = "";
   triviaRoundState.lastResult = "";
@@ -9751,6 +10427,8 @@ function resetTriviaUsedCategories() {
     safeRound.lockedOptionIndex = -1;
     safeRound.resultChecked = false;
     safeRound.isCorrect = null;
+    safeRound.betDelta = 0;
+    safeRound.bonusDelta = 0;
     safeRound.lastDelta = 0;
     safeRound.resultCategoryId = "";
     safeRound.lastResult = "";
@@ -9764,6 +10442,8 @@ function resetTriviaUsedCategories() {
   triviaRoundState.lockedOptionIndex = -1;
   triviaRoundState.resultChecked = false;
   triviaRoundState.isCorrect = null;
+  triviaRoundState.betDelta = 0;
+  triviaRoundState.bonusDelta = 0;
   triviaRoundState.lastDelta = 0;
   triviaRoundState.resultCategoryId = "";
   triviaRoundState.lastResult = "";
@@ -9834,6 +10514,8 @@ function selectTriviaTopicFromOverlay(categoryId) {
   triviaRoundState.lockedOptionIndex = -1;
   triviaRoundState.resultChecked = false;
   triviaRoundState.isCorrect = null;
+  triviaRoundState.betDelta = 0;
+  triviaRoundState.bonusDelta = 0;
   triviaRoundState.lastDelta = 0;
   triviaRoundState.resultCategoryId = "";
   triviaRoundState.lastResult = "";
@@ -9955,6 +10637,8 @@ function advanceTriviaToNextTopic() {
   nextRoundState.lockedOptionIndex = -1;
   nextRoundState.resultChecked = false;
   nextRoundState.isCorrect = null;
+  nextRoundState.betDelta = 0;
+  nextRoundState.bonusDelta = 0;
   nextRoundState.lastDelta = 0;
   nextRoundState.resultCategoryId = "";
   nextRoundState.lastResult = "";
@@ -9977,13 +10661,20 @@ function applyTriviaRoundResult(isCorrect, options = {}) {
   }
 
   const triviaRoundState = getOrCreateTriviaRoundState();
+  if (triviaRoundState.resultChecked) {
+    setLastResultSummary("Trivia result already applied for this round.");
+    renderTriviaControls();
+    renderShowUi();
+    saveState("Trivia apply blocked: payout already applied.");
+    return false;
+  }
   const selectedCategory = state.trivia.categories.find((entry) => entry.id === triviaRoundState.selectedCategoryId);
   if (!selectedCategory) {
     setLastResultSummary("Selecteaza un topic valid inainte de rezultat.");
     renderTriviaControls();
     renderShowUi();
     saveState("Trivia result blocked: no category selected.");
-    return;
+    return false;
   }
 
   const playingTeamKey = triviaRoundState.teamKey;
@@ -10002,7 +10693,7 @@ function applyTriviaRoundResult(isCorrect, options = {}) {
     renderTriviaControls();
     renderShowUi();
     saveState("Trivia bet blocked.");
-    return;
+    return false;
   }
 
   const effectiveBet = Math.min(normalizedBet, maxAllowedBet);
@@ -10011,6 +10702,8 @@ function applyTriviaRoundResult(isCorrect, options = {}) {
     elements.triviaBetAmountInput.value = String(effectiveBet);
   }
   const teamDelta = isCorrect ? effectiveBet + bonus : -effectiveBet;
+  const betDelta = isCorrect ? effectiveBet : -effectiveBet;
+  const bonusDelta = isCorrect ? bonus : 0;
   pushResultUndoSnapshot("Trivia round result");
 
   const selectedCategoryId = triviaRoundState.selectedCategoryId;
@@ -10025,6 +10718,8 @@ function applyTriviaRoundResult(isCorrect, options = {}) {
   triviaRoundState.resultCategoryId = selectedCategoryId;
   triviaRoundState.resultChecked = true;
   triviaRoundState.isCorrect = Boolean(isCorrect);
+  triviaRoundState.betDelta = betDelta;
+  triviaRoundState.bonusDelta = bonusDelta;
   triviaRoundState.lastDelta = teamDelta;
   state.trivia.turnTeamKey = playingTeamKey === "teamA" ? "teamB" : "teamA";
 
@@ -10074,6 +10769,7 @@ function applyTriviaRoundResult(isCorrect, options = {}) {
   renderTriviaControls();
   renderShowUi();
   saveState(isCorrect ? "Trivia correct payout applied." : "Trivia wrong payout applied.");
+  return true;
 }
 
 function computeFixedTitlePlayerSnapshot() {
