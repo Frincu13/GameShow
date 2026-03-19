@@ -59,7 +59,7 @@ const GAME_FLOW_DEFINITIONS = {
         label: "Topic Select",
         description: "Active team picks one topic card.",
         visible: ["active team", "topic tiles", "used topic status"],
-        actions: ["select topic", "review active players"]
+        actions: ["select topic"]
       },
       {
         id: "bet-screen",
@@ -70,16 +70,9 @@ const GAME_FLOW_DEFINITIONS = {
       },
       {
         id: "question-screen",
-        label: "Question Screen",
-        description: "Show question and options before timer starts.",
-        visible: ["question prompt", "multiple choice options", "start round button"],
-        actions: ["start round"]
-      },
-      {
-        id: "answer-screen",
-        label: "Answer Screen",
-        description: "Timer runs while team picks and confirms one answer.",
-        visible: ["big timer", "answer options", "confirm answer"],
+        label: "Question + Answers",
+        description: "Question stays visible while timer runs and team locks one answer.",
+        visible: ["question prompt", "multiple choice options", "live timer", "confirm answer"],
         actions: ["pick option", "confirm/lock answer"],
         payout: true
       },
@@ -91,7 +84,7 @@ const GAME_FLOW_DEFINITIONS = {
         actions: ["next topic"]
       }
     ],
-    payoutStateId: "answer-screen",
+    payoutStateId: "question-screen",
     roundReturn: "After result, turn switches and flow returns to Topic Select.",
     gameEnd: "Game ends when all topics are used, then returns to Game Select."
   },
@@ -2000,6 +1993,14 @@ function getRoundKey(gameId = state.progress.currentGame, roundNumber = state.pr
   return `${gameId}::R${roundNumber}`;
 }
 
+function getGameLineupKey(gameId = state.progress.currentGame) {
+  return `${gameId}::LINEUP`;
+}
+
+function isRoundHistoryKey(key) {
+  return /::R\d+$/i.test(String(key || ""));
+}
+
 function sanitizeHistorySnapshot(snapshot) {
   const base = {
     activeByTeam: { teamA: [], teamB: [] },
@@ -3100,10 +3101,6 @@ function ensureCurrentRoundSelectionValid() {
     availableIdSets.teamB.has(id)
   );
 
-  enforceTriviaRoundTeamRestrictions();
-  enforceFilmRoundTeamRestrictions();
-  enforceSamsarRoundTeamSelection();
-
   for (const teamKey of ["teamA", "teamB"]) {
     const jokerSlot = state.roundSelection.jokerAssignment === teamKey ? 1 : 0;
     const allowed = Math.max(0, MAX_ACTIVE_PER_TEAM - jokerSlot);
@@ -3115,17 +3112,21 @@ function ensureCurrentRoundSelectionValid() {
 
 function saveCurrentRoundSnapshot() {
   ensureCurrentRoundSelectionValid();
-  state.roundSelection.history[getRoundKey()] = {
+  const snapshot = {
     activeByTeam: {
       teamA: [...state.roundSelection.activeByTeam.teamA],
       teamB: [...state.roundSelection.activeByTeam.teamB]
     },
     jokerAssignment: state.roundSelection.jokerAssignment
   };
+  state.roundSelection.history[getRoundKey()] = snapshot;
+  state.roundSelection.history[getGameLineupKey()] = sanitizeHistorySnapshot(snapshot);
 }
 
 function loadCurrentRoundSnapshot() {
-  const snapshot = state.roundSelection.history[getRoundKey()];
+  const roundSnapshot = state.roundSelection.history[getRoundKey()];
+  const lineupSnapshot = state.roundSelection.history[getGameLineupKey()];
+  const snapshot = roundSnapshot || lineupSnapshot;
   if (snapshot) {
     const safe = sanitizeHistorySnapshot(snapshot);
     state.roundSelection.activeByTeam.teamA = [...safe.activeByTeam.teamA];
@@ -3137,6 +3138,13 @@ function loadCurrentRoundSnapshot() {
     state.roundSelection.jokerAssignment = "out";
   }
   ensureCurrentRoundSelectionValid();
+  state.roundSelection.history[getGameLineupKey()] = sanitizeHistorySnapshot({
+    activeByTeam: {
+      teamA: [...state.roundSelection.activeByTeam.teamA],
+      teamB: [...state.roundSelection.activeByTeam.teamB]
+    },
+    jokerAssignment: state.roundSelection.jokerAssignment
+  });
 }
 
 function countActiveWithJoker(teamKey) {
@@ -3349,6 +3357,10 @@ function finishCurrentGameAndReturn(options = {}) {
   const persist = options.persist !== false;
   ensureShowUiState();
   const finishedGameId = state.progress.currentGame;
+  if (state.roundSelection.jokerAssignment !== "out") {
+    state.roundSelection.jokerAssignment = "out";
+    saveCurrentRoundSnapshot();
+  }
   if (!state.showUi.completedGameIds.includes(finishedGameId)) {
     state.showUi.completedGameIds.push(finishedGameId);
   }
@@ -3421,7 +3433,7 @@ function getGameIntroRules(gameId) {
   if (gameId === "trivia") {
     return [
       "One team plays each round; turn switches automatically after result.",
-      "Flow: Topic Select -> Bet -> Question -> Answer -> Result -> next topic.",
+      "Flow: Topic Select -> Bet -> Question+Answers (timer live) -> Result -> next topic.",
       "Multiple choice topics are disabled after use; correct gives bonus + bet win."
     ];
   }
@@ -3441,7 +3453,7 @@ function getGameIntroRules(gameId) {
   }
   if (gameId === "cel-mai-bun-samsar") {
     return [
-      "Each team sends one active player in every round.",
+      "Each team uses its game lineup; host can still override in debug.",
       "Higher manual score wins the round; tie is draw.",
       "Standard Samsar payout is applied with cap rules."
     ];
@@ -3450,21 +3462,21 @@ function getGameIntroRules(gameId) {
     return [
       "Team vs team manual result entry.",
       "Standard payout with draw allowed.",
-      "Active players can be selected up to 6 per team."
+      "Game lineup is selected once at game start (max 6 per team)."
     ];
   }
   if (gameId === "beer-pong") {
     return [
       "Team vs team manual result entry.",
       "Standard payout with draw allowed.",
-      "Use active player selection and lock when round starts."
+      "Game lineup is selected once at game start (max 6 per team)."
     ];
   }
   if (gameId === "shot-fake") {
     return [
       "Bet-only mode with no fixed round bonus.",
       "Round can include multiple side bets.",
-      "Special transfer uses x * active players from both teams."
+      "Special transfer uses x * active players from both teams in current game lineup."
     ];
   }
   if (gameId === "curse-de-cai") {
@@ -3478,18 +3490,19 @@ function getGameIntroRules(gameId) {
 }
 
 function shouldShowLiveStageControls(gameId, liveStep) {
-  if (gameId === "trivia") {
-    return liveStep === "question-screen" || liveStep === "answer-screen";
-  }
+  const _gameId = gameId;
+  const _liveStep = liveStep;
+  void _gameId;
+  void _liveStep;
   return true;
 }
 
-function renderShowStageControls(gameId, liveStep) {
+function renderShowStageControls(gameId = state.progress.currentGame, liveStep = getLiveRoundStep(gameId)) {
   if (!shouldShowLiveStageControls(gameId, liveStep)) {
     return "";
   }
 
-  const lockLabel = state.roundSelection.locked ? "Unlock selection" : "Lock selection";
+  const lockLabel = state.roundSelection.locked ? "Unlock lineup" : "Lock lineup";
   const triviaTeam = state.progress.currentGame === "trivia" ? getCurrentTriviaTeam() : "";
   const filmTeam = state.progress.currentGame === "film-joc-franciza-fun-fact" ? getCurrentFilmTeam() : "";
   const activeGameTeam = triviaTeam || filmTeam;
@@ -3500,22 +3513,39 @@ function renderShowStageControls(gameId, liveStep) {
   return `
     <div class="show-control-strip">
       <p class="show-control-note">${escapeHtml(infoLabel)}</p>
+      <div class="show-control-cell">
+        <label class="show-info-label" for="showTimerRemainingQuick">Time left (sec)</label>
+        <input
+          id="showTimerRemainingQuick"
+          class="text-input compact-input"
+          type="number"
+          min="0"
+          max="600"
+          step="1"
+          value="${Math.max(0, Math.round(sanitizeNumber(state.timer.remaining, state.timer.duration)))}"
+          data-show-timer-remaining
+        >
+      </div>
       <div class="show-control-buttons">
         <button class="pill-btn" type="button" data-show-action="timer-start">Start</button>
         <button class="pill-btn" type="button" data-show-action="timer-pause">Pause</button>
         <button class="pill-btn" type="button" data-show-action="timer-reset">Reset</button>
+        <button class="pill-btn" type="button" data-show-action="timer-minus-10">-10s</button>
+        <button class="pill-btn" type="button" data-show-action="timer-plus-10">+10s</button>
         <button class="pill-btn" type="button" data-show-action="toggle-round-lock">${lockLabel}</button>
       </div>
     </div>
   `;
 }
 
-function renderShowJokerControl() {
+function renderShowJokerControl(options = {}) {
+  const mode = options.mode === "game" ? "game" : "round";
+  const outLabel = mode === "game" ? "Out this game" : "Out this round";
   return `
     <div class="show-joker-row">
       <label class="show-info-label" for="showJokerAssignmentSelect">Joker Player</label>
       <select id="showJokerAssignmentSelect" class="text-input compact-input" data-show-joker-assignment>
-        <option value="out" ${state.roundSelection.jokerAssignment === "out" ? "selected" : ""}>Out this round</option>
+        <option value="out" ${state.roundSelection.jokerAssignment === "out" ? "selected" : ""}>${outLabel}</option>
         <option value="teamA" ${state.roundSelection.jokerAssignment === "teamA" ? "selected" : ""}>Join ${escapeHtml(
           state.teams.teamA.name
         )}</option>
@@ -4302,50 +4332,22 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
 
     if (liveStep === "bet-screen") {
       return `
-        <div class="show-overlay-grid two-col">
-          <article class="show-control-card">
-            <h3>Bet Screen</h3>
-            <p class="show-round-copy">Topic: ${escapeHtml(category?.title || "Select topic first")}</p>
-            <p class="show-round-copy">Max bet: ${formatMoney(maxBet)}</p>
-            <label class="show-info-label" for="showTriviaBetFlow">Bet amount</label>
-            <input id="showTriviaBetFlow" class="text-input compact-input" type="number" min="0" step="10" value="${triviaBet}" data-show-trivia-bet>
-          </article>
-          ${renderShowPlayerSelectionBlock(roundState.teamKey, { allowStatus: false })}
-        </div>
+        <article class="show-control-card">
+          <h3>Bet Screen</h3>
+          <p class="show-round-copy">Topic: ${escapeHtml(category?.title || "Select topic first")}</p>
+          <p class="show-round-copy">Max bet: ${formatMoney(maxBet)}</p>
+          <label class="show-info-label" for="showTriviaBetFlow">Bet amount</label>
+          <input id="showTriviaBetFlow" class="text-input compact-input" type="number" min="0" step="10" value="${triviaBet}" data-show-trivia-bet>
+        </article>
       `;
     }
 
     if (liveStep === "question-screen") {
       return `
         <div class="show-round-card">
-          <p class="show-info-label">Question Screen</p>
+          <p class="show-info-label">Question + Answers</p>
           <p class="show-round-title">${escapeHtml(category?.title || "No topic selected")}</p>
           <p class="show-round-copy">${escapeHtml(category?.question || "Select a topic to continue.")}</p>
-          <div class="show-trivia-options-list">
-            ${options
-              .map(
-                (option, index) => `
-              <div class="show-trivia-option-row">
-                <span>${String.fromCharCode(65 + index)}.</span>
-                <span>${escapeHtml(option)}</span>
-              </div>
-            `
-              )
-              .join("")}
-          </div>
-          <div class="show-action-footer">
-            <button class="primary-btn" type="button" data-show-action="trivia-start-round">Start Round</button>
-          </div>
-        </div>
-      `;
-    }
-
-    if (liveStep === "answer-screen") {
-      return `
-        <div class="show-round-card">
-          <p class="show-info-label">Answer Screen / Timer Running</p>
-          <p class="show-round-title">${escapeHtml(category?.title || "No topic selected")}</p>
-          <p class="show-round-copy">Choose one answer and confirm.</p>
           <div class="show-trivia-options-grid">
             ${options
               .map((option, index) => {
@@ -4358,6 +4360,10 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
                 `;
               })
               .join("")}
+          </div>
+          <p class="show-round-copy">Timer is live. Select one answer, then confirm.</p>
+          <div class="show-action-footer">
+            <button class="pill-btn" type="button" data-show-action="trivia-start-round">Restart Timer</button>
           </div>
         </div>
       `;
@@ -4609,9 +4615,6 @@ function buildLiveRoundQuickActions(gameId, liveStep) {
       actions.push({ tone: "primary-btn", action: "trivia-confirm-bet", label: "Confirm Bet" });
       actions.push({ tone: "secondary-btn", action: "live-step-topic-select", label: "Back to Topics" });
     } else if (liveStep === "question-screen") {
-      actions.push({ tone: "primary-btn", action: "trivia-start-round", label: "Start Round" });
-      actions.push({ tone: "secondary-btn", action: "live-step-bet-screen", label: "Back to Bet" });
-    } else if (liveStep === "answer-screen") {
       actions.push({ tone: "secondary-btn", action: "toggle-answer-lock", label: lockLabel });
       actions.push({ tone: "primary-btn", action: "trivia-confirm-answer", label: "Confirm Answer" });
     } else if (liveStep === "result-screen") {
@@ -4789,6 +4792,15 @@ function buildShowScreenContent(screenId) {
         <p class="show-round-copy">Max bet cap: ${maxBet}% (rounded to ${BET_ROUNDING_STEP}).</p>
       </div>
       <ul class="show-rule-list">${rules}</ul>
+      <div class="show-round-card">
+        <p class="show-info-label">Game Lineup</p>
+        <p class="show-round-copy">Pick active players once for this mini-game. Lineup stays active on every round.</p>
+      </div>
+      ${renderShowJokerControl({ mode: "game" })}
+      <div class="show-overlay-grid two-col">
+        ${renderShowPlayerSelectionBlock("teamA", { allowStatus: false })}
+        ${renderShowPlayerSelectionBlock("teamB", { allowStatus: false })}
+      </div>
       <div class="show-action-footer">
         <button class="primary-btn" type="button" data-show-action="go-live-round">Start live round</button>
         <button class="secondary-btn" type="button" data-show-action="go-game-select">Change game</button>
@@ -5236,7 +5248,7 @@ function clearActiveTeamFromOverlay(teamKey) {
     return;
   }
   if (state.roundSelection.locked) {
-    setLastResultSummary("Round selection is locked. Unlock to clear active players.");
+    setLastResultSummary("Game lineup is locked. Unlock to clear active players.");
     saveState("Overlay clear active blocked while locked.");
     return;
   }
@@ -5416,6 +5428,14 @@ function handleShowOverlayAction(action, trigger) {
     resetTimer();
     return;
   }
+  if (action === "timer-plus-10") {
+    adjustTimerRemaining(10);
+    return;
+  }
+  if (action === "timer-minus-10") {
+    adjustTimerRemaining(-10);
+    return;
+  }
   if (action === "toggle-round-lock") {
     toggleRoundSelectionLock();
     return;
@@ -5589,6 +5609,10 @@ function handleShowOverlayChange(target) {
       elements.roundDuration.value = String(target.value);
     }
     updateRoundDuration();
+    return;
+  }
+  if (target.matches("[data-show-timer-remaining]")) {
+    setTimerRemaining(target.value);
     return;
   }
   if (target.matches("[data-show-joker-assignment]")) {
@@ -5904,6 +5928,12 @@ function renderTimer() {
   if (elements.showStageTimer) {
     elements.showStageTimer.textContent = formatTimer(state.timer.remaining);
   }
+  if (elements.showScreenContent) {
+    const quickRemainingInput = elements.showScreenContent.querySelector("[data-show-timer-remaining]");
+    if (quickRemainingInput) {
+      quickRemainingInput.value = String(Math.max(0, Math.round(sanitizeNumber(state.timer.remaining, 0))));
+    }
+  }
   if (elements.startTimerBtn) {
     elements.startTimerBtn.disabled = state.timer.isRunning;
   }
@@ -6016,9 +6046,9 @@ function renderSettingsRulesSnapshot() {
   elements.settingsCurseRuleLine.textContent =
     "Curse de cai: bet-only race mode, multi-bet on horses enabled, only winning-horse bet pays x4, other horse bets are lost, winner is auto-detected.";
   elements.settingsSelectionRuleLine.textContent =
-    "Player selection: manual per round, up to 6 active players per team, fast deselect controls, plus Bench/Unavailable status support.";
+    "Player selection: game lineup model (selected once per game), up to 6 active players per team, fast deselect controls, plus Bench/Unavailable status support.";
   elements.settingsMultiBetRuleLine.textContent =
-    "Lock round selection is available to prevent accidental edits. Multi-bet is available in Shot Fake (side bets) and Curse de cai (horse board).";
+    "Lock game lineup is available to prevent accidental edits. Multi-bet is available in Shot Fake (side bets) and Curse de cai (horse board).";
 }
 
 function renderTriviaControls() {
@@ -6312,7 +6342,7 @@ function resetPretulUsedItems() {
 
 function clearPretulActiveTeam(teamKey) {
   if (state.roundSelection.locked) {
-    setLastResultSummary("Round selection is locked. Unlock to clear active players.");
+    setLastResultSummary("Game lineup is locked. Unlock to clear active players.");
     saveState("Pretul clear active blocked while locked.");
     return;
   }
@@ -6633,7 +6663,6 @@ function setFilmPlayingTeam(teamKey) {
 
   const roundState = getOrCreateFilmRoundState();
   roundState.teamKey = teamKey;
-  enforceFilmRoundTeamRestrictions();
   saveCurrentRoundSnapshot();
   renderRoundSelection();
   renderFilmControls();
@@ -6736,7 +6765,7 @@ function resetFilmUsedItems() {
 
 function clearFilmActivePlayers() {
   if (state.roundSelection.locked) {
-    setLastResultSummary("Round selection is locked. Unlock to clear active players.");
+    setLastResultSummary("Game lineup is locked. Unlock to clear active players.");
     saveState("Film clear active blocked while locked.");
     return;
   }
@@ -6926,7 +6955,7 @@ function setSamsarActivePlayer(teamKey, playerId) {
     return;
   }
   if (state.roundSelection.locked) {
-    setLastResultSummary("Round selection is locked. Unlock to change active players.");
+    setLastResultSummary("Game lineup is locked. Unlock to change active players.");
     renderSamsarControls();
     saveState("Samsar active player blocked while locked.");
     return;
@@ -7392,7 +7421,7 @@ function setManualRoundBet(teamKey, rawBet) {
 
 function clearManualActiveTeam(teamKey) {
   if (state.roundSelection.locked) {
-    setLastResultSummary("Round selection is locked. Unlock to clear active players.");
+    setLastResultSummary("Game lineup is locked. Unlock to clear active players.");
     saveState("Manual clear active blocked while locked.");
     return;
   }
@@ -7868,7 +7897,7 @@ function setCurseBettor(teamKey, bettorId) {
 
 function clearCurseActiveTeam(teamKey) {
   if (state.roundSelection.locked) {
-    setLastResultSummary("Round selection is locked. Unlock to clear active players.");
+    setLastResultSummary("Game lineup is locked. Unlock to clear active players.");
     saveState("Curse clear active blocked while locked.");
     return;
   }
@@ -8095,7 +8124,6 @@ function setTriviaPlayingTeam(teamKey) {
   state.trivia.turnTeamKey = teamKey;
   const triviaRoundState = getOrCreateTriviaRoundState();
   triviaRoundState.teamKey = teamKey;
-  enforceTriviaRoundTeamRestrictions();
   saveCurrentRoundSnapshot();
   renderRoundSelection();
   renderTriviaControls();
@@ -8265,9 +8293,11 @@ function confirmTriviaBetAndContinue() {
     saveState("Trivia bet confirm blocked: no valid bet.");
     return;
   }
+  resetTimer();
+  startTimer();
   setOverlayAnswerLocked(false, { persist: false });
   setLiveRoundStep("question-screen", { persist: false });
-  setLastResultSummary(`${playingTeam.name} confirmed bet ${formatMoney(triviaRoundState.betAmount)}.`);
+  setLastResultSummary(`${playingTeam.name} confirmed bet ${formatMoney(triviaRoundState.betAmount)}. Timer started.`);
   renderShowUi();
   saveState("Trivia bet confirmed.");
 }
@@ -8275,7 +8305,7 @@ function confirmTriviaBetAndContinue() {
 function startTriviaQuestionRound() {
   const triviaRoundState = getOrCreateTriviaRoundState();
   if (!triviaRoundState.selectedCategoryId) {
-    setLastResultSummary("Selecteaza topicul inainte de Start Round.");
+    setLastResultSummary("Selecteaza topicul inainte sa pornesti timerul.");
     renderShowUi();
     saveState("Trivia start blocked: no topic.");
     return;
@@ -8283,8 +8313,8 @@ function startTriviaQuestionRound() {
   resetTimer();
   setOverlayAnswerLocked(false, { persist: false });
   startTimer();
-  setLiveRoundStep("answer-screen", { persist: false });
-  setLastResultSummary("Trivia round started. Timer running.");
+  setLiveRoundStep("question-screen", { persist: false });
+  setLastResultSummary("Trivia timer started.");
   renderShowUi();
   saveState("Trivia round started.");
 }
@@ -8469,8 +8499,6 @@ function applyTriviaRoundResult(isCorrect, options = {}) {
           }
         : null
   });
-
-  enforceTriviaRoundTeamRestrictions();
   saveCurrentRoundSnapshot();
   renderTeams();
   renderRoundSelection();
@@ -8481,7 +8509,9 @@ function applyTriviaRoundResult(isCorrect, options = {}) {
 }
 
 function computeJokerStats() {
-  const snapshots = Object.values(state.roundSelection.history);
+  const snapshots = Object.entries(state.roundSelection.history)
+    .filter(([key]) => isRoundHistoryKey(key))
+    .map(([, snapshot]) => snapshot);
   let roundsTeamA = 0;
   let roundsTeamB = 0;
   let roundsOut = 0;
@@ -8506,7 +8536,10 @@ function computeJokerStats() {
 
 function getPlayerActiveRounds(teamKey, playerId) {
   let roundsActive = 0;
-  for (const snapshot of Object.values(state.roundSelection.history)) {
+  for (const [historyKey, snapshot] of Object.entries(state.roundSelection.history)) {
+    if (!isRoundHistoryKey(historyKey)) {
+      continue;
+    }
     if (snapshot.activeByTeam?.[teamKey]?.includes(playerId)) {
       roundsActive += 1;
     }
@@ -8522,17 +8555,11 @@ function renderTeamPlayersList(teamKey) {
 
   const isLocked = state.roundSelection.locked;
   const selectedIds = new Set(state.roundSelection.activeByTeam[teamKey]);
-  const triviaPlayingTeam = state.progress.currentGame === "trivia" ? getCurrentTriviaTeam() : null;
-  const filmPlayingTeam =
-    state.progress.currentGame === "film-joc-franciza-fun-fact" ? getCurrentFilmTeam() : null;
-  const blockedByGameTeamRule = Boolean(
-    (triviaPlayingTeam && triviaPlayingTeam !== teamKey) || (filmPlayingTeam && filmPlayingTeam !== teamKey)
-  );
 
   container.innerHTML = state.teams[teamKey].players
     .map((player) => {
       const isSelected = selectedIds.has(player.id);
-      const canBeActive = player.status === "available" && !isLocked && !blockedByGameTeamRule;
+      const canBeActive = player.status === "available" && !isLocked;
       const disabledActive = !canBeActive ? "disabled" : "";
       const disabledEdit = isLocked ? "disabled" : "";
       const roundsActive = getPlayerActiveRounds(teamKey, player.id);
@@ -8568,25 +8595,12 @@ function renderTeamPlayersList(teamKey) {
 function renderRoundSelection() {
   ensureCurrentRoundSelectionValid();
 
-  const lockText = state.roundSelection.locked ? "Selection locked." : "Selection unlocked.";
-  if (state.progress.currentGame === "trivia") {
-    const triviaTeamName = state.teams[getCurrentTriviaTeam()].name;
-    elements.selectionLockStatus.textContent = `${lockText} Trivia active team: ${triviaTeamName}.`;
-  } else if (state.progress.currentGame === "film-joc-franciza-fun-fact") {
-    const filmTeamName = state.teams[getCurrentFilmTeam()].name;
-    elements.selectionLockStatus.textContent = `${lockText} Film/Joc active team: ${filmTeamName}.`;
-  } else if (state.progress.currentGame === "cel-mai-bun-samsar") {
-    elements.selectionLockStatus.textContent = `${lockText} Samsar uses one active player selector per team.`;
-  } else if (isManualMatchGame(state.progress.currentGame)) {
-    elements.selectionLockStatus.textContent = `${lockText} Manual Match supports both teams active (max 6 each).`;
-  } else if (state.progress.currentGame === "curse-de-cai") {
-    elements.selectionLockStatus.textContent = `${lockText} Curse de cai supports both teams active (max 6 each).`;
-  } else {
-    elements.selectionLockStatus.textContent = lockText;
-  }
+  const lockText = state.roundSelection.locked ? "Game lineup locked." : "Game lineup unlocked.";
+  elements.selectionLockStatus.textContent =
+    `${lockText} Current game lineup stays active on all rounds until game ends.`;
   elements.lockRoundSelectionBtn.textContent = state.roundSelection.locked
-    ? "Unlock round selection"
-    : "Lock round selection";
+    ? "Unlock game lineup"
+    : "Lock game lineup";
   elements.jokerAssignmentSelect.value = state.roundSelection.jokerAssignment;
   elements.jokerAssignmentSelect.disabled = state.roundSelection.locked;
   elements.clearActiveSelectionBtn.disabled = state.roundSelection.locked;
@@ -8712,11 +8726,15 @@ function updateTeamMetric(teamKey, metricKey, delta) {
 
 function switchRoundContext(nextGameId, nextRound, options = {}) {
   const navigateToSection = options.navigateToSection === true;
+  const previousGameId = state.progress.currentGame;
+  const gameChanged = previousGameId !== nextGameId;
   saveCurrentRoundSnapshot();
 
   state.progress.currentGame = nextGameId;
   state.progress.currentRound = Math.max(1, Math.round(sanitizeNumber(nextRound, 1)));
-  state.roundSelection.locked = false;
+  if (gameChanged) {
+    state.roundSelection.locked = false;
+  }
   ensureShowUiState();
   state.showUi.liveRoundStep = getDefaultFlowStateId(nextGameId);
   state.showUi.answerLocked = false;
@@ -8883,7 +8901,7 @@ function findPlayer(teamKey, playerId) {
 
 function addPlayer(teamKey, inputElement) {
   if (state.roundSelection.locked) {
-    setLastResultSummary("Round selection is locked. Unlock to add players.");
+    setLastResultSummary("Game lineup is locked. Unlock to add players.");
     saveState("Add player blocked while locked.");
     return;
   }
@@ -8906,7 +8924,7 @@ function addPlayer(teamKey, inputElement) {
 
 function removePlayer(teamKey, playerId) {
   if (state.roundSelection.locked) {
-    setLastResultSummary("Round selection is locked. Unlock to remove players.");
+    setLastResultSummary("Game lineup is locked. Unlock to remove players.");
     saveState("Remove player blocked while locked.");
     return;
   }
@@ -8946,7 +8964,7 @@ function updatePlayerName(teamKey, playerId, newName) {
 
 function updatePlayerStatus(teamKey, playerId, nextStatus) {
   if (state.roundSelection.locked) {
-    setLastResultSummary("Round selection is locked. Unlock to update statuses.");
+    setLastResultSummary("Game lineup is locked. Unlock to update statuses.");
     saveState("Status change blocked while locked.");
     return;
   }
@@ -8973,7 +8991,7 @@ function updatePlayerStatus(teamKey, playerId, nextStatus) {
 
 function togglePlayerActive(teamKey, playerId, shouldBeActive) {
   if (state.roundSelection.locked) {
-    setLastResultSummary("Round selection is locked. Unlock to change active players.");
+    setLastResultSummary("Game lineup is locked. Unlock to change active players.");
     saveState("Active toggle blocked while locked.");
     return;
   }
@@ -8983,27 +9001,8 @@ function togglePlayerActive(teamKey, playerId, shouldBeActive) {
     return;
   }
 
-  if (state.progress.currentGame === "trivia" && teamKey !== getCurrentTriviaTeam()) {
-    setLastResultSummary("In Trivia rounds, only the selected playing team can have active players.");
-    renderRoundSelection();
-    saveState("Trivia team-only selection enforced.");
-    return;
-  }
-
-  if (state.progress.currentGame === "film-joc-franciza-fun-fact" && teamKey !== getCurrentFilmTeam()) {
-    setLastResultSummary("In Film/Joc rounds, only the selected playing team can have active players.");
-    renderRoundSelection();
-    renderFilmControls();
-    saveState("Film team-only selection enforced.");
-    return;
-  }
-
   if (state.progress.currentGame === "cel-mai-bun-samsar") {
-    setLastResultSummary("In Cel mai bun samsar, use the per-team active player selectors from that game section.");
-    renderRoundSelection();
-    renderSamsarControls();
-    saveState("Samsar active selection enforced.");
-    return;
+    setLastResultSummary("Samsar specific selectors can still override lineup from Host/Debug if needed.");
   }
 
   const activeIds = state.roundSelection.activeByTeam[teamKey];
@@ -9018,7 +9017,7 @@ function togglePlayerActive(teamKey, playerId, shouldBeActive) {
     }
     if (!isAlreadyActive) {
       if (countActiveWithJoker(teamKey) >= MAX_ACTIVE_PER_TEAM) {
-        setLastResultSummary(`${state.teams[teamKey].name} reached max ${MAX_ACTIVE_PER_TEAM} active players for this round.`);
+        setLastResultSummary(`${state.teams[teamKey].name} reached max ${MAX_ACTIVE_PER_TEAM} active players for this game.`);
         renderRoundSelection();
         saveState("Active limit reached.");
         return;
@@ -9031,41 +9030,18 @@ function togglePlayerActive(teamKey, playerId, shouldBeActive) {
 
   saveCurrentRoundSnapshot();
   renderRoundSelection();
-  setLastResultSummary(`${player.name} active state updated.`);
+  setLastResultSummary(`${player.name} lineup state updated for ${getGameLabel(state.progress.currentGame)}.`);
   saveState("Active selection updated.");
 }
 
 function setJokerAssignment(nextAssignment) {
   if (state.roundSelection.locked) {
-    setLastResultSummary("Round selection is locked. Unlock to move Joker Player.");
+    setLastResultSummary("Game lineup is locked. Unlock to move Joker Player.");
     saveState("Joker move blocked while locked.");
     return;
   }
 
   if (!["teamA", "teamB", "out"].includes(nextAssignment)) {
-    return;
-  }
-
-  if (
-    state.progress.currentGame === "trivia" &&
-    nextAssignment !== "out" &&
-    nextAssignment !== getCurrentTriviaTeam()
-  ) {
-    setLastResultSummary("In Trivia rounds, Joker can only join the playing team or be out.");
-    renderRoundSelection();
-    saveState("Trivia Joker restriction enforced.");
-    return;
-  }
-
-  if (
-    state.progress.currentGame === "film-joc-franciza-fun-fact" &&
-    nextAssignment !== "out" &&
-    nextAssignment !== getCurrentFilmTeam()
-  ) {
-    setLastResultSummary("In Film/Joc rounds, Joker can only join the playing team or be out.");
-    renderRoundSelection();
-    renderFilmControls();
-    saveState("Film Joker restriction enforced.");
     return;
   }
 
@@ -9085,7 +9061,7 @@ function setJokerAssignment(nextAssignment) {
   state.roundSelection.jokerAssignment = nextAssignment;
   saveCurrentRoundSnapshot();
   renderRoundSelection();
-  setLastResultSummary(`Joker Player assignment updated: ${nextAssignment}.`);
+  setLastResultSummary(`Joker Player assignment updated for ${getGameLabel(state.progress.currentGame)}.`);
   saveState("Joker assignment updated.");
 }
 
@@ -9093,18 +9069,18 @@ function toggleRoundSelectionLock() {
   state.roundSelection.locked = !state.roundSelection.locked;
   if (state.roundSelection.locked) {
     saveCurrentRoundSnapshot();
-    setLastResultSummary("Round selection locked.");
-    saveState("Round selection locked.");
+    setLastResultSummary("Game lineup locked.");
+    saveState("Game lineup locked.");
   } else {
-    setLastResultSummary("Round selection unlocked.");
-    saveState("Round selection unlocked.");
+    setLastResultSummary("Game lineup unlocked.");
+    saveState("Game lineup unlocked.");
   }
   renderRoundSelection();
 }
 
 function clearActiveSelection() {
   if (state.roundSelection.locked) {
-    setLastResultSummary("Round selection is locked. Unlock to clear active players.");
+    setLastResultSummary("Game lineup is locked. Unlock to clear active players.");
     saveState("Clear active blocked while locked.");
     return;
   }
@@ -9114,7 +9090,7 @@ function clearActiveSelection() {
   state.roundSelection.jokerAssignment = "out";
   saveCurrentRoundSnapshot();
   renderRoundSelection();
-  setLastResultSummary("Active players cleared for both teams. Joker moved out.");
+  setLastResultSummary("Game lineup cleared for both teams. Joker moved out.");
   saveState("Active selection cleared.");
 }
 
@@ -9193,6 +9169,29 @@ function resetTimer() {
   stopTimerLoop();
   renderTimer();
   saveState("Timer reset.");
+}
+
+function setTimerRemaining(nextSeconds) {
+  const normalized = clampNumber(Math.round(sanitizeNumber(nextSeconds, state.timer.remaining)), 0, 600);
+  const wasRunning = state.timer.isRunning;
+  state.timer.remaining = normalized;
+  if (state.timer.remaining === 0) {
+    state.timer.isRunning = false;
+    state.timer.lastTickMs = null;
+    stopTimerLoop();
+  } else if (wasRunning) {
+    state.timer.lastTickMs = Date.now();
+  }
+  renderTimer();
+  saveState(`Timer set to ${state.timer.remaining}s.`);
+}
+
+function adjustTimerRemaining(deltaSeconds) {
+  const delta = Math.round(sanitizeNumber(deltaSeconds, 0));
+  if (delta === 0) {
+    return;
+  }
+  setTimerRemaining(state.timer.remaining + delta);
 }
 
 function updateRoundDuration() {
@@ -10105,3 +10104,5 @@ function init() {
 }
 
 init();
+
+
