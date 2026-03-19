@@ -3483,6 +3483,19 @@ function getTeamLineupHudHtml(teamKey) {
   return `<div class="show-team-chip-list">${chips}</div>`;
 }
 
+function renderGameStageTeamPanel(teamKey) {
+  const team = state.teams[teamKey];
+  return `
+    <aside class="show-game-stage-team show-game-stage-team-${teamKey}">
+      <p class="show-info-label">${escapeHtml(team.name)}</p>
+      <p class="show-game-stage-team-money">${formatMoney(team.money)}</p>
+      <div class="show-game-stage-lineup">
+        ${getTeamLineupHudHtml(teamKey)}
+      </div>
+    </aside>
+  `;
+}
+
 function getCurrentRoundResultForShow(gameId) {
   if (gameId === "trivia") {
     return getOrCreateTriviaRoundState().lastResult || state.progress.lastResultSummary || "";
@@ -4988,11 +5001,22 @@ function buildLiveRoundHostDrawer(gameId) {
 
 function buildLiveRoundContent(gameId) {
   const liveStep = getLiveRoundStep(gameId);
+  const stageControls = renderShowStageControls(gameId, liveStep);
+  const stageExperience = buildLiveRoundExperienceContent(gameId, liveStep);
+  const stageActions = buildLiveRoundQuickActions(gameId, liveStep);
   return `
-    <section class="show-live-screen">
-      ${renderShowStageControls(gameId, liveStep)}
-      ${buildLiveRoundExperienceContent(gameId, liveStep)}
-      ${buildLiveRoundQuickActions(gameId, liveStep)}
+    <section class="show-live-screen show-shared-game-stage" data-game-stage="${escapeHtml(gameId)}">
+      <div class="show-game-stage-grid">
+        ${renderGameStageTeamPanel("teamA")}
+        <section class="show-game-stage-center">
+          ${stageControls}
+          ${stageExperience}
+        </section>
+        ${renderGameStageTeamPanel("teamB")}
+      </div>
+      <footer class="show-game-stage-actions">
+        ${stageActions}
+      </footer>
     </section>
   `;
 }

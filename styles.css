@@ -127,6 +127,10 @@ body {
   gap: 8px;
 }
 
+.show-shell.is-live-round-focus .show-team-grid {
+  display: none;
+}
+
 .host-trigger-btn {
   flex: 0 0 auto;
   padding: 8px 14px;
@@ -2016,12 +2020,79 @@ button.show-leader-row {
 /* Game feel polish pass: live screens */
 .show-live-screen {
   display: grid;
-  gap: 14px;
+  gap: 12px;
+}
+
+.show-game-stage-grid {
+  display: grid;
+  grid-template-columns: minmax(190px, 250px) minmax(0, 1fr) minmax(190px, 250px);
+  gap: 12px;
+  align-items: stretch;
+}
+
+.show-game-stage-team {
+  border: 1px solid #d1dcff;
+  border-radius: 14px;
+  background: linear-gradient(162deg, #ffffff, #f4f7ff);
+  padding: 10px;
+  display: grid;
+  align-content: start;
+  gap: 8px;
+}
+
+.show-game-stage-team-money {
+  margin: 0;
+  font-size: clamp(1.45rem, 2.8vw, 2.2rem);
+  font-weight: 700;
+  color: #142043;
+  line-height: 1;
+}
+
+.show-game-stage-lineup .show-team-chip-list {
+  gap: 5px;
+}
+
+.show-game-stage-lineup .show-team-chip {
+  padding: 3px 8px;
+  font-size: 0.76rem;
+}
+
+.show-game-stage-center {
+  border: 1px solid #d1dcff;
+  border-radius: 16px;
+  background: linear-gradient(162deg, #ffffff, #f5f8ff);
+  padding: 12px;
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  min-height: 560px;
+}
+
+.show-game-stage-center .show-game-experience {
+  min-height: 100%;
+}
+
+.show-game-stage-actions {
+  border: 1px solid #d1dcff;
+  border-radius: 14px;
+  background: linear-gradient(160deg, #ffffff, #f4f7ff);
+  padding: 10px;
+}
+
+.show-game-stage-actions .show-action-footer {
+  margin: 0;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.show-game-stage-actions .show-flow-actions {
+  justify-content: center;
 }
 
 .show-live-screen .show-game-experience {
   display: grid;
-  gap: 14px;
+  gap: 12px;
 }
 
 .show-live-screen .show-control-strip {
@@ -2426,6 +2497,14 @@ button.show-leader-row {
 
   .show-live-screen .show-control-buttons {
     justify-content: flex-start;
+  }
+
+  .show-game-stage-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .show-game-stage-center {
+    min-height: 420px;
   }
 
   .show-trivia-topic-grid,
