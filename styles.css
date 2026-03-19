@@ -969,6 +969,8 @@ select.text-input {
   inset: 0 auto 0 0;
   width: 0;
   background: linear-gradient(90deg, #a8b9ff 0%, #7f97ff 100%);
+  transition: width 0.32s cubic-bezier(0.2, 0.7, 0.2, 1);
+  will-change: width;
 }
 
 .curse-track-token {
@@ -983,6 +985,8 @@ select.text-input {
   font-weight: 700;
   color: #2a366a;
   white-space: nowrap;
+  transition: left 0.32s cubic-bezier(0.22, 0.8, 0.22, 1);
+  will-change: left;
 }
 
 .curse-track-start,
@@ -2811,6 +2815,8 @@ button.show-leader-row {
   display: block;
   height: 100%;
   background: linear-gradient(120deg, var(--accent), #ffd986);
+  transition: width 0.32s cubic-bezier(0.2, 0.7, 0.2, 1);
+  will-change: width;
 }
 
 .show-stage-race-track-token {
@@ -2820,6 +2826,8 @@ button.show-leader-row {
   font-size: 1.1rem;
   line-height: 1;
   filter: drop-shadow(0 2px 2px rgba(16, 25, 49, 0.24));
+  transition: left 0.32s cubic-bezier(0.22, 0.8, 0.22, 1);
+  will-change: left;
 }
 
 .show-stage-race-draw-log {

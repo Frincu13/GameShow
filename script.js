@@ -6,7 +6,7 @@ const BET_ROUNDING_STEP = 10;
 const SAMSAR_STANDARD_BET = 100;
 const RESULT_UNDO_LIMIT = 30;
 const SAVE_EXPORT_FORMAT_VERSION = 1;
-const CURSE_RACE_TICK_MS = 800;
+const CURSE_RACE_TICK_MS = 520;
 
 const SECTION_IDS = [
   "home",
@@ -148,30 +148,37 @@ const GAME_FLOW_DEFINITIONS = {
   "film-joc-franciza-fun-fact": {
     states: [
       {
+        id: "topic-select",
+        label: "Topic Select",
+        description: "Active team picks one unused category card.",
+        visible: ["active team", "category cards", "used status"],
+        actions: ["select category"]
+      },
+      {
         id: "bet-screen",
         label: "Bet Screen",
-        description: "Both teams place bets before image + card reveal.",
-        visible: ["team bet inputs", "max bet info"],
-        actions: ["set team bets"]
+        description: "Only active team places bet for this round.",
+        visible: ["selected category", "active team bet", "max bet info"],
+        actions: ["set bet"]
       },
       {
         id: "card-reveal",
         label: "Card Reveal",
-        description: "Image + reveal cards on one screen for round evaluation.",
+        description: "Image + reveal cards on one screen for active team evaluation.",
         visible: ["large image", "3 reveal cards", "mark correct/wrong"],
         actions: ["reveal cards", "set outcomes", "calculate result"]
       },
       {
         id: "breakdown-result",
         label: "Breakdown Result",
-        description: "Show weighted breakdown and bet eligibility result.",
+        description: "Show weighted breakdown and payout for active team.",
         visible: ["component breakdown", "bet activation", "money delta"],
         actions: ["next round / finish game"],
         payout: true
       }
     ],
     payoutStateId: "breakdown-result",
-    roundReturn: "After reveal, Next round moves to next image round.",
+    roundReturn: "After result, flow returns to Topic Select with automatic team turn switch.",
     gameEnd: "Game ends when all 12 configured rounds are used, then returns to Game Select."
   },
   "cel-mai-bun-samsar": {
@@ -738,7 +745,7 @@ const SECTION_NOTES_DEFAULTS = {
   pretulRules:
     "- Ambele echipe dau raspuns si pariu (max 15%, rotunjit la 10).\n- Introdu pretul real la finalul rundei.\n- Castigatorul este detectat automat dupa distanta fata de pretul real.\n- Distanta egala = tie, pariurile se returneaza.",
   filmJocRules:
-    "- Team vs team pe aceeasi imagine + carduri.\n- Componente: Character/Title x1, Franchise x1, Fun Fact x3.\n- Payout partial pe componente, nu all-or-nothing.\n- Bet-ul se activeaza separat per echipa la minim 2/3 corecte.",
+    "- O singura echipa joaca pe runda (alternare automata Team 1 / Team 2).\n- Echipa activa alege o categorie/card nefolosit(a).\n- Componente: Character/Title x1, Franchise x1, Fun Fact x3.\n- Payout partial pe componente, nu all-or-nothing.\n- Bet-ul echipei active se activeaza la minim 2/3 corecte.",
   samsarRules:
     "- Joc in 6 runde, fiecare cu persona si cerinte clare.\n- Fiecare echipa trimite un jucator activ.\n- Scor mai mare castiga, scor egal = draw.\n- Payout standard Samsar cu limita de bet a jocului.",
   manualMatchups:
@@ -2006,21 +2013,42 @@ function sanitizeFilmRoundState(rawRoundState) {
   return safeState;
 }
 
+function getFilmTeamForRound(roundNumber = state.progress.currentRound) {
+  const safeRound = Math.max(1, Math.round(sanitizeNumber(roundNumber, 1)));
+  return safeRound % 2 === 1 ? "teamA" : "teamB";
+}
+
+function getFilmUsedItemIdSet() {
+  const itemIdSet = new Set(state.filmGame.items.map((item) => item.id));
+  const used = new Set();
+  for (const rawRoundState of Object.values(state.filmGame.rounds || {})) {
+    const safeRoundState = sanitizeFilmRoundState(rawRoundState);
+    for (const itemId of safeRoundState.usedItemIds) {
+      if (itemIdSet.has(itemId)) {
+        used.add(itemId);
+      }
+    }
+  }
+  return used;
+}
+
 function getFilmRoundKey(roundNumber = state.progress.currentRound) {
   return `film::R${roundNumber}`;
 }
 
 function getOrCreateFilmRoundState(roundNumber = state.progress.currentRound) {
-  const roundKey = getFilmRoundKey(roundNumber);
+  const safeRound = Math.max(1, Math.round(sanitizeNumber(roundNumber, 1)));
+  const roundKey = getFilmRoundKey(safeRound);
+  const teamForRound = getFilmTeamForRound(safeRound);
   if (!state.filmGame.rounds[roundKey]) {
-    const previousRoundKey = getFilmRoundKey(Math.max(1, roundNumber - 1));
+    const previousRoundKey = getFilmRoundKey(Math.max(1, safeRound - 1));
     const previousRound = sanitizeFilmRoundState(state.filmGame.rounds[previousRoundKey]);
-    const carryUsed = Array.isArray(previousRound.usedItemIds) ? [...previousRound.usedItemIds] : [];
+    const carryUsed = Array.from(getFilmUsedItemIdSet());
     const nextAvailable = state.filmGame.items.find((item) => !carryUsed.includes(item.id));
     const defaultParticipantsA = getAvailablePlayersForTeam("teamA").map((player) => player.id);
     const defaultParticipantsB = getAvailablePlayersForTeam("teamB").map((player) => player.id);
     state.filmGame.rounds[roundKey] = sanitizeFilmRoundState({
-      teamKey: previousRound.teamKey || "teamA",
+      teamKey: teamForRound,
       selectedItemId: nextAvailable?.id || state.filmGame.items[0]?.id || "",
       usedItemIds: carryUsed,
       participantsTeamA: previousRound.participantsTeamA?.length > 0 ? previousRound.participantsTeamA : defaultParticipantsA,
@@ -2054,6 +2082,10 @@ function getOrCreateFilmRoundState(roundNumber = state.progress.currentRound) {
     });
   }
   const roundState = sanitizeFilmRoundState(state.filmGame.rounds[roundKey]);
+  roundState.teamKey = teamForRound;
+  roundState.betAmount = roundState.teamKey === "teamA" ? roundState.betTeamA : roundState.betTeamB;
+  roundState.outcomes = { ...roundState.outcomesByTeam[roundState.teamKey] };
+  roundState.usedItemIds = Array.from(getFilmUsedItemIdSet());
   if (roundState.participantsTeamA.length === 0) {
     roundState.participantsTeamA = getAvailablePlayersForTeam("teamA").map((player) => player.id);
   }
@@ -3737,9 +3769,8 @@ function isGameFlowComplete(gameId) {
     return total > 0 && getPretulUsedItemIdSet().size >= total;
   }
   if (gameId === "film-joc-franciza-fun-fact") {
-    const roundState = getOrCreateFilmRoundState();
     const total = Math.min(getGameRoundLimit("film-joc-franciza-fun-fact"), Math.max(0, state.filmGame.items.length));
-    return total > 0 && roundState.usedItemIds.length >= total;
+    return total > 0 && getFilmUsedItemIdSet().size >= total;
   }
   if (gameId === "cel-mai-bun-samsar") {
     return state.progress.currentRound >= getGameRoundLimit("cel-mai-bun-samsar");
@@ -5403,75 +5434,91 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
   }
   if (gameId === "film-joc-franciza-fun-fact") {
     const roundState = getOrCreateFilmRoundState();
+    const itemIdSet = new Set(state.filmGame.items.map((entry) => entry.id));
+    roundState.usedItemIds = Array.from(getFilmUsedItemIdSet()).filter((id) => itemIdSet.has(id));
+    if (!itemIdSet.has(roundState.selectedItemId) || roundState.usedItemIds.includes(roundState.selectedItemId)) {
+      const nextAvailable = state.filmGame.items.find((entry) => !roundState.usedItemIds.includes(entry.id));
+      roundState.selectedItemId = nextAvailable?.id || "";
+    }
+    const playingTeamKey = getFilmTeamForRound(state.progress.currentRound);
+    const otherTeamKey = playingTeamKey === "teamA" ? "teamB" : "teamA";
+    const playingTeam = state.teams[playingTeamKey];
+    const maxBet = getMaxBetAmount(playingTeam.money, "film-joc-franciza-fun-fact");
+    roundState.teamKey = playingTeamKey;
+    if (playingTeamKey === "teamA") {
+      roundState.betTeamA = maxBet <= 0 ? 0 : Math.min(normalizeBetAmount(roundState.betTeamA), maxBet);
+      roundState.betAmount = roundState.betTeamA;
+    } else {
+      roundState.betTeamB = maxBet <= 0 ? 0 : Math.min(normalizeBetAmount(roundState.betTeamB), maxBet);
+      roundState.betAmount = roundState.betTeamB;
+    }
+    roundState.outcomes = { ...roundState.outcomesByTeam[playingTeamKey] };
     const item = state.filmGame.items.find((entry) => entry.id === roundState.selectedItemId);
-    const maxBetA = getMaxBetAmount(state.teams.teamA.money, "film-joc-franciza-fun-fact");
-    const maxBetB = getMaxBetAmount(state.teams.teamB.money, "film-joc-franciza-fun-fact");
-    if (roundState.participantsTeamA.length === 0) {
-      roundState.participantsTeamA = getAvailablePlayersForTeam("teamA").map((player) => player.id);
-    }
-    if (roundState.participantsTeamB.length === 0) {
-      roundState.participantsTeamB = getAvailablePlayersForTeam("teamB").map((player) => player.id);
-    }
-    roundState.betTeamA = maxBetA <= 0 ? 0 : Math.min(normalizeBetAmount(roundState.betTeamA), maxBetA);
-    roundState.betTeamB = maxBetB <= 0 ? 0 : Math.min(normalizeBetAmount(roundState.betTeamB), maxBetB);
-    const breakdownA = getFilmRoundBreakdown(roundState, roundState.betTeamA, "teamA");
-    const breakdownB = getFilmRoundBreakdown(roundState, roundState.betTeamB, "teamB");
+    const breakdown = getFilmRoundBreakdown(roundState, roundState.betAmount, playingTeamKey);
     const cardConfig = [
       { key: "character", title: "Character / Title", revealText: item?.characterPrompt || "Placeholder character/title" },
       { key: "franchise", title: "Franchise", revealText: item?.franchisePrompt || "Placeholder franchise" },
       { key: "funFact", title: "Fun Fact", revealText: item?.funFactPrompt || "Placeholder fun fact" }
     ];
+    const betPresets = Array.from(
+      new Set(
+        [BET_ROUNDING_STEP, Math.round(maxBet * 0.25), Math.round(maxBet * 0.5), Math.round(maxBet * 0.75), maxBet]
+          .map((amount) => normalizeBetAmount(amount))
+          .filter((amount) => amount > 0 && amount <= maxBet)
+      )
+    ).sort((left, right) => left - right);
+
+    if (liveStep === "topic-select") {
+      const topicTiles = state.filmGame.items
+        .map((entry) => {
+          const isUsed = roundState.usedItemIds.includes(entry.id);
+          const isSelected = entry.id === roundState.selectedItemId;
+          return `
+            <button class="show-trivia-topic-tile ${isSelected ? "is-selected" : ""}" type="button" data-show-film-topic="${
+              entry.id
+            }" ${isUsed ? "disabled" : ""}>
+              <span class="show-trivia-topic-status ${isUsed ? "is-used" : ""}">${isUsed ? "USED" : "CATEGORY"}</span>
+              <span class="show-trivia-topic-title">${escapeHtml(entry.title)}</span>
+            </button>
+          `;
+        })
+        .join("");
+      return `
+        <div class="show-round-card show-trivia-turn-card">
+          <p class="show-info-label">Active Team</p>
+          <p class="show-round-title show-trivia-turn-team">${escapeHtml(playingTeam.name)}</p>
+          <p class="show-round-copy">Choose one category card.</p>
+        </div>
+        <div class="show-trivia-topic-grid">${topicTiles}</div>
+        ${
+          topicTiles.trim()
+            ? ""
+            : `<p class="show-round-copy">No categories left. Use <strong>Finish Film/Joc</strong> to return to Game Select.</p>`
+        }
+      `;
+    }
 
     if (liveStep === "bet-screen") {
       return `
-        <section class="show-stage-stack">
+        <section class="show-stage-stack show-trivia-bet-stage">
           <p class="show-info-label">Bet Screen</p>
-          <p class="show-round-title">${escapeHtml(item?.title || "Select round card first")}</p>
-          <div class="show-vs-input-grid">
-            <article class="show-stage-mini-card">
-              <p class="show-info-label">${escapeHtml(state.teams.teamA.name)} bet</p>
-              <input
-                class="text-input show-stage-money-input"
-                type="number"
-                min="0"
-                step="10"
-                value="${roundState.betTeamA}"
-                data-show-film-bet-team
-                data-team="teamA"
-              >
-              <p class="show-info-sub">Max: ${formatMoney(maxBetA)}</p>
-            </article>
-            <article class="show-stage-mini-card">
-              <p class="show-info-label">${escapeHtml(state.teams.teamB.name)} bet</p>
-              <input
-                class="text-input show-stage-money-input"
-                type="number"
-                min="0"
-                step="10"
-                value="${roundState.betTeamB}"
-                data-show-film-bet-team
-                data-team="teamB"
-              >
-              <p class="show-info-sub">Max: ${formatMoney(maxBetB)}</p>
-            </article>
+          <p class="show-round-title show-trivia-topic-focus">${escapeHtml(item?.title || "Select category first")}</p>
+          <p class="show-round-copy show-trivia-bet-team">Team in play: ${escapeHtml(playingTeam.name)}</p>
+          <div class="show-trivia-bet-core">
+            <label class="show-info-label show-trivia-bet-label" for="showFilmBetFlow">Bet amount</label>
+            <input id="showFilmBetFlow" class="text-input show-trivia-bet-input" type="number" min="0" step="10" value="${roundState.betAmount}" data-show-film-bet>
+            <p class="show-control-note show-trivia-bet-max">Max bet: ${formatMoney(maxBet)}</p>
           </div>
-          <div class="show-vs-input-grid">
-            ${renderSetupParticipantPicker("film-joc-franciza-fun-fact", "teamA", roundState.participantsTeamA)}
-            ${renderSetupParticipantPicker("film-joc-franciza-fun-fact", "teamB", roundState.participantsTeamB)}
+          <div class="show-trivia-bet-presets">
+            ${betPresets
+              .map(
+                (preset) =>
+                  `<button class="pill-btn show-trivia-bet-chip" type="button" data-show-film-bet="${preset}">${formatMoney(
+                    preset
+                  )}</button>`
+              )
+              .join("")}
           </div>
-          <article class="show-stage-mini-card">
-            <p class="show-info-label">Round Card</p>
-            <select class="text-input" data-show-film-item>
-              ${state.filmGame.items
-                .map((entry) => {
-                  const isUsed = roundState.usedItemIds.includes(entry.id);
-                  return `<option value="${entry.id}" ${roundState.selectedItemId === entry.id ? "selected" : ""} ${
-                    isUsed ? "disabled" : ""
-                  }>${escapeHtml(entry.title)}${isUsed ? " (USED)" : ""}</option>`;
-                })
-                .join("")}
-            </select>
-          </article>
         </section>
       `;
     }
@@ -5488,8 +5535,7 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
             ${cardConfig
               .map((card) => {
                 const revealState = roundState.revealed[card.key];
-                const outcomeA = roundState.outcomesByTeam.teamA[card.key];
-                const outcomeB = roundState.outcomesByTeam.teamB[card.key];
+                const activeOutcome = roundState.outcomesByTeam[playingTeamKey][card.key];
                 return `
                   <article class="show-film-reveal-card ${revealState ? "is-open" : ""}">
                     <div class="show-film-card-head">
@@ -5498,14 +5544,9 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
                     </div>
                     <p class="show-round-copy">${escapeHtml(revealState ? card.revealText : "Hidden until reveal")}</p>
                     <div class="show-film-outcome-row">
-                      <span class="show-info-sub">${escapeHtml(state.teams.teamA.name)}</span>
-                      <button class="pill-btn ${outcomeA === "correct" ? "is-active" : ""}" type="button" data-show-film-outcome="teamA:${card.key}:correct">Correct</button>
-                      <button class="pill-btn ${outcomeA === "wrong" ? "is-active" : ""}" type="button" data-show-film-outcome="teamA:${card.key}:wrong">Wrong</button>
-                    </div>
-                    <div class="show-film-outcome-row">
-                      <span class="show-info-sub">${escapeHtml(state.teams.teamB.name)}</span>
-                      <button class="pill-btn ${outcomeB === "correct" ? "is-active" : ""}" type="button" data-show-film-outcome="teamB:${card.key}:correct">Correct</button>
-                      <button class="pill-btn ${outcomeB === "wrong" ? "is-active" : ""}" type="button" data-show-film-outcome="teamB:${card.key}:wrong">Wrong</button>
+                      <span class="show-info-sub">${escapeHtml(playingTeam.name)}</span>
+                      <button class="pill-btn ${activeOutcome === "correct" ? "is-active" : ""}" type="button" data-show-film-outcome="${card.key}:correct">Correct</button>
+                      <button class="pill-btn ${activeOutcome === "wrong" ? "is-active" : ""}" type="button" data-show-film-outcome="${card.key}:wrong">Wrong</button>
                     </div>
                   </article>
                 `;
@@ -5521,18 +5562,17 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
         <p class="show-info-label">Result / Breakdown</p>
         <div class="show-film-breakdown-grid">
           <article class="show-stage-mini-card">
-            <p class="show-info-label">${escapeHtml(state.teams.teamA.name)}</p>
-            <p class="show-info-value">${breakdownA.totalPoints}/${breakdownA.maxPoints}</p>
-            <p class="show-info-sub">Correct: ${breakdownA.correctCount}/3 | Bet: ${breakdownA.betEligible ? "ON" : "OFF"}</p>
-            <p class="show-info-sub">Delta: ${formatSignedMoney(breakdownA.totalDelta)}</p>
-          </article>
-          <article class="show-stage-mini-card">
-            <p class="show-info-label">${escapeHtml(state.teams.teamB.name)}</p>
-            <p class="show-info-value">${breakdownB.totalPoints}/${breakdownB.maxPoints}</p>
-            <p class="show-info-sub">Correct: ${breakdownB.correctCount}/3 | Bet: ${breakdownB.betEligible ? "ON" : "OFF"}</p>
-            <p class="show-info-sub">Delta: ${formatSignedMoney(breakdownB.totalDelta)}</p>
+            <p class="show-info-label">${escapeHtml(playingTeam.name)}</p>
+            <p class="show-info-value">${breakdown.totalPoints}/${breakdown.maxPoints}</p>
+            <p class="show-info-sub">Correct: ${breakdown.correctCount}/3 | Bet: ${breakdown.betEligible ? "ON" : "OFF"}</p>
+            <p class="show-info-sub">Component payout: +${formatMoney(breakdown.componentPayout)}</p>
+            <p class="show-info-sub">Bet delta: ${formatSignedMoney(breakdown.betDelta)}</p>
+            <p class="show-info-sub">Total delta: ${formatSignedMoney(breakdown.totalDelta)}</p>
           </article>
         </div>
+        <p class="show-round-copy">Only active team (${escapeHtml(playingTeam.name)}) is scored this round. Next turn goes to ${escapeHtml(
+          state.teams[otherTeamKey].name
+        )}.</p>
         <p class="show-round-copy">Scoring weights: Character x1, Franchise x1, Fun Fact x3.</p>
         <p class="show-round-copy">${escapeHtml(roundState.lastResult || "Apply result to generate payout breakdown.")}</p>
       </section>
@@ -5885,14 +5925,14 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
       return `
         <section class="show-stage-stack">
           <p class="show-info-label">Race Screen</p>
-          <p class="show-round-title">${
+          <p class="show-round-title" data-show-curse-race-title>${
             winnerHorse
               ? `Winner detected: ${escapeHtml(winnerHorse.symbol)} ${escapeHtml(winnerHorse.name)}`
               : raceRunning
                 ? "Race running live..."
                 : "Race ready"
           }</p>
-          <p class="show-round-copy">Leader: ${
+          <p class="show-round-copy" data-show-curse-race-leader>Leader: ${
             leader ? `${escapeHtml(leader.horse.symbol)} ${escapeHtml(leader.horse.name)} (${leader.position}/${trackLength})` : "No movement yet"
           }.</p>
           <p class="show-round-copy">Race is generated by card draw. Push-back applies automatically on lane collision.</p>
@@ -5903,27 +5943,29 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
                 const progress = trackLength <= 0 ? 0 : Math.min(100, Math.round((Math.min(position, trackLength) / trackLength) * 100));
                 const isWinner = roundState.winnerHorseId === horse.id ? "is-winner" : "";
                 return `
-                  <article class="show-stage-race-track-lane ${isWinner}">
+                  <article class="show-stage-race-track-lane ${isWinner}" data-show-curse-lane="${horse.id}">
                     <div class="show-stage-race-track-head">
                       <p class="show-info-label">${escapeHtml(horse.symbol)} ${escapeHtml(horse.name)}</p>
-                      <p class="show-info-sub">${position}/${trackLength}</p>
+                      <p class="show-info-sub" data-show-curse-pos>${position}/${trackLength}</p>
                     </div>
                     <div class="show-stage-race-track-bar">
-                      <span style="width:${progress}%"></span>
-                      <strong class="show-stage-race-track-token" style="left:${progress}%">${escapeHtml(horse.symbol)}</strong>
+                      <span data-show-curse-fill style="width:${progress}%"></span>
+                      <strong class="show-stage-race-track-token" data-show-curse-token style="left:${progress}%">${escapeHtml(
+                        horse.symbol
+                      )}</strong>
                     </div>
                   </article>
                 `;
               })
               .join("")}
           </div>
-          <div class="show-stage-race-draw-log">
+          <div class="show-stage-race-draw-log" data-show-curse-log>
             <p class="show-info-label">Draw Log</p>
-            ${
+            <div data-show-curse-log-body>${
               Array.isArray(roundState.cardHistory) && roundState.cardHistory.length > 0
                 ? `<ul>${roundState.cardHistory.map((entry) => `<li>${escapeHtml(entry)}</li>`).join("")}</ul>`
                 : '<p class="show-round-copy">No cards drawn yet. Press "Run Auto Race".</p>'
-            }
+            }</div>
           </div>
         </section>
       `;
@@ -6038,12 +6080,22 @@ function buildLiveRoundQuickActions(gameId, liveStep) {
   if (gameId === "film-joc-franciza-fun-fact") {
     const roundState = getOrCreateFilmRoundState();
     const flowComplete = isGameFlowComplete(gameId);
-    if (liveStep === "bet-screen") {
+    const hasAvailableCategory = state.filmGame.items.some((entry) => !roundState.usedItemIds.includes(entry.id));
+    if (liveStep === "topic-select") {
+      if (flowComplete || !hasAvailableCategory) {
+        actions.push({ tone: "primary-btn", action: "finish-game-return", label: "Finish Film/Joc" });
+      } else {
+        actions.push({ tone: "primary-btn", action: "live-step-bet-screen", label: "Lock Category" });
+      }
+      actions.push({ tone: "secondary-btn", action: "film-reset-used", label: "Reset categories" });
+    } else if (liveStep === "bet-screen") {
       actions.push({ tone: "primary-btn", action: "live-step-card-reveal", label: "Open Round" });
+      actions.push({ tone: "secondary-btn", action: "live-step-topic-select", label: "Back to Categories" });
     } else if (liveStep === "card-reveal") {
       if (!roundState.payoutApplied) {
         actions.push({ tone: "primary-btn", action: "film-apply", label: "Calculate Result" });
       }
+      actions.push({ tone: "secondary-btn", action: "live-step-bet-screen", label: "Back to Bet" });
     } else if (liveStep === "breakdown-result") {
       actions.push({
         tone: "primary-btn",
@@ -6271,6 +6323,16 @@ function buildShowScreenContent(screenId) {
           <p class="show-info-value">${formatMoney(state.teams.teamB.money)}</p>
           <p class="show-info-sub">Score: ${state.teams.teamB.score}</p>
         </div>
+      </div>
+      <div class="show-overlay-grid two-col">
+        <article class="show-control-card">
+          <h3>${escapeHtml(state.teams.teamA.name)} Name</h3>
+          <input class="text-input" type="text" maxlength="40" value="${escapeHtml(state.teams.teamA.name)}" data-show-team-name data-team="teamA">
+        </article>
+        <article class="show-control-card">
+          <h3>${escapeHtml(state.teams.teamB.name)} Name</h3>
+          <input class="text-input" type="text" maxlength="40" value="${escapeHtml(state.teams.teamB.name)}" data-show-team-name data-team="teamB">
+        </article>
       </div>
       <div class="show-action-footer">
         <button class="primary-btn" type="button" data-show-action="start-game-night">${
@@ -6806,6 +6868,21 @@ function setTeamMoneyAbsolute(teamKey, rawAmount) {
   state.teams[teamKey].money = normalized;
 }
 
+function setTeamNameFromOverlay(teamKey, rawName) {
+  if (!["teamA", "teamB"].includes(teamKey)) {
+    return;
+  }
+  const fallback = teamKey === "teamA" ? DEFAULT_STATE.teams.teamA.name : DEFAULT_STATE.teams.teamB.name;
+  const nextName = sanitizeString(rawName, fallback).trim().slice(0, 40) || fallback;
+  if (state.teams[teamKey].name === nextName) {
+    return;
+  }
+  state.teams[teamKey].name = nextName;
+  renderAll();
+  setLastResultSummary(`Team name updated: ${nextName}.`);
+  saveState(`Team name updated for ${teamKey}.`);
+}
+
 function clearActiveTeamFromOverlay(teamKey) {
   if (!["teamA", "teamB"].includes(teamKey)) {
     return;
@@ -7292,6 +7369,11 @@ function handleShowOverlayChange(target) {
     updatePlayerStatus(teamKey, playerId, target.value, { ignoreLock: true });
     return;
   }
+  if (target.matches("[data-show-team-name]")) {
+    const teamKey = target.getAttribute("data-team");
+    setTeamNameFromOverlay(teamKey, target.value);
+    return;
+  }
   if (target.matches("[data-show-trivia-team]")) {
     setTriviaPlayingTeam(target.value);
     return;
@@ -7526,6 +7608,24 @@ function handleShowOverlayClick(event) {
     const itemId = pretulTopicButton.getAttribute("data-show-pretul-item");
     if (itemId) {
       setPretulSelectedItem(itemId);
+    }
+    return;
+  }
+
+  const filmTopicButton = event.target.closest("[data-show-film-topic]");
+  if (filmTopicButton) {
+    const itemId = filmTopicButton.getAttribute("data-show-film-topic");
+    if (itemId) {
+      setFilmSelectedItem(itemId);
+    }
+    return;
+  }
+
+  const filmBetPresetButton = event.target.closest("button[data-show-film-bet]");
+  if (filmBetPresetButton) {
+    const betValue = filmBetPresetButton.getAttribute("data-show-film-bet");
+    if (betValue) {
+      setFilmBetAmount(betValue);
     }
     return;
   }
@@ -7812,7 +7912,7 @@ function renderSettingsRulesSnapshot() {
   elements.settingsPretulRuleLine.textContent =
     "Pretul corect: both teams submit answer + bet, and winner is auto-detected by closest value to real price; equal distance is tie.";
   elements.settingsFilmRuleLine.textContent =
-    "Film/Joc/Franciza/Fun Fact: team-vs-team, component weights 1/1/3, partial payout per team, and each team bet is active only at minimum 2/3 correct.";
+    "Film/Joc/Franciza/Fun Fact: one-team-per-round with automatic team turn switch, category pick each round, component weights 1/1/3, and active-team bet applies at minimum 2/3 correct.";
   elements.settingsSamsarRuleLine.textContent =
     "Cel mai bun samsar: 6 rounds cu persona/cerinte editabile, no link fields, one duelist per team, higher score wins, equal score draw, payout standard + fixed bonus.";
   elements.settingsShotFakeRuleLine.textContent =
@@ -8403,18 +8503,17 @@ function renderFilmControls() {
 
   const roundState = getOrCreateFilmRoundState();
   const itemIdSet = new Set(state.filmGame.items.map((item) => item.id));
-  roundState.usedItemIds = roundState.usedItemIds.filter((id) => itemIdSet.has(id));
+  const globalUsed = getFilmUsedItemIdSet();
+  roundState.usedItemIds = Array.from(globalUsed).filter((id) => itemIdSet.has(id));
 
   if (!itemIdSet.has(roundState.selectedItemId) || roundState.usedItemIds.includes(roundState.selectedItemId)) {
     const firstAvailable = state.filmGame.items.find((item) => !roundState.usedItemIds.includes(item.id));
     roundState.selectedItemId = firstAvailable?.id || "";
   }
 
-  const playingTeamKey = ["teamA", "teamB"].includes(roundState.teamKey) ? roundState.teamKey : "teamA";
+  const playingTeamKey = getFilmTeamForRound(state.progress.currentRound);
   roundState.teamKey = playingTeamKey;
   const playingTeam = state.teams[playingTeamKey];
-  const otherTeamKey = playingTeamKey === "teamA" ? "teamB" : "teamA";
-  const otherTeam = state.teams[otherTeamKey];
   const maxBet = getMaxBetAmount(playingTeam.money, "film-joc-franciza-fun-fact");
   if (playingTeamKey === "teamA") {
     roundState.betTeamA = maxBet <= 0 ? 0 : Math.min(normalizeBetAmount(roundState.betTeamA), maxBet);
@@ -8428,6 +8527,7 @@ function renderFilmControls() {
   elements.filmPlayingTeamSelect.options[0].text = state.teams.teamA.name;
   elements.filmPlayingTeamSelect.options[1].text = state.teams.teamB.name;
   elements.filmPlayingTeamSelect.value = playingTeamKey;
+  elements.filmPlayingTeamSelect.disabled = true;
 
   elements.filmRoundSelect.innerHTML = state.filmGame.items
     .map((item) => {
@@ -8477,11 +8577,10 @@ function renderFilmControls() {
   elements.filmCorrectCount.textContent = `${breakdown.correctCount} / 3`;
   elements.filmBetEligibility.textContent = breakdown.betEligible ? "Bet active" : "Bet inactive";
   elements.filmRuleInfo.textContent =
-    `Weights: Character/Title x1, Franchise x1, Fun Fact x3. Component payout preview (${playingTeam.name}): +${formatMoney(
+    `One-team round (${playingTeam.name}). Weights: Character/Title x1, Franchise x1, Fun Fact x3. Component payout preview: +${formatMoney(
       breakdown.componentPayout
     )}. Bet preview: ${betDeltaLabel}. Net preview: ${totalDeltaLabel}. ` +
-    `Bet cap is 15%, rounded to ${BET_ROUNDING_STEP}. ${playingTeam.name} max now: ${formatMoney(maxBet)} | ` +
-    `${otherTeam.name} max now: ${formatMoney(getMaxBetAmount(otherTeam.money, "film-joc-franciza-fun-fact"))}.`;
+    `Bet cap is 15%, rounded to ${BET_ROUNDING_STEP}. ${playingTeam.name} max now: ${formatMoney(maxBet)}.`;
   elements.filmRoundResult.textContent = roundState.lastResult || "Rezultatul rundei va aparea aici.";
 
   const activeCount = countActiveWithJoker(playingTeamKey);
@@ -8539,19 +8638,20 @@ function renderFilmControls() {
 }
 
 function setFilmPlayingTeam(teamKey) {
-  if (!["teamA", "teamB"].includes(teamKey)) {
-    return;
-  }
-
   const roundState = getOrCreateFilmRoundState();
-  roundState.teamKey = teamKey;
-  roundState.betAmount = teamKey === "teamA" ? roundState.betTeamA : roundState.betTeamB;
-  roundState.outcomes = { ...roundState.outcomesByTeam[teamKey] };
+  const forcedTeamKey = getFilmTeamForRound(state.progress.currentRound);
+  roundState.teamKey = forcedTeamKey;
+  roundState.betAmount = forcedTeamKey === "teamA" ? roundState.betTeamA : roundState.betTeamB;
+  roundState.outcomes = { ...roundState.outcomesByTeam[forcedTeamKey] };
   saveCurrentRoundSnapshot();
   renderRoundSelection();
   renderFilmControls();
-  setLastResultSummary(`Film round team set to ${state.teams[teamKey].name}.`);
-  saveState("Film round team updated.");
+  if (teamKey && teamKey !== forcedTeamKey) {
+    setLastResultSummary(`Film team turn is automatic. Round ${state.progress.currentRound} plays with ${state.teams[forcedTeamKey].name}.`);
+  } else {
+    setLastResultSummary(`Film round active team: ${state.teams[forcedTeamKey].name}.`);
+  }
+  saveState("Film round team synced.");
 }
 
 function setFilmSelectedItem(itemId) {
@@ -8792,74 +8892,66 @@ function applyFilmRoundResult() {
     return false;
   }
 
-  const maxBetA = getMaxBetAmount(state.teams.teamA.money, "film-joc-franciza-fun-fact");
-  const maxBetB = getMaxBetAmount(state.teams.teamB.money, "film-joc-franciza-fun-fact");
-  roundState.betTeamA = maxBetA <= 0 ? 0 : Math.min(normalizeBetAmount(roundState.betTeamA), maxBetA);
-  roundState.betTeamB = maxBetB <= 0 ? 0 : Math.min(normalizeBetAmount(roundState.betTeamB), maxBetB);
-  roundState.betAmount = roundState.teamKey === "teamA" ? roundState.betTeamA : roundState.betTeamB;
-  roundState.outcomes = { ...roundState.outcomesByTeam[roundState.teamKey] };
+  const playingTeamKey = getFilmTeamForRound(state.progress.currentRound);
+  const otherTeamKey = playingTeamKey === "teamA" ? "teamB" : "teamA";
+  const playingTeam = state.teams[playingTeamKey];
+  const maxBet = getMaxBetAmount(playingTeam.money, "film-joc-franciza-fun-fact");
+  roundState.teamKey = playingTeamKey;
+  if (playingTeamKey === "teamA") {
+    roundState.betTeamA = maxBet <= 0 ? 0 : Math.min(normalizeBetAmount(roundState.betTeamA), maxBet);
+    roundState.betAmount = roundState.betTeamA;
+  } else {
+    roundState.betTeamB = maxBet <= 0 ? 0 : Math.min(normalizeBetAmount(roundState.betTeamB), maxBet);
+    roundState.betAmount = roundState.betTeamB;
+  }
+  roundState.outcomes = { ...roundState.outcomesByTeam[playingTeamKey] };
 
-  const missingByTeam = ["teamA", "teamB"]
-    .map((teamKey) => {
-      const missingComponents = FILM_COMPONENT_KEYS.filter(
-        (key) => roundState.outcomesByTeam?.[teamKey]?.[key] === null
-      );
-      return missingComponents.length > 0 ? `${state.teams[teamKey].name}: ${missingComponents.join(", ")}` : "";
-    })
-    .filter(Boolean);
-  if (missingByTeam.length > 0) {
-    roundState.lastResult = `Mark all 3 components for both teams before payout. Missing -> ${missingByTeam.join(" | ")}.`;
+  const missingComponents = FILM_COMPONENT_KEYS.filter(
+    (key) => roundState.outcomesByTeam?.[playingTeamKey]?.[key] === null
+  );
+  if (missingComponents.length > 0) {
+    roundState.lastResult = `Mark all 3 components for ${playingTeam.name} before payout. Missing: ${missingComponents.join(", ")}.`;
     renderFilmControls();
     setLastResultSummary(roundState.lastResult);
     saveState("Film round blocked: incomplete outcomes.");
     return false;
   }
 
-  const breakdownA = getFilmRoundBreakdown(roundState, roundState.betTeamA, "teamA");
-  const breakdownB = getFilmRoundBreakdown(roundState, roundState.betTeamB, "teamB");
+  const breakdown = getFilmRoundBreakdown(roundState, roundState.betAmount, playingTeamKey);
 
   pushResultUndoSnapshot("Film/Joc/Franciza/Fun Fact round result");
-  const moneyBeforeA = state.teams.teamA.money;
-  const moneyBeforeB = state.teams.teamB.money;
-  state.teams.teamA.money = Math.max(0, state.teams.teamA.money + breakdownA.totalDelta);
-  state.teams.teamB.money = Math.max(0, state.teams.teamB.money + breakdownB.totalDelta);
-  const appliedDeltaA = state.teams.teamA.money - moneyBeforeA;
-  const appliedDeltaB = state.teams.teamB.money - moneyBeforeB;
-
-  const roundOutcomeA = appliedDeltaA > appliedDeltaB ? "win" : appliedDeltaA < appliedDeltaB ? "loss" : "draw";
-  const roundOutcomeB = roundOutcomeA === "win" ? "loss" : roundOutcomeA === "loss" ? "win" : "draw";
-  const betOutcomeA = roundState.betTeamA > 0 ? (breakdownA.betEligible ? "win" : "loss") : "draw";
-  const betOutcomeB = roundState.betTeamB > 0 ? (breakdownB.betEligible ? "win" : "loss") : "draw";
-  const selectedParticipantsA = getSelectedParticipantsForTeam("teamA", roundState.participantsTeamA);
-  const selectedParticipantsB = getSelectedParticipantsForTeam("teamB", roundState.participantsTeamB);
-
-  applyRoundPlayerStats({
-    gameId: "film-joc-franciza-fun-fact",
-    teamA: {
-      participants: selectedParticipantsA,
-      roundOutcome: roundOutcomeA,
-      teamNetDelta: appliedDeltaA,
-      teamBetAmount: roundState.betTeamA,
-      betOutcome: betOutcomeA
-    },
-    teamB: {
-      participants: selectedParticipantsB,
-      roundOutcome: roundOutcomeB,
-      teamNetDelta: appliedDeltaB,
-      teamBetAmount: roundState.betTeamB,
-      betOutcome: betOutcomeB
-    }
-  });
+  const moneyBefore = state.teams[playingTeamKey].money;
+  state.teams[playingTeamKey].money = Math.max(0, state.teams[playingTeamKey].money + breakdown.totalDelta);
+  const appliedDelta = state.teams[playingTeamKey].money - moneyBefore;
+  const roundOutcome = appliedDelta > 0 ? "win" : appliedDelta < 0 ? "loss" : "draw";
+  const betOutcome = roundState.betAmount > 0 ? (breakdown.betEligible ? "win" : "loss") : "draw";
+  const selectedParticipants = getActiveParticipantsForTeam(playingTeamKey);
+  const fallbackParticipants = getAvailablePlayersForTeam(playingTeamKey).map((player) => ({
+    id: player.id,
+    displayName: player.name,
+    teamKey: playingTeamKey
+  }));
+  const participantsForStats = selectedParticipants.length > 0 ? selectedParticipants : fallbackParticipants;
+  const statsPayload = {
+    gameId: "film-joc-franciza-fun-fact"
+  };
+  statsPayload[playingTeamKey] = {
+    participants: participantsForStats,
+    roundOutcome,
+    teamNetDelta: appliedDelta,
+    teamBetAmount: roundState.betAmount,
+    betOutcome
+  };
+  applyRoundPlayerStats(statsPayload);
 
   if (!roundState.usedItemIds.includes(selectedItem.id)) {
     roundState.usedItemIds.push(selectedItem.id);
   }
 
   roundState.lastResult =
-    `${selectedItem.title}: ${state.teams.teamA.name} ${breakdownA.totalPoints}/${breakdownA.maxPoints} ` +
-    `(bet ${breakdownA.betEligible ? "ON" : "OFF"}) => ${formatSignedMoney(appliedDeltaA)} | ` +
-    `${state.teams.teamB.name} ${breakdownB.totalPoints}/${breakdownB.maxPoints} ` +
-    `(bet ${breakdownB.betEligible ? "ON" : "OFF"}) => ${formatSignedMoney(appliedDeltaB)}.`;
+    `${selectedItem.title}: ${playingTeam.name} scored ${breakdown.totalPoints}/${breakdown.maxPoints} ` +
+    `(bet ${breakdown.betEligible ? "ON" : "OFF"}) => ${formatSignedMoney(appliedDelta)}. ` +
+    `Next turn: ${state.teams[otherTeamKey].name}.`;
   roundState.payoutApplied = true;
 
   saveCurrentRoundSnapshot();
@@ -9843,6 +9935,93 @@ function pushCurseCardHistoryEntry(roundState, text) {
   }
 }
 
+function updateCurseOverlayRaceFrame(roundState, options = {}) {
+  if (state.progress.currentGame !== "curse-de-cai") {
+    return;
+  }
+  if (state.showUi?.activeScreen !== "live-round") {
+    return;
+  }
+  if (getLiveRoundStep("curse-de-cai") !== "race-screen") {
+    return;
+  }
+
+  const root = elements.showScreenContent;
+  if (!root) {
+    return;
+  }
+
+  const trackLength = Math.max(1, Math.round(sanitizeNumber(state.curseRace.trackLength, 1)));
+  const raceRunning =
+    options.raceRunning === true || isCurseRaceRunning(getCurseRoundKey(state.progress.currentRound));
+  const winnerHorse = state.curseRace.horses.find((horse) => horse.id === roundState.winnerHorseId);
+  const leader = state.curseRace.horses
+    .map((horse) => ({
+      horse,
+      position: Math.max(0, Math.round(sanitizeNumber(roundState.positions?.[horse.id], 0)))
+    }))
+    .sort((left, right) => right.position - left.position)[0];
+
+  const titleNode = root.querySelector("[data-show-curse-race-title]");
+  if (titleNode) {
+    titleNode.textContent = winnerHorse
+      ? `Winner detected: ${winnerHorse.symbol} ${winnerHorse.name}`
+      : raceRunning
+        ? "Race running live..."
+        : "Race ready";
+  }
+
+  const leaderNode = root.querySelector("[data-show-curse-race-leader]");
+  if (leaderNode) {
+    leaderNode.textContent = leader
+      ? `Leader: ${leader.horse.symbol} ${leader.horse.name} (${leader.position}/${trackLength}).`
+      : "Leader: No movement yet.";
+  }
+
+  const logBody = root.querySelector("[data-show-curse-log-body]");
+  if (logBody) {
+    if (Array.isArray(roundState.cardHistory) && roundState.cardHistory.length > 0) {
+      logBody.innerHTML = `<ul>${roundState.cardHistory.map((entry) => `<li>${escapeHtml(entry)}</li>`).join("")}</ul>`;
+    } else {
+      logBody.innerHTML = '<p class="show-round-copy">No cards drawn yet. Press "Run Auto Race".</p>';
+    }
+  }
+
+  for (const horse of state.curseRace.horses) {
+    const lane = root.querySelector(`[data-show-curse-lane="${horse.id}"]`);
+    if (!lane) {
+      continue;
+    }
+    const position = Math.max(0, Math.round(sanitizeNumber(roundState.positions?.[horse.id], 0)));
+    const progress = Math.min(100, Math.round((Math.min(position, trackLength) / trackLength) * 100));
+    lane.classList.toggle("is-winner", roundState.winnerHorseId === horse.id);
+
+    const posNode = lane.querySelector("[data-show-curse-pos]");
+    if (posNode) {
+      posNode.textContent = `${position}/${trackLength}`;
+    }
+    const fillNode = lane.querySelector("[data-show-curse-fill]");
+    if (fillNode) {
+      fillNode.style.width = `${progress}%`;
+    }
+    const tokenNode = lane.querySelector("[data-show-curse-token]");
+    if (tokenNode) {
+      tokenNode.style.left = `${progress}%`;
+    }
+  }
+
+  const moveButton = root.querySelector('[data-show-action="curse-move"]');
+  if (moveButton) {
+    moveButton.disabled = raceRunning || Boolean(roundState.winnerHorseId) || roundState.payoutApplied;
+    moveButton.textContent = raceRunning ? "Race Running..." : "Run Auto Race";
+  }
+
+  const applyButton = root.querySelector('[data-show-action="curse-apply"]');
+  if (applyButton) {
+    applyButton.disabled = raceRunning || !roundState.winnerHorseId || roundState.payoutApplied;
+  }
+}
+
 function getCurseTeamBetTotal(roundState, teamKey) {
   const horseIds = state.curseRace.horses.map((horse) => horse.id);
   return horseIds.reduce((sum, horseId) => sum + normalizeOptionalBetAmount(roundState.bets?.[teamKey]?.horseBets?.[horseId]), 0);
@@ -10020,7 +10199,8 @@ function renderCurseBetBoard(roundState, options = {}) {
     .join("");
 }
 
-function renderCurseControls() {
+function renderCurseControls(options = {}) {
+  const syncShowUi = options.syncShowUi !== false;
   if (
     !elements.curseRoundInput ||
     !elements.curseRuleInfo ||
@@ -10108,7 +10288,9 @@ function renderCurseControls() {
   elements.curseMoveBtn.disabled = raceRunning || Boolean(roundState.winnerHorseId) || roundState.payoutApplied;
   elements.curseApplyPayoutBtn.disabled = raceRunning || !roundState.winnerHorseId || roundState.payoutApplied;
   elements.curseResetRaceBtn.disabled = false;
-  renderShowUi();
+  if (syncShowUi) {
+    renderShowUi();
+  }
 }
 
 function setCurseRound(rawRoundValue) {
@@ -10346,6 +10528,12 @@ function runCurseRaceAuto() {
 
   const maxTurns = Math.max(20, state.curseRace.trackLength * 8);
   let turn = 0;
+  const renderRaceFrame = (activeRoundState, raceRunning) => {
+    if (state.activeSection === "curse-de-cai") {
+      renderCurseControls({ syncShowUi: false });
+    }
+    updateCurseOverlayRaceFrame(activeRoundState, { raceRunning });
+  };
 
   const finishRace = (activeRoundState, saveReason) => {
     const winnerHorse = state.curseRace.horses.find((horse) => horse.id === activeRoundState.winnerHorseId);
@@ -10366,7 +10554,7 @@ function runCurseRaceAuto() {
   curseRaceRuntime.isRunning = true;
   curseRaceRuntime.roundKey = roundKey;
   setLastResultSummary("Race started. Cards are now drawing live...");
-  renderCurseControls();
+  renderRaceFrame(roundState, true);
 
   curseRaceRuntime.intervalId = window.setInterval(() => {
     if (!isCurseRaceRunning(roundKey)) {
@@ -10382,7 +10570,8 @@ function runCurseRaceAuto() {
 
     const activeRoundState = getOrCreateCurseRoundState(state.progress.currentRound);
     if (activeRoundState.payoutApplied) {
-      stopCurseRaceSimulation({ render: true, persist: false });
+      stopCurseRaceSimulation({ render: false, persist: false });
+      renderRaceFrame(activeRoundState, false);
       return;
     }
 
@@ -10431,7 +10620,7 @@ function runCurseRaceAuto() {
       }
     }
 
-    renderCurseControls();
+    renderRaceFrame(activeRoundState, !activeRoundState.winnerHorseId);
     if (activeRoundState.winnerHorseId) {
       finishRace(activeRoundState, "Curse auto race finished.");
     }
