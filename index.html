@@ -23,11 +23,11 @@
         <button class="show-screen-btn" type="button" data-show-screen-target="game-intro">Game Intro</button>
         <button class="show-screen-btn" type="button" data-show-screen-target="live-round">Live Round</button>
         <button class="show-screen-btn" type="button" data-show-screen-target="reveal-result">Reveal / Result</button>
-        <button class="show-screen-btn" type="button" data-show-screen-target="leaderboard">Leaderboard</button>
+        <button class="show-screen-btn" type="button" data-show-screen-target="end-of-game">End of Game</button>
         <button class="show-screen-btn" type="button" data-show-screen-target="end-screen">End Screen</button>
       </div>
       <div class="show-header-actions">
-        <button id="hostPanelToggleBtn" class="primary-btn" type="button">Host Controls</button>
+        <button id="hostPanelToggleBtn" class="pill-btn host-trigger-btn" type="button">Host / God Mode</button>
       </div>
     </header>
 
@@ -80,7 +80,7 @@
       </div>
       <p class="eyebrow">HOST EMERGENCY PANEL</p>
       <h1 data-show-title>GameShow Friday Night</h1>
-      <p class="muted">Emergency panel for admin override and recovery controls.</p>
+      <p class="muted">Emergency panel for rare manual interventions and recovery controls.</p>
 
       <article class="host-admin-card">
         <h3>Admin Quick Actions</h3>
@@ -136,6 +136,55 @@
           <button id="adminApplyStateBtn" class="secondary-btn" type="button">Apply game/round</button>
           <button id="adminResetGameBtn" class="secondary-btn" type="button">Reset current game</button>
           <button id="adminFullResetBtn" class="danger-btn" type="button">Full reset</button>
+        </div>
+      </article>
+
+      <article class="host-admin-card">
+        <h3>Timer Override</h3>
+        <div class="players-control-grid">
+          <div>
+            <label class="field-label" for="adminTimerDurationInput">Duration (sec)</label>
+            <input id="adminTimerDurationInput" class="text-input compact-input" type="number" min="10" max="600" step="5">
+          </div>
+          <div>
+            <label class="field-label" for="adminTimerRemainingInput">Remaining (sec)</label>
+            <input id="adminTimerRemainingInput" class="text-input compact-input" type="number" min="0" max="600" step="1">
+          </div>
+        </div>
+        <div class="metric-actions spaced">
+          <button id="adminApplyTimerBtn" class="secondary-btn" type="button">Apply timer override</button>
+          <button id="adminPauseTimerBtn" class="secondary-btn" type="button">Pause timer</button>
+          <button id="adminResetTimerBtn" class="secondary-btn" type="button">Reset timer</button>
+        </div>
+      </article>
+
+      <article class="host-admin-card">
+        <h3>Active Players Fix</h3>
+        <div class="players-control-grid">
+          <div>
+            <label class="field-label" for="adminFixTeamSelect">Team</label>
+            <select id="adminFixTeamSelect" class="text-input">
+              <option value="teamA">Team 1</option>
+              <option value="teamB">Team 2</option>
+            </select>
+          </div>
+          <div>
+            <label class="field-label" for="adminFixActionSelect">Action</label>
+            <select id="adminFixActionSelect" class="text-input">
+              <option value="activate">Set active</option>
+              <option value="deactivate">Set inactive</option>
+              <option value="status-available">Status: available</option>
+              <option value="status-bench">Status: bench</option>
+              <option value="status-unavailable">Status: unavailable</option>
+              <option value="clear-team">Clear active for selected team</option>
+              <option value="clear-all">Clear active for both teams</option>
+            </select>
+          </div>
+        </div>
+        <label class="field-label spaced" for="adminFixPlayerSelect">Player</label>
+        <select id="adminFixPlayerSelect" class="text-input"></select>
+        <div class="metric-actions spaced">
+          <button id="adminApplyPlayerFixBtn" class="secondary-btn" type="button">Apply player fix</button>
         </div>
       </article>
 
@@ -444,7 +493,7 @@
         </article>
 
         <article class="placeholder-card">
-          <h3>Categories / Questions / Answers (Placeholder Board)</h3>
+          <h3>Categories / Questions / Answers Board</h3>
           <div id="triviaCategoriesBoard" class="trivia-categories-board"></div>
           <p class="muted">Used categories are marked and disabled for this round.</p>
         </article>
@@ -670,7 +719,7 @@
 
         <div class="two-col">
           <article class="placeholder-card">
-            <h3>Placeholder data source</h3>
+            <h3>Round data source</h3>
             <textarea id="filmJocBoard" class="text-area" rows="10" data-bind="sections.filmJocBoard"></textarea>
           </article>
           <article class="placeholder-card">

@@ -28,6 +28,7 @@ const SHOW_SCREEN_IDS = [
   "game-intro",
   "live-round",
   "reveal-result",
+  "end-of-game",
   "leaderboard",
   "end-screen"
 ];
@@ -50,30 +51,286 @@ const GAME_CONFIG = [
 
 const GAME_ORDER = GAME_CONFIG.map((game) => game.id);
 const MANUAL_MATCH_GAME_IDS = ["guess-right-order", "beer-pong", "shot-fake"];
+const GAME_FLOW_DEFINITIONS = {
+  trivia: {
+    states: [
+      {
+        id: "topic-select",
+        label: "Topic Select",
+        description: "Active team picks one topic card.",
+        visible: ["active team", "topic tiles", "used topic status"],
+        actions: ["select topic", "review active players"]
+      },
+      {
+        id: "bet-screen",
+        label: "Bet Screen",
+        description: "Set and confirm bet for the active team.",
+        visible: ["selected topic", "max bet", "bet input"],
+        actions: ["set bet", "confirm bet"]
+      },
+      {
+        id: "question-screen",
+        label: "Question Screen",
+        description: "Show question and options before timer starts.",
+        visible: ["question prompt", "multiple choice options", "start round button"],
+        actions: ["start round"]
+      },
+      {
+        id: "answer-screen",
+        label: "Answer Screen",
+        description: "Timer runs while team picks and confirms one answer.",
+        visible: ["big timer", "answer options", "confirm answer"],
+        actions: ["pick option", "confirm/lock answer"],
+        payout: true
+      },
+      {
+        id: "result-screen",
+        label: "Result Screen",
+        description: "Auto-check answer and show money impact.",
+        visible: ["correct/wrong verdict", "money delta", "team total"],
+        actions: ["next topic"]
+      }
+    ],
+    payoutStateId: "answer-screen",
+    roundReturn: "After result, turn switches and flow returns to Topic Select.",
+    gameEnd: "Game ends when all topics are used, then returns to Game Select."
+  },
+  "pretul-corect": {
+    states: [
+      {
+        id: "item-brief",
+        label: "Item Brief",
+        description: "Select item, set both bets, and prepare both teams.",
+        visible: ["item card", "team answers", "team bets", "active players"],
+        actions: ["set item", "set answers", "set bets", "player select"]
+      },
+      {
+        id: "estimate-live",
+        label: "Estimate Live",
+        description: "Collect final estimates and keep timer visible.",
+        visible: ["estimate board", "timer", "distance context"],
+        actions: ["adjust estimates", "timer control"]
+      },
+      {
+        id: "confirm-winner",
+        label: "Confirm Winner",
+        description: "Lock answer and run auto winner detection.",
+        visible: ["real price", "auto winner preview", "lock answer"],
+        actions: ["lock answer", "auto detect winner", "open reveal"],
+        payout: true
+      }
+    ],
+    payoutStateId: "confirm-winner",
+    roundReturn: "After reveal, use Next round for next item.",
+    gameEnd: "Game ends when all configured items are used, then returns to Game Select."
+  },
+  "film-joc-franciza-fun-fact": {
+    states: [
+      {
+        id: "round-brief",
+        label: "Round Brief",
+        description: "Choose round image, team, bet, and active players.",
+        visible: ["round image", "team in play", "bet", "active players"],
+        actions: ["team select", "set bet", "player select"]
+      },
+      {
+        id: "clue-reveal",
+        label: "Clue Reveal",
+        description: "Reveal Character, Franchise, and Fun Fact cards.",
+        visible: ["image", "reveal cards", "component board"],
+        actions: ["reveal components", "timer control"]
+      },
+      {
+        id: "component-judge",
+        label: "Component Judge",
+        description: "Lock answer and score each component.",
+        visible: ["component outcomes", "2/3 bet rule", "partial payout preview"],
+        actions: ["lock answer", "mark correct/wrong", "apply result", "open reveal"],
+        payout: true
+      }
+    ],
+    payoutStateId: "component-judge",
+    roundReturn: "After reveal, Next round moves to next image round.",
+    gameEnd: "Game ends when all configured rounds are used, then returns to Game Select."
+  },
+  "cel-mai-bun-samsar": {
+    states: [
+      {
+        id: "persona-brief",
+        label: "Persona Brief",
+        description: "Present round persona and pick one active player per team.",
+        visible: ["persona card", "player selectors", "round info"],
+        actions: ["select active player team1/team2"]
+      },
+      {
+        id: "negotiation-live",
+        label: "Negotiation Live",
+        description: "Teams play the negotiation phase.",
+        visible: ["persona requirements", "timer", "active duel"],
+        actions: ["timer control", "lock selection"]
+      },
+      {
+        id: "score-judge",
+        label: "Score Judge",
+        description: "Lock answer and input final scores.",
+        visible: ["score inputs", "winner preview", "lock answer"],
+        actions: ["lock answer", "apply score result", "open reveal"],
+        payout: true
+      }
+    ],
+    payoutStateId: "score-judge",
+    roundReturn: "After reveal, Next round moves to next samsar round.",
+    gameEnd: "Game ends automatically after round 6, then returns to Game Select."
+  },
+  "guess-right-order": {
+    states: [
+      {
+        id: "order-brief",
+        label: "Order Brief",
+        description: "Set matchup, active players, and bets.",
+        visible: ["matchup board", "bets", "active players"],
+        actions: ["player select", "set bets"]
+      },
+      {
+        id: "order-live",
+        label: "Order Live",
+        description: "Play the order challenge live.",
+        visible: ["timer", "order challenge board", "scoreline"],
+        actions: ["timer control", "round live control"]
+      },
+      {
+        id: "order-judge",
+        label: "Order Judge",
+        description: "Lock answer and apply result (team1/team2/draw).",
+        visible: ["score inputs", "winner preview", "lock answer"],
+        actions: ["lock answer", "apply result", "open reveal"],
+        payout: true
+      }
+    ],
+    payoutStateId: "order-judge",
+    roundReturn: "After reveal, use Next round for the next order challenge.",
+    gameEnd: "Game end is manual from End of Game when host decides."
+  },
+  "beer-pong": {
+    states: [
+      {
+        id: "beer-brief",
+        label: "Match Brief",
+        description: "Set active players and bets for both teams.",
+        visible: ["team cards", "bets", "active players"],
+        actions: ["player select", "set bets", "lock selection"]
+      },
+      {
+        id: "beer-live",
+        label: "Beer Pong Live",
+        description: "Play live with timer and visible scoreline.",
+        visible: ["timer", "scoreline", "round context"],
+        actions: ["timer control", "round live control"]
+      },
+      {
+        id: "beer-judge",
+        label: "Result Judge",
+        description: "Lock answer and apply final result.",
+        visible: ["score inputs", "winner/draw preview", "lock answer"],
+        actions: ["lock answer", "apply result", "open reveal"],
+        payout: true
+      }
+    ],
+    payoutStateId: "beer-judge",
+    roundReturn: "After reveal, Next round starts the next beer pong round.",
+    gameEnd: "Game end is manual from End of Game when host decides."
+  },
+  "shot-fake": {
+    states: [
+      {
+        id: "shot-brief",
+        label: "Side Bet Brief",
+        description: "Prepare base bets, side bets, multiplier, and active players.",
+        visible: ["side bet list", "multiplier", "active players"],
+        actions: ["set bets", "add/remove side bets", "player select"]
+      },
+      {
+        id: "shot-live",
+        label: "Shot Live",
+        description: "Run live round with transfer preview.",
+        visible: ["special transfer preview", "timer", "scoreline"],
+        actions: ["timer control", "live tracking"]
+      },
+      {
+        id: "shot-settle",
+        label: "Settle Round",
+        description: "Lock answer and apply bet-only settlement.",
+        visible: ["net preview", "lock answer", "settlement controls"],
+        actions: ["lock answer", "apply settlement", "open reveal"],
+        payout: true
+      }
+    ],
+    payoutStateId: "shot-settle",
+    roundReturn: "After reveal, Next round starts next Shot Fake round.",
+    gameEnd: "Game end is manual from End of Game when host decides."
+  },
+  "curse-de-cai": {
+    states: [
+      {
+        id: "race-brief",
+        label: "Race Brief",
+        description: "Set multi-bets, bettors, and active players.",
+        visible: ["horse roster", "multi-bet board", "active players"],
+        actions: ["set bets", "set bettors", "player select"]
+      },
+      {
+        id: "race-live",
+        label: "Race Live",
+        description: "Move horses manually and track leader.",
+        visible: ["visual track", "move controls", "leader preview"],
+        actions: ["move horse", "timer control", "race control"]
+      },
+      {
+        id: "race-settle",
+        label: "Settle Payout",
+        description: "Lock answer and apply winner-horse payout x4.",
+        visible: ["winner horse", "net payout preview", "lock answer"],
+        actions: ["lock answer", "apply payout", "open reveal"],
+        payout: true
+      }
+    ],
+    payoutStateId: "race-settle",
+    roundReturn: "After reveal, Next round starts the next race.",
+    gameEnd: "Game end is manual from End of Game when host decides."
+  }
+};
 const DEFAULT_RESULT_SUMMARY = "Niciun rezultat aplicat inca.";
 const DEFAULT_TRIVIA_CATEGORIES = [
   {
     id: "trivia-cat-1",
     title: "Geografie",
     question: "Care este capitala Australiei?",
+    options: ["Sydney", "Melbourne", "Canberra", "Perth"],
+    correctOptionIndex: 2,
     answer: "Canberra"
   },
   {
     id: "trivia-cat-2",
     title: "Istorie",
     question: "In ce an a cazut Zidul Berlinului?",
+    options: ["1987", "1989", "1991", "1993"],
+    correctOptionIndex: 1,
     answer: "1989"
   },
   {
     id: "trivia-cat-3",
     title: "Filme si seriale",
     question: "Cum se numeste continentul fictiv din Black Panther?",
+    options: ["Genovia", "Wakanda", "Latveria", "Narnia"],
+    correctOptionIndex: 1,
     answer: "Wakanda"
   },
   {
     id: "trivia-cat-4",
     title: "Sport si jocuri",
     question: "Cate piese are un jucator la inceputul unei partide de sah?",
+    options: ["12", "14", "16", "18"],
+    correctOptionIndex: 2,
     answer: "16"
   }
 ];
@@ -259,6 +516,10 @@ const DEFAULT_STATE = {
   activeSection: "home",
   showUi: {
     activeScreen: "show-home",
+    liveRoundStep: "topic-select",
+    gameNightStarted: false,
+    completedGameIds: [],
+    answerLocked: false,
     hostPanelOpen: false,
     adminAdvancedOpen: false
   },
@@ -313,6 +574,7 @@ const DEFAULT_STATE = {
   },
   trivia: {
     fixedBonus: 100,
+    turnTeamKey: "teamA",
     categories: DEFAULT_TRIVIA_CATEGORIES,
     rounds: {}
   },
@@ -414,6 +676,15 @@ const elements = {
   adminApplyStateBtn: document.getElementById("adminApplyStateBtn"),
   adminResetGameBtn: document.getElementById("adminResetGameBtn"),
   adminFullResetBtn: document.getElementById("adminFullResetBtn"),
+  adminTimerDurationInput: document.getElementById("adminTimerDurationInput"),
+  adminTimerRemainingInput: document.getElementById("adminTimerRemainingInput"),
+  adminApplyTimerBtn: document.getElementById("adminApplyTimerBtn"),
+  adminPauseTimerBtn: document.getElementById("adminPauseTimerBtn"),
+  adminResetTimerBtn: document.getElementById("adminResetTimerBtn"),
+  adminFixTeamSelect: document.getElementById("adminFixTeamSelect"),
+  adminFixActionSelect: document.getElementById("adminFixActionSelect"),
+  adminFixPlayerSelect: document.getElementById("adminFixPlayerSelect"),
+  adminApplyPlayerFixBtn: document.getElementById("adminApplyPlayerFixBtn"),
   adminSummaryInput: document.getElementById("adminSummaryInput"),
   adminApplySummaryBtn: document.getElementById("adminApplySummaryBtn"),
   adminExportSaveBtn: document.getElementById("adminExportSaveBtn"),
@@ -1109,6 +1380,9 @@ function sanitizeTriviaCategories(rawCategories) {
     const title = sanitizeString(rawCategory?.title, "").trim();
     const question = sanitizeString(rawCategory?.question, "").trim();
     const answer = sanitizeString(rawCategory?.answer, "").trim();
+    const rawOptions = Array.isArray(rawCategory?.options)
+      ? rawCategory.options.map((option) => sanitizeString(option, "").trim()).filter((option) => option.length > 0)
+      : [];
 
     if (!title && !question && !answer) {
       continue;
@@ -1120,11 +1394,29 @@ function sanitizeTriviaCategories(rawCategories) {
     }
     seenIds.add(id);
 
+    let options = rawOptions.slice(0, 6);
+    if (options.length < 2) {
+      options = ["Optiunea A", "Optiunea B", "Optiunea C", "Optiunea D"];
+    }
+    if (answer && !options.includes(answer)) {
+      options = [answer].concat(options.filter((option) => option !== answer)).slice(0, 6);
+    }
+
+    let correctOptionIndex = Math.round(sanitizeNumber(rawCategory?.correctOptionIndex, 0));
+    if (correctOptionIndex < 0 || correctOptionIndex >= options.length) {
+      correctOptionIndex = options.findIndex((option) => normalizeTextToken(option) === normalizeTextToken(answer));
+    }
+    if (correctOptionIndex < 0 || correctOptionIndex >= options.length) {
+      correctOptionIndex = 0;
+    }
+
     sanitized.push({
       id,
       title: title || `Categoria ${sanitized.length + 1}`,
       question: question || "Intrebare demo pentru aceasta categorie.",
-      answer: answer || "Raspuns demo pentru aceasta categorie."
+      options,
+      correctOptionIndex,
+      answer: options[correctOptionIndex] || answer || "Raspuns demo pentru aceasta categorie."
     });
   }
 
@@ -1135,7 +1427,15 @@ function sanitizeTriviaRoundState(rawRoundState) {
   const safeState = {
     teamKey: "teamA",
     usedCategoryIds: [],
-    selectedCategoryId: ""
+    selectedCategoryId: "",
+    betAmount: 100,
+    selectedOptionIndex: -1,
+    lockedOptionIndex: -1,
+    resultChecked: false,
+    isCorrect: null,
+    lastDelta: 0,
+    resultCategoryId: "",
+    lastResult: ""
   };
 
   if (!rawRoundState || typeof rawRoundState !== "object") {
@@ -1153,6 +1453,15 @@ function sanitizeTriviaRoundState(rawRoundState) {
   }
 
   safeState.selectedCategoryId = sanitizeString(rawRoundState.selectedCategoryId, "");
+  safeState.betAmount = normalizeBetAmount(rawRoundState.betAmount);
+  safeState.selectedOptionIndex = Math.round(sanitizeNumber(rawRoundState.selectedOptionIndex, -1));
+  safeState.lockedOptionIndex = Math.round(sanitizeNumber(rawRoundState.lockedOptionIndex, -1));
+  safeState.resultChecked = Boolean(rawRoundState.resultChecked);
+  safeState.isCorrect =
+    rawRoundState.isCorrect === true ? true : rawRoundState.isCorrect === false ? false : null;
+  safeState.lastDelta = Math.round(sanitizeNumber(rawRoundState.lastDelta, 0));
+  safeState.resultCategoryId = sanitizeString(rawRoundState.resultCategoryId, "");
+  safeState.lastResult = sanitizeString(rawRoundState.lastResult, "");
   return safeState;
 }
 
@@ -1163,10 +1472,28 @@ function getTriviaRoundKey(roundNumber = state.progress.currentRound) {
 function getOrCreateTriviaRoundState(roundNumber = state.progress.currentRound) {
   const roundKey = getTriviaRoundKey(roundNumber);
   if (!state.trivia.rounds[roundKey]) {
+    const previousRoundKey = getTriviaRoundKey(Math.max(1, roundNumber - 1));
+    const previousRound = sanitizeTriviaRoundState(state.trivia.rounds[previousRoundKey]);
+    const inferredTurn =
+      ["teamA", "teamB"].includes(state.trivia.turnTeamKey)
+        ? state.trivia.turnTeamKey
+        : previousRound.teamKey === "teamA"
+          ? "teamB"
+          : "teamA";
+    const carryUsed = Array.isArray(previousRound.usedCategoryIds) ? [...previousRound.usedCategoryIds] : [];
+    const nextAvailable = state.trivia.categories.find((category) => !carryUsed.includes(category.id));
     state.trivia.rounds[roundKey] = sanitizeTriviaRoundState({
-      teamKey: "teamA",
-      usedCategoryIds: [],
-      selectedCategoryId: state.trivia.categories[0]?.id || ""
+      teamKey: inferredTurn,
+      usedCategoryIds: carryUsed,
+      selectedCategoryId: nextAvailable?.id || state.trivia.categories[0]?.id || "",
+      betAmount: elements.triviaBetAmountInput?.value || 100,
+      selectedOptionIndex: -1,
+      lockedOptionIndex: -1,
+      resultChecked: false,
+      isCorrect: null,
+      lastDelta: 0,
+      resultCategoryId: "",
+      lastResult: ""
     });
   }
   const roundState = sanitizeTriviaRoundState(state.trivia.rounds[roundKey]);
@@ -1705,6 +2032,12 @@ function sanitizeState(rawState) {
   if (SHOW_SCREEN_IDS.includes(source.showUi?.activeScreen)) {
     clean.showUi.activeScreen = source.showUi.activeScreen;
   }
+  clean.showUi.liveRoundStep = sanitizeString(source.showUi?.liveRoundStep, clean.showUi.liveRoundStep).trim() || clean.showUi.liveRoundStep;
+  clean.showUi.gameNightStarted = Boolean(source.showUi?.gameNightStarted);
+  clean.showUi.completedGameIds = Array.isArray(source.showUi?.completedGameIds)
+    ? Array.from(new Set(source.showUi.completedGameIds.filter((gameId) => GAME_ORDER.includes(gameId))))
+    : [];
+  clean.showUi.answerLocked = Boolean(source.showUi?.answerLocked);
   clean.showUi.hostPanelOpen = Boolean(source.showUi?.hostPanelOpen);
   clean.showUi.adminAdvancedOpen = Boolean(source.showUi?.adminAdvancedOpen);
 
@@ -1748,6 +2081,9 @@ function sanitizeState(rawState) {
   clean.timer.lastTickMs = source.timer?.lastTickMs ? Number(source.timer.lastTickMs) : null;
 
   clean.trivia.fixedBonus = Math.max(0, Math.round(sanitizeNumber(source.trivia?.fixedBonus, 100)));
+  clean.trivia.turnTeamKey = ["teamA", "teamB"].includes(source.trivia?.turnTeamKey)
+    ? source.trivia.turnTeamKey
+    : clean.trivia.turnTeamKey;
   clean.trivia.categories = sanitizeTriviaCategories(source.trivia?.categories);
   const categoryIdSet = new Set(clean.trivia.categories.map((category) => category.id));
 
@@ -2815,6 +3151,7 @@ function getShowScreenTitle(screenId = state.showUi?.activeScreen) {
     "game-intro": "Game Intro",
     "live-round": "Live Round",
     "reveal-result": "Reveal / Result",
+    "end-of-game": "End of Game",
     leaderboard: "Leaderboard",
     "end-screen": "End Screen"
   };
@@ -2822,7 +3159,7 @@ function getShowScreenTitle(screenId = state.showUi?.activeScreen) {
 }
 
 function getSectionForShowScreen(screenId) {
-  if (screenId === "show-home" || screenId === "game-select") {
+  if (screenId === "show-home" || screenId === "game-select" || screenId === "end-of-game") {
     return "home";
   }
   if (screenId === "leaderboard") {
@@ -2837,6 +3174,217 @@ function getSectionForShowScreen(screenId) {
   return "home";
 }
 
+function getGameFlowDefinition(gameId) {
+  return GAME_FLOW_DEFINITIONS[gameId] || GAME_FLOW_DEFINITIONS.trivia;
+}
+
+function getGameFlowStates(gameId) {
+  const flow = getGameFlowDefinition(gameId);
+  return Array.isArray(flow.states) && flow.states.length > 0 ? flow.states : GAME_FLOW_DEFINITIONS.trivia.states;
+}
+
+function getGameFlowState(gameId, stepId) {
+  return getGameFlowStates(gameId).find((stateEntry) => stateEntry.id === stepId) || null;
+}
+
+function getDefaultFlowStateId(gameId) {
+  return getGameFlowStates(gameId)[0]?.id || "topic-select";
+}
+
+function getLiveRoundStep(gameId = state.progress.currentGame) {
+  const step = state.showUi?.liveRoundStep;
+  if (getGameFlowState(gameId, step)) {
+    return step;
+  }
+  return getDefaultFlowStateId(gameId);
+}
+
+function getLiveStepLabel(gameId, stepId) {
+  return getGameFlowState(gameId, stepId)?.label || "Flow Step";
+}
+
+function getLiveStepDescription(gameId, stepId) {
+  return getGameFlowState(gameId, stepId)?.description || "Flow-ul rundei este pregatit pentru acest joc.";
+}
+
+function getNextLiveRoundStep(gameId, currentStep) {
+  const states = getGameFlowStates(gameId);
+  const index = states.findIndex((entry) => entry.id === currentStep);
+  if (index < 0 || index >= states.length - 1) {
+    return states[states.length - 1]?.id || getDefaultFlowStateId(gameId);
+  }
+  return states[index + 1].id;
+}
+
+function getPrevLiveRoundStep(gameId, currentStep) {
+  const states = getGameFlowStates(gameId);
+  const index = states.findIndex((entry) => entry.id === currentStep);
+  if (index <= 0) {
+    return states[0]?.id || getDefaultFlowStateId(gameId);
+  }
+  return states[index - 1].id;
+}
+
+function getFlowPayoutStateId(gameId) {
+  const flow = getGameFlowDefinition(gameId);
+  return flow.payoutStateId || getGameFlowStates(gameId)[getGameFlowStates(gameId).length - 1]?.id || getDefaultFlowStateId(gameId);
+}
+
+function getFlowRoundReturn(gameId) {
+  return getGameFlowDefinition(gameId).roundReturn || "Use Next round to continue.";
+}
+
+function getFlowGameEndRule(gameId) {
+  return getGameFlowDefinition(gameId).gameEnd || "Use End of Game screen when this game is complete.";
+}
+
+function isGameFlowComplete(gameId) {
+  if (gameId === "trivia") {
+    const roundState = getOrCreateTriviaRoundState();
+    const total = Math.max(0, state.trivia.categories.length);
+    return total > 0 && roundState.usedCategoryIds.length >= total;
+  }
+  if (gameId === "pretul-corect") {
+    const roundState = getOrCreatePretulRoundState();
+    const total = Math.max(0, state.pretul.items.length);
+    return total > 0 && roundState.usedItemIds.length >= total;
+  }
+  if (gameId === "film-joc-franciza-fun-fact") {
+    const roundState = getOrCreateFilmRoundState();
+    const total = Math.max(0, state.filmGame.items.length);
+    return total > 0 && roundState.usedItemIds.length >= total;
+  }
+  if (gameId === "cel-mai-bun-samsar") {
+    const totalRounds = Math.max(1, state.samsarGame.roundsData?.length || 6);
+    return state.progress.currentRound >= totalRounds;
+  }
+  return false;
+}
+
+function ensureShowUiState() {
+  if (!state.showUi || typeof state.showUi !== "object") {
+    state.showUi = {
+      ...DEFAULT_STATE.showUi,
+      completedGameIds: [...DEFAULT_STATE.showUi.completedGameIds]
+    };
+  }
+  if (!SHOW_SCREEN_IDS.includes(state.showUi.activeScreen)) {
+    state.showUi.activeScreen = DEFAULT_STATE.showUi.activeScreen;
+  }
+  const currentGameId = GAME_ORDER.includes(state.progress?.currentGame)
+    ? state.progress.currentGame
+    : DEFAULT_STATE.progress.currentGame;
+  if (!getGameFlowState(currentGameId, state.showUi.liveRoundStep)) {
+    state.showUi.liveRoundStep = getDefaultFlowStateId(currentGameId);
+  }
+  if (!Array.isArray(state.showUi.completedGameIds)) {
+    state.showUi.completedGameIds = [];
+  }
+  state.showUi.completedGameIds = Array.from(
+    new Set(state.showUi.completedGameIds.filter((gameId) => GAME_ORDER.includes(gameId)))
+  );
+  if (typeof state.showUi.gameNightStarted !== "boolean") {
+    state.showUi.gameNightStarted = false;
+  }
+  if (typeof state.showUi.answerLocked !== "boolean") {
+    state.showUi.answerLocked = false;
+  }
+}
+
+function isOverlayAnswerLocked() {
+  ensureShowUiState();
+  return Boolean(state.showUi.answerLocked);
+}
+
+function setOverlayAnswerLocked(nextLocked, options = {}) {
+  const persist = options.persist !== false;
+  ensureShowUiState();
+  state.showUi.answerLocked = Boolean(nextLocked);
+  renderShowUi();
+  if (persist) {
+    saveState(state.showUi.answerLocked ? "Answer locked from overlay." : "Answer unlocked from overlay.");
+  }
+}
+
+function isGameCompleted(gameId) {
+  ensureShowUiState();
+  return state.showUi.completedGameIds.includes(gameId);
+}
+
+function getCompletedGameCount() {
+  ensureShowUiState();
+  return state.showUi.completedGameIds.length;
+}
+
+function getRemainingGameCount() {
+  return GAME_ORDER.length - getCompletedGameCount();
+}
+
+function isGameNightComplete() {
+  return getCompletedGameCount() >= GAME_ORDER.length;
+}
+
+function getNextUnfinishedGameId() {
+  ensureShowUiState();
+  return GAME_ORDER.find((gameId) => !state.showUi.completedGameIds.includes(gameId)) || GAME_ORDER[0];
+}
+
+function startGameNightFlow(options = {}) {
+  const persist = options.persist !== false;
+  ensureShowUiState();
+  state.showUi.gameNightStarted = true;
+  state.showUi.completedGameIds = [];
+  const nextGameId = getNextUnfinishedGameId();
+  switchRoundContext(nextGameId, 1, { navigateToSection: false });
+  state.showUi.activeScreen = "game-select";
+  setLastResultSummary("Game night started. Pick the first mini-game.");
+  renderAll();
+  if (persist) {
+    saveState("Game night started.");
+  }
+}
+
+function finishCurrentGameAndReturn(options = {}) {
+  const persist = options.persist !== false;
+  ensureShowUiState();
+  const finishedGameId = state.progress.currentGame;
+  if (!state.showUi.completedGameIds.includes(finishedGameId)) {
+    state.showUi.completedGameIds.push(finishedGameId);
+  }
+  if (isGameNightComplete()) {
+    state.showUi.activeScreen = "end-screen";
+    setLastResultSummary("All games complete. Opening Final End Screen.");
+    renderAll();
+    if (persist) {
+      saveState("Game night complete.");
+    }
+    return;
+  }
+
+  const nextGameId = getNextUnfinishedGameId();
+  switchRoundContext(nextGameId, 1, { navigateToSection: false });
+  state.showUi.activeScreen = "game-select";
+  setLastResultSummary(`${getGameLabel(nextGameId)} is next. Choose when ready.`);
+  renderAll();
+  if (persist) {
+    saveState(`Game finished: ${getGameLabel(finishedGameId)}.`);
+  }
+}
+
+function setLiveRoundStep(nextStep, options = {}) {
+  const persist = options.persist !== false;
+  const currentGameId = state.progress.currentGame;
+  if (!getGameFlowState(currentGameId, nextStep)) {
+    return;
+  }
+  ensureShowUiState();
+  state.showUi.liveRoundStep = nextStep;
+  renderShowUi();
+  if (persist) {
+    saveState(`Live round step: ${getLiveStepLabel(currentGameId, nextStep)}.`);
+  }
+}
+
 function getTeamActivePlayersLabel(teamKey) {
   const participants = getActiveParticipantsForTeam(teamKey);
   if (participants.length === 0) {
@@ -2848,7 +3396,7 @@ function getTeamActivePlayersLabel(teamKey) {
 
 function getCurrentRoundResultForShow(gameId) {
   if (gameId === "trivia") {
-    return state.progress.lastResultSummary || "";
+    return getOrCreateTriviaRoundState().lastResult || state.progress.lastResultSummary || "";
   }
   if (gameId === "pretul-corect") {
     return getOrCreatePretulRoundState().lastResult || "";
@@ -2871,9 +3419,9 @@ function getCurrentRoundResultForShow(gameId) {
 function getGameIntroRules(gameId) {
   if (gameId === "trivia") {
     return [
-      "One team plays the round and places the only active bet.",
-      "Correct answer gives fixed bonus and bet win.",
-      "Wrong answer loses the bet; category is marked used."
+      "One team plays each round; turn switches automatically after result.",
+      "Flow: Topic Select -> Bet -> Question -> Answer -> Result -> next topic.",
+      "Multiple choice topics are disabled after use; correct gives bonus + bet win."
     ];
   }
   if (gameId === "pretul-corect") {
@@ -2936,9 +3484,19 @@ function renderShowStageControls() {
   const infoLabel = activeGameTeam
     ? `One-team mode: ${state.teams[activeGameTeam].name}`
     : "Team-vs-team mode";
+  const gameOptions = GAME_CONFIG.map(
+    (game) =>
+      `<option value="${game.id}" ${state.progress.currentGame === game.id ? "selected" : ""}>${escapeHtml(game.label)}</option>`
+  ).join("");
 
   return `
     <div class="show-control-strip">
+      <div class="show-control-cell">
+        <label class="show-info-label" for="showCurrentGameSelect">Game</label>
+        <select id="showCurrentGameSelect" class="text-input" data-show-current-game>
+          ${gameOptions}
+        </select>
+      </div>
       <div class="show-control-cell">
         <label class="show-info-label" for="showCurrentRoundInput">Round</label>
         <input id="showCurrentRoundInput" class="text-input compact-input" type="number" min="1" step="1" value="${state.progress.currentRound}" data-show-current-round>
@@ -3055,9 +3613,12 @@ function renderShowActionFooter() {
   `;
 }
 
-function buildLiveRoundContent(gameId) {
+function buildLegacyLiveRoundContent(gameId, options = {}) {
+  const minimal = options.minimal === true;
   const stageControls = renderShowStageControls();
   const jokerControl = renderShowJokerControl();
+  const topBlock = minimal ? "" : `${stageControls}\n      ${jokerControl}`;
+  const playerSelectionOptions = { allowStatus: !minimal };
 
   if (gameId === "trivia") {
     const roundState = getOrCreateTriviaRoundState();
@@ -3076,8 +3637,7 @@ function buildLiveRoundContent(gameId) {
       .join("");
 
     return `
-      ${stageControls}
-      ${jokerControl}
+      ${topBlock}
       <div class="show-info-grid">
         <div class="show-info-card">
           <p class="show-info-label">Team In Play</p>
@@ -3106,25 +3666,29 @@ function buildLiveRoundContent(gameId) {
           <select id="showTriviaCategorySelect" class="text-input" data-show-trivia-category>${categoryOptions}</select>
 
           <label class="show-info-label spaced" for="showTriviaBetInput">Bet (max ${formatMoney(maxBet)})</label>
-          <input id="showTriviaBetInput" class="text-input compact-input" type="number" min="0" step="10" value="${
-            getOrCreateTriviaRoundState().teamKey === roundState.teamKey ? normalizeBetAmount(elements.triviaBetAmountInput?.value || 100) : 100
-          }" data-show-trivia-bet>
+          <input id="showTriviaBetInput" class="text-input compact-input" type="number" min="0" step="10" value="${roundState.betAmount}" data-show-trivia-bet>
 
-          <label class="show-info-label spaced" for="showTriviaBonusInput">Fixed bonus</label>
-          <input id="showTriviaBonusInput" class="text-input compact-input" type="number" min="0" step="10" value="${Math.max(
-            0,
-            Math.round(sanitizeNumber(state.trivia.fixedBonus, 100))
-          )}" data-show-trivia-bonus>
+          ${
+            minimal
+              ? ""
+              : `
+            <label class="show-info-label spaced" for="showTriviaBonusInput">Fixed bonus</label>
+            <input id="showTriviaBonusInput" class="text-input compact-input" type="number" min="0" step="10" value="${Math.max(
+              0,
+              Math.round(sanitizeNumber(state.trivia.fixedBonus, 100))
+            )}" data-show-trivia-bonus>
 
-          <div class="show-action-footer">
-            <button class="primary-btn" type="button" data-show-action="trivia-correct">Correct</button>
-            <button class="danger-btn" type="button" data-show-action="trivia-wrong">Wrong</button>
-            <button class="secondary-btn" type="button" data-show-action="trivia-reset-used">Reset used</button>
-          </div>
+            <div class="show-action-footer">
+              <button class="primary-btn" type="button" data-show-action="trivia-correct">Correct</button>
+              <button class="danger-btn" type="button" data-show-action="trivia-wrong">Wrong</button>
+              <button class="secondary-btn" type="button" data-show-action="trivia-reset-used">Reset used</button>
+            </div>
+          `
+          }
         </article>
-        ${renderShowPlayerSelectionBlock(roundState.teamKey, { allowStatus: true })}
+        ${renderShowPlayerSelectionBlock(roundState.teamKey, playerSelectionOptions)}
       </div>
-      ${renderShowActionFooter()}
+      ${minimal ? "" : renderShowActionFooter()}
     `;
   }
 
@@ -3143,8 +3707,7 @@ function buildLiveRoundContent(gameId) {
     const maxBetB = getMaxBetAmount(state.teams.teamB.money, "pretul-corect");
 
     return `
-      ${stageControls}
-      ${jokerControl}
+      ${topBlock}
       <div class="show-round-card">
         <p class="show-info-label">Item In Round</p>
         <p class="show-round-title">${escapeHtml(item?.name || "No item selected")}</p>
@@ -3191,15 +3754,15 @@ function buildLiveRoundContent(gameId) {
           <input id="showPretulRealPrice" class="text-input compact-input" type="number" min="0" step="1" value="${roundState.realPrice}" data-show-pretul-real-price>
           <div class="show-action-footer">
             <button class="primary-btn" type="button" data-show-action="pretul-evaluate">Detect winner & apply</button>
-            <button class="secondary-btn" type="button" data-show-action="pretul-reset-used">Reset used items</button>
+            ${minimal ? "" : '<button class="secondary-btn" type="button" data-show-action="pretul-reset-used">Reset used items</button>'}
           </div>
         </article>
         <div class="show-control-card">
-          ${renderShowPlayerSelectionBlock("teamA", { allowStatus: true })}
-          ${renderShowPlayerSelectionBlock("teamB", { allowStatus: true })}
+          ${renderShowPlayerSelectionBlock("teamA", playerSelectionOptions)}
+          ${renderShowPlayerSelectionBlock("teamB", playerSelectionOptions)}
         </div>
       </div>
-      ${renderShowActionFooter()}
+      ${minimal ? "" : renderShowActionFooter()}
     `;
   }
 
@@ -3228,8 +3791,7 @@ function buildLiveRoundContent(gameId) {
       `;
     };
     return `
-      ${stageControls}
-      ${jokerControl}
+      ${topBlock}
       <div class="show-round-card">
         <p class="show-info-label">Round Card</p>
         <p class="show-round-title">${escapeHtml(item?.title || "No round item selected")}</p>
@@ -3272,12 +3834,12 @@ function buildLiveRoundContent(gameId) {
 
           <div class="show-action-footer">
             <button class="primary-btn" type="button" data-show-action="film-apply">Apply round result</button>
-            <button class="secondary-btn" type="button" data-show-action="film-reset-used">Reset used rounds</button>
+            ${minimal ? "" : '<button class="secondary-btn" type="button" data-show-action="film-reset-used">Reset used rounds</button>'}
           </div>
         </article>
-        ${renderShowPlayerSelectionBlock(roundState.teamKey, { allowStatus: true })}
+        ${renderShowPlayerSelectionBlock(roundState.teamKey, playerSelectionOptions)}
       </div>
-      ${renderShowActionFooter()}
+      ${minimal ? "" : renderShowActionFooter()}
     `;
   }
 
@@ -3316,8 +3878,7 @@ function buildLiveRoundContent(gameId) {
       .join("");
 
     return `
-      ${stageControls}
-      ${jokerControl}
+      ${topBlock}
       <div class="show-round-card">
         <p class="show-info-label">Persona</p>
         <p class="show-round-title">${escapeHtml(template.personaTitle)}</p>
@@ -3354,11 +3915,11 @@ function buildLiveRoundContent(gameId) {
           </div>
           <div class="show-action-footer">
             <button class="primary-btn" type="button" data-show-action="samsar-apply">Apply result</button>
-            <button class="secondary-btn" type="button" data-show-action="go-reveal">Go reveal</button>
+            ${minimal ? "" : '<button class="secondary-btn" type="button" data-show-action="go-reveal">Go reveal</button>'}
           </div>
         </article>
       </div>
-      ${renderShowActionFooter()}
+      ${minimal ? "" : renderShowActionFooter()}
     `;
   }
 
@@ -3409,8 +3970,7 @@ function buildLiveRoundContent(gameId) {
         `
         : "";
     return `
-      ${stageControls}
-      ${jokerControl}
+      ${topBlock}
       <div class="show-round-card">
         <p class="show-info-label">${escapeHtml(getGameLabel(manualGameId))}</p>
         <p class="show-round-title">${escapeHtml(state.teams.teamA.name)} ${roundState.scoreTeamA} - ${roundState.scoreTeamB} ${escapeHtml(state.teams.teamB.name)}</p>
@@ -3477,11 +4037,11 @@ function buildLiveRoundContent(gameId) {
           </div>
         </article>
         <div class="show-control-card">
-          ${renderShowPlayerSelectionBlock("teamA", { allowStatus: true })}
-          ${renderShowPlayerSelectionBlock("teamB", { allowStatus: true })}
+          ${renderShowPlayerSelectionBlock("teamA", playerSelectionOptions)}
+          ${renderShowPlayerSelectionBlock("teamB", playerSelectionOptions)}
         </div>
       </div>
-      ${renderShowActionFooter()}
+      ${minimal ? "" : renderShowActionFooter()}
     `;
   }
 
@@ -3515,8 +4075,7 @@ function buildLiveRoundContent(gameId) {
       .map((option) => `<option value="${option.id}" ${roundState.bets.teamB.bettorId === option.id ? "selected" : ""}>${escapeHtml(option.label)}</option>`)
       .join("");
     return `
-      ${stageControls}
-      ${jokerControl}
+      ${topBlock}
       <div class="show-round-card">
         <p class="show-info-label">Race Status</p>
         <p class="show-round-title">${winnerHorse ? `Winner: ${winnerHorse.symbol} ${winnerHorse.name}` : "Race in progress"}</p>
@@ -3587,18 +4146,598 @@ function buildLiveRoundContent(gameId) {
         </article>
       </div>
       <div class="show-overlay-grid two-col">
-        ${renderShowPlayerSelectionBlock("teamA", { allowStatus: true })}
-        ${renderShowPlayerSelectionBlock("teamB", { allowStatus: true })}
+        ${renderShowPlayerSelectionBlock("teamA", playerSelectionOptions)}
+        ${renderShowPlayerSelectionBlock("teamB", playerSelectionOptions)}
       </div>
-      ${renderShowActionFooter()}
+      ${minimal ? "" : renderShowActionFooter()}
     `;
   }
 
   return `
-    ${stageControls}
-    ${jokerControl}
+    ${topBlock}
     <p class="show-round-copy">Continutul rundei pentru ${escapeHtml(getGameLabel(gameId))} apare aici.</p>
-    ${renderShowActionFooter()}
+    ${minimal ? "" : renderShowActionFooter()}
+  `;
+}
+
+function renderFlowActionButtons(buttons) {
+  if (!Array.isArray(buttons) || buttons.length === 0) {
+    return "";
+  }
+  return `
+    <div class="show-action-footer show-flow-actions">
+      ${buttons
+        .map((button) => {
+          const tone = button.tone || "secondary-btn";
+          return `<button class="${tone}" type="button" data-show-action="${button.action}">${escapeHtml(button.label)}</button>`;
+        })
+        .join("")}
+    </div>
+  `;
+}
+
+function renderLiveRoundFlowRail(gameId, liveStep) {
+  const flowStates = getGameFlowStates(gameId);
+  const stepButtons = flowStates.map((stateEntry) => {
+    const stepId = stateEntry.id;
+    const isActive = stepId === liveStep ? "is-active" : "";
+    return `
+      <button class="show-step-btn ${isActive}" type="button" data-show-action="live-step-${stepId}">
+        ${escapeHtml(stateEntry.label)}
+      </button>
+    `;
+  }).join("");
+  return `
+    <div class="show-step-rail">
+      <p class="show-info-label">Mini-Game Flow</p>
+      <div class="show-step-buttons">${stepButtons}</div>
+      <p class="show-control-note">${escapeHtml(getLiveStepDescription(gameId, liveStep))}</p>
+      <p class="show-control-note">Payout: ${escapeHtml(getLiveStepLabel(gameId, getFlowPayoutStateId(gameId)))} | ${escapeHtml(
+        getFlowRoundReturn(gameId)
+      )}</p>
+      <p class="show-control-note">Game end: ${escapeHtml(getFlowGameEndRule(gameId))}</p>
+    </div>
+  `;
+}
+
+function renderGameFlowBlueprint(gameId, liveStep) {
+  const states = getGameFlowStates(gameId);
+  const stateRows = states
+    .map((stateEntry, index) => {
+      const isActive = stateEntry.id === liveStep ? "is-active" : "";
+      const isPayout = stateEntry.payout === true ? "is-payout" : "";
+      return `
+        <article class="show-flow-state ${isActive} ${isPayout}">
+          <p class="show-info-label">Step ${index + 1}</p>
+          <p class="show-info-value">${escapeHtml(stateEntry.label)}</p>
+          <p class="show-info-sub">${escapeHtml(stateEntry.description)}</p>
+          <p class="show-info-sub">Visible: ${escapeHtml((stateEntry.visible || []).join(", "))}</p>
+          <p class="show-info-sub">Actions: ${escapeHtml((stateEntry.actions || []).join(", "))}</p>
+          <p class="show-info-sub">${stateEntry.payout ? "Payout triggers here." : "No payout on this step."}</p>
+        </article>
+      `;
+    })
+    .join("");
+
+  return `
+    <article class="show-flow-blueprint">
+      <h3>${escapeHtml(getGameLabel(gameId))} Flow Blueprint</h3>
+      <div class="show-flow-grid">${stateRows}</div>
+      <p class="show-control-note"><strong>Payout:</strong> ${escapeHtml(getLiveStepLabel(gameId, getFlowPayoutStateId(gameId)))}</p>
+      <p class="show-control-note"><strong>Round return:</strong> ${escapeHtml(getFlowRoundReturn(gameId))}</p>
+      <p class="show-control-note"><strong>Game return:</strong> ${escapeHtml(getFlowGameEndRule(gameId))}</p>
+    </article>
+  `;
+}
+
+function renderFlowStateCapabilities(gameId, liveStep) {
+  const flowState = getGameFlowState(gameId, liveStep);
+  if (!flowState) {
+    return "";
+  }
+
+  const visible = Array.isArray(flowState.visible) ? flowState.visible : [];
+  const actions = Array.isArray(flowState.actions) ? flowState.actions : [];
+  const chips = (items) => items.map((item) => `<span class="show-flow-chip">${escapeHtml(item)}</span>`).join("");
+
+  return `
+    <article class="show-flow-capabilities">
+      <h3>${escapeHtml(flowState.label)} / Live view</h3>
+      <p class="show-control-note">${escapeHtml(flowState.description || "")}</p>
+      <div class="show-flow-cap-grid">
+        <div>
+          <p class="show-info-label">On screen now</p>
+          <div class="show-flow-chip-row">${chips(visible)}</div>
+        </div>
+        <div>
+          <p class="show-info-label">Allowed actions now</p>
+          <div class="show-flow-chip-row">${chips(actions)}</div>
+        </div>
+      </div>
+      <p class="show-control-note">${
+        flowState.payout ? "Payout is executed on this state." : "Payout is not executed on this state."
+      }</p>
+    </article>
+  `;
+}
+
+function buildLiveRoundExperienceContent(gameId, liveStep) {
+  let gameNote = "Mini-game flow is active.";
+  if (gameId === "trivia") {
+    const roundState = getOrCreateTriviaRoundState();
+    const usedCount = roundState.usedCategoryIds.length;
+    gameNote = `One-team turn mode. Used topics: ${usedCount}/${state.trivia.categories.length}. Turn auto-switches after each result.`;
+  } else if (gameId === "pretul-corect") {
+    gameNote = "Two-team mode. Winner is auto-detected by closest distance to real price.";
+  } else if (gameId === "film-joc-franciza-fun-fact") {
+    const roundState = getOrCreateFilmRoundState();
+    const breakdown = getFilmRoundBreakdown(roundState, roundState.betAmount);
+    gameNote = `Component scoring mode. Current score ${breakdown.totalPoints}/${breakdown.maxPoints}, bet active at min 2/3.`;
+  } else if (gameId === "cel-mai-bun-samsar") {
+    const totalRounds = Math.max(1, state.samsarGame.roundsData?.length || 6);
+    gameNote = `Round-based duel mode. Current round ${getSamsarRoundNumber()}/${totalRounds}.`;
+  } else if (gameId === "guess-right-order") {
+    gameNote = "Manual team-vs-team mode. Draw is allowed.";
+  } else if (gameId === "beer-pong") {
+    gameNote = "Manual team-vs-team mode with standard payout and draw support.";
+  } else if (gameId === "shot-fake") {
+    const roundState = getOrCreateManualMatchRoundState("shot-fake", state.progress.currentRound);
+    gameNote = `Bet-only mode. Side bets: ${roundState.shotFake.sideBets.length}, multiplier x${roundState.shotFake.multiplier}.`;
+  } else if (gameId === "curse-de-cai") {
+    const roundState = getOrCreateCurseRoundState(state.progress.currentRound);
+    const winnerHorse = state.curseRace.horses.find((horse) => horse.id === roundState.winnerHorseId);
+    gameNote = winnerHorse
+      ? `Race settled. Winner ${winnerHorse.symbol} ${winnerHorse.name}, payout x${state.curseRace.payoutMultiplier}.`
+      : `Race live mode. Winning horse payout is x${state.curseRace.payoutMultiplier}.`;
+  }
+
+  return `
+    <section class="show-game-experience show-game-${escapeHtml(gameId)}">
+      <article class="show-round-card">
+        <p class="show-info-label">${escapeHtml(getGameLabel(gameId))} / ${escapeHtml(getLiveStepLabel(gameId, liveStep))}</p>
+        <p class="show-round-copy">${escapeHtml(gameNote)}</p>
+      </article>
+      ${renderFlowStateCapabilities(gameId, liveStep)}
+      ${buildLiveRoundFocusContent(gameId, liveStep)}
+      ${renderGameFlowBlueprint(gameId, liveStep)}
+    </section>
+  `;
+}
+
+function buildLiveRoundFocusContent(gameId, liveStep) {
+  if (gameId === "trivia") {
+    const roundState = getOrCreateTriviaRoundState();
+    const playingTeam = state.teams[roundState.teamKey];
+    const maxBet = getMaxBetAmount(playingTeam.money, "trivia");
+    const triviaBet = normalizeBetAmount(
+      roundState.betAmount || elements.triviaBetAmountInput?.value || 100
+    );
+    const categoryId =
+      liveStep === "result-screen" && roundState.resultCategoryId
+        ? roundState.resultCategoryId
+        : roundState.selectedCategoryId;
+    const category = state.trivia.categories.find((entry) => entry.id === categoryId);
+    const options = getTriviaCategoryOptions(category);
+    const correctIndex = getTriviaCorrectOptionIndex(category);
+    const selectedOptionIndex =
+      liveStep === "result-screen" ? roundState.lockedOptionIndex : roundState.selectedOptionIndex;
+    const selectedOptionText =
+      selectedOptionIndex >= 0 && selectedOptionIndex < options.length ? options[selectedOptionIndex] : "";
+
+    if (liveStep === "topic-select") {
+      const topicTiles = state.trivia.categories
+        .map((entry) => {
+          const isUsed = roundState.usedCategoryIds.includes(entry.id);
+          const isSelected = entry.id === roundState.selectedCategoryId;
+          return `
+            <button class="show-trivia-topic-tile ${isSelected ? "is-selected" : ""}" type="button" data-show-trivia-topic="${
+              entry.id
+            }" ${isUsed ? "disabled" : ""}>
+              <p class="show-info-label">${isUsed ? "USED" : "TOPIC"}</p>
+              <p class="show-round-title">${escapeHtml(entry.title)}</p>
+              <p class="show-round-copy">${escapeHtml(entry.question)}</p>
+            </button>
+          `;
+        })
+        .join("");
+      return `
+        <div class="show-round-card">
+          <p class="show-info-label">Topic Select</p>
+          <p class="show-round-title">${escapeHtml(playingTeam.name)} is now in play</p>
+          <p class="show-round-copy">Only active team can choose one topic card. Used topics are disabled.</p>
+        </div>
+        <div class="show-trivia-topic-grid">${topicTiles}</div>
+      `;
+    }
+
+    if (liveStep === "bet-screen") {
+      return `
+        <div class="show-overlay-grid two-col">
+          <article class="show-control-card">
+            <h3>Bet Screen</h3>
+            <p class="show-round-copy">Topic: ${escapeHtml(category?.title || "Select topic first")}</p>
+            <p class="show-round-copy">Max bet: ${formatMoney(maxBet)}</p>
+            <label class="show-info-label" for="showTriviaBetFlow">Bet amount</label>
+            <input id="showTriviaBetFlow" class="text-input compact-input" type="number" min="0" step="10" value="${triviaBet}" data-show-trivia-bet>
+          </article>
+          ${renderShowPlayerSelectionBlock(roundState.teamKey, { allowStatus: false })}
+        </div>
+      `;
+    }
+
+    if (liveStep === "question-screen") {
+      return `
+        <div class="show-round-card">
+          <p class="show-info-label">Question Screen</p>
+          <p class="show-round-title">${escapeHtml(category?.title || "No topic selected")}</p>
+          <p class="show-round-copy">${escapeHtml(category?.question || "Select a topic to continue.")}</p>
+          <div class="show-trivia-options-list">
+            ${options
+              .map(
+                (option, index) => `
+              <div class="show-trivia-option-row">
+                <span>${String.fromCharCode(65 + index)}.</span>
+                <span>${escapeHtml(option)}</span>
+              </div>
+            `
+              )
+              .join("")}
+          </div>
+          <div class="show-action-footer">
+            <button class="primary-btn" type="button" data-show-action="trivia-start-round">Start Round</button>
+          </div>
+        </div>
+      `;
+    }
+
+    if (liveStep === "answer-screen") {
+      return `
+        <div class="show-round-card">
+          <p class="show-info-label">Answer Screen / Timer Running</p>
+          <p class="show-round-title">${escapeHtml(category?.title || "No topic selected")}</p>
+          <p class="show-round-copy">Choose one answer and confirm.</p>
+          <div class="show-trivia-options-grid">
+            ${options
+              .map((option, index) => {
+                const selected = selectedOptionIndex === index ? "is-selected" : "";
+                return `
+                  <button class="show-trivia-answer-btn ${selected}" type="button" data-show-trivia-option="${index}">
+                    <span>${String.fromCharCode(65 + index)}</span>
+                    <span>${escapeHtml(option)}</span>
+                  </button>
+                `;
+              })
+              .join("")}
+          </div>
+        </div>
+      `;
+    }
+
+    const deltaLabel =
+      roundState.lastDelta >= 0
+        ? `+${formatMoney(roundState.lastDelta)}`
+        : `-${formatMoney(Math.abs(roundState.lastDelta))}`;
+    const verdictLabel =
+      roundState.isCorrect === true
+        ? "Correct answer"
+        : roundState.isCorrect === false
+          ? "Wrong answer"
+          : "Result pending";
+    return `
+      <div class="show-round-card">
+        <p class="show-info-label">Result Screen</p>
+        <p class="show-round-title">${verdictLabel}</p>
+        <p class="show-round-copy">Selected: ${escapeHtml(selectedOptionText || "No answer selected")}</p>
+        <p class="show-round-copy">Correct: ${escapeHtml(options[correctIndex] || category?.answer || "N/A")}</p>
+        <p class="show-round-copy">Money delta: ${deltaLabel}. ${escapeHtml(playingTeam.name)} now has ${formatMoney(
+          playingTeam.money
+        )}.</p>
+      </div>
+    `;
+  }
+  if (gameId === "pretul-corect") {
+    const roundState = getOrCreatePretulRoundState();
+    const item = state.pretul.items.find((entry) => entry.id === roundState.selectedItemId);
+    const diffA = Math.abs(roundState.answerTeamA - roundState.realPrice);
+    const diffB = Math.abs(roundState.answerTeamB - roundState.realPrice);
+    const winnerLabel =
+      diffA < diffB ? state.teams.teamA.name : diffB < diffA ? state.teams.teamB.name : "Tie (equal distance)";
+
+    if (liveStep === "item-brief") {
+      return `
+        <div class="show-round-card">
+          <p class="show-info-label">Item brief</p>
+          <p class="show-round-title">${escapeHtml(item?.name || "Selecteaza item")}</p>
+          <p class="show-round-copy">Set both bets and active players before answer phase.</p>
+        </div>
+      `;
+    }
+
+    if (liveStep === "estimate-live") {
+      return `
+        <div class="show-round-card">
+          <p class="show-info-label">Estimate live</p>
+          <p class="show-round-title">${escapeHtml(state.teams.teamA.name)} ${formatMoney(roundState.answerTeamA)} | ${escapeHtml(
+            state.teams.teamB.name
+          )} ${formatMoney(roundState.answerTeamB)}</p>
+          <p class="show-round-copy">Real price set: ${formatMoney(roundState.realPrice)}.</p>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="show-round-card">
+        <p class="show-info-label">Confirm winner</p>
+        <p class="show-round-title">${escapeHtml(item?.name || "Selecteaza item")}</p>
+        <p class="show-round-copy">Auto winner: ${escapeHtml(winnerLabel)}.</p>
+        <p class="show-round-copy">${escapeHtml(state.teams.teamA.name)} distance ${formatMoney(diffA)} | ${escapeHtml(
+          state.teams.teamB.name
+        )} distance ${formatMoney(diffB)}</p>
+      </div>
+    `;
+  }
+  if (gameId === "film-joc-franciza-fun-fact") {
+    const roundState = getOrCreateFilmRoundState();
+    const item = state.filmGame.items.find((entry) => entry.id === roundState.selectedItemId);
+    const breakdown = getFilmRoundBreakdown(roundState, roundState.betAmount);
+
+    if (liveStep === "round-brief") {
+      return `
+        <div class="show-round-card">
+          <p class="show-info-label">Round brief</p>
+          <p class="show-round-title">${escapeHtml(item?.title || "Selecteaza item")}</p>
+          <p class="show-round-copy">Set team, bet, and active players before reveals.</p>
+        </div>
+      `;
+    }
+
+    if (liveStep === "clue-reveal") {
+      return `
+        <div class="show-round-card">
+          <p class="show-info-label">Clue reveal</p>
+          <p class="show-round-title">${escapeHtml(item?.title || "Selecteaza item")}</p>
+          <p class="show-round-copy">Reveal Character/Title, Franchise, then Fun Fact.</p>
+          <p class="show-round-copy">Current reveals: ${
+            roundState.revealed.character ? "Character " : ""
+          }${roundState.revealed.franchise ? "Franchise " : ""}${roundState.revealed.funFact ? "Fun Fact" : ""}</p>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="show-round-card">
+        <p class="show-info-label">Component judge</p>
+        <p class="show-round-title">${escapeHtml(item?.title || "Selecteaza item")}</p>
+        <p class="show-round-copy">Scor componente: ${breakdown.totalPoints}/${breakdown.maxPoints} | corecte ${breakdown.correctCount}/3.</p>
+        <p class="show-round-copy">Bet is active only with minimum 2/3 correct.</p>
+      </div>
+    `;
+  }
+  if (gameId === "cel-mai-bun-samsar") {
+    const roundNumber = getSamsarRoundNumber();
+    const roundState = getOrCreateSamsarRoundState(roundNumber);
+    const template = state.samsarGame.roundsData[roundNumber - 1];
+
+    if (liveStep === "persona-brief") {
+      return `
+        <div class="show-round-card">
+          <p class="show-info-label">Persona brief</p>
+          <p class="show-round-title">${escapeHtml(template?.personaTitle || "Persona runda")}</p>
+          <p class="show-round-copy">${escapeHtml(template?.personaRequirements || "Completeaza cerintele pentru persona.")}</p>
+        </div>
+      `;
+    }
+
+    if (liveStep === "negotiation-live") {
+      return `
+        <div class="show-round-card">
+          <p class="show-info-label">Negotiation live</p>
+          <p class="show-round-title">${escapeHtml(template?.personaTitle || "Persona runda")}</p>
+          <p class="show-round-copy">Ruleaza duelul live, apoi introdu scorurile in etapa de judge.</p>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="show-round-card">
+        <p class="show-info-label">Score judge</p>
+        <p class="show-round-title">${escapeHtml(state.teams.teamA.name)} ${roundState.scoreTeamA} - ${roundState.scoreTeamB} ${escapeHtml(
+          state.teams.teamB.name
+        )}</p>
+        <p class="show-round-copy">Higher score wins. Equal score is draw.</p>
+      </div>
+    `;
+  }
+  if (isManualMatchGame(gameId)) {
+    const manualGameId = gameId;
+    const roundState = getOrCreateManualMatchRoundState(manualGameId, state.progress.currentRound);
+    const settlement = calculateManualMatchSettlement(manualGameId, roundState);
+
+    if (liveStep === "order-brief" || liveStep === "beer-brief" || liveStep === "shot-brief") {
+      return `
+        <div class="show-round-card">
+          <p class="show-info-label">${escapeHtml(getGameLabel(manualGameId))} setup</p>
+          <p class="show-round-title">Round ${state.progress.currentRound}</p>
+          <p class="show-round-copy">Select active players and bets before live phase.</p>
+        </div>
+      `;
+    }
+
+    if (liveStep === "order-live" || liveStep === "beer-live" || liveStep === "shot-live") {
+      return `
+        <div class="show-round-card">
+          <p class="show-info-label">${escapeHtml(getGameLabel(manualGameId))} live</p>
+          <p class="show-round-title">${escapeHtml(state.teams.teamA.name)} ${roundState.scoreTeamA} - ${roundState.scoreTeamB} ${escapeHtml(
+            state.teams.teamB.name
+          )}</p>
+          <p class="show-round-copy">${
+            manualGameId === "shot-fake"
+              ? `Shot Fake transfer preview: ${formatMoney(settlement.specialTransfer)}.`
+              : "Team-vs-team round in progress."
+          }</p>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="show-round-card">
+        <p class="show-info-label">${escapeHtml(getGameLabel(manualGameId))} judge</p>
+        <p class="show-round-title">${escapeHtml(state.teams.teamA.name)} ${roundState.scoreTeamA} - ${roundState.scoreTeamB} ${escapeHtml(
+          state.teams.teamB.name
+        )}</p>
+        <p class="show-round-copy">Ready to apply payout. Draw is allowed for this game.</p>
+      </div>
+    `;
+  }
+  if (gameId === "curse-de-cai") {
+    const roundState = getOrCreateCurseRoundState(state.progress.currentRound);
+    const winnerHorse = state.curseRace.horses.find((horse) => horse.id === roundState.winnerHorseId);
+
+    if (liveStep === "race-brief") {
+      return `
+        <div class="show-round-card">
+          <p class="show-info-label">Race brief</p>
+          <p class="show-round-title">${state.curseRace.horses.length} horses ready</p>
+          <p class="show-round-copy">Configure multi-bets and bettors, then move into race live.</p>
+        </div>
+      `;
+    }
+
+    if (liveStep === "race-live") {
+      return `
+        <div class="show-round-card">
+          <p class="show-info-label">Race live</p>
+          <p class="show-round-title">${winnerHorse ? `Winner set: ${winnerHorse.symbol} ${winnerHorse.name}` : "Race in progress"}</p>
+          <p class="show-round-copy">Move horses manually by symbol and handle push-back collisions.</p>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="show-round-card">
+        <p class="show-info-label">Settle payout</p>
+        <p class="show-round-title">${winnerHorse ? `Winner: ${winnerHorse.symbol} ${winnerHorse.name}` : "Select winner by race outcome"}</p>
+        <p class="show-round-copy">Only winning-horse bet pays x${state.curseRace.payoutMultiplier}. All other horse bets lose.</p>
+      </div>
+    `;
+  }
+  return `
+    <div class="show-round-card">
+      <p class="show-info-label">${escapeHtml(getGameLabel(gameId))}</p>
+      <p class="show-round-title">${escapeHtml(getLiveStepLabel(gameId, liveStep))}</p>
+      <p class="show-round-copy">${escapeHtml(getLiveStepDescription(gameId, liveStep))}</p>
+    </div>
+  `;
+}
+
+function buildLiveRoundQuickActions(gameId, liveStep) {
+  const flowStates = getGameFlowStates(gameId);
+  const firstStateId = flowStates[0]?.id;
+  const payoutStateId = getFlowPayoutStateId(gameId);
+  const lastStateId = flowStates[flowStates.length - 1]?.id;
+  const nextStateId = getNextLiveRoundStep(gameId, liveStep);
+  const prevStateId = getPrevLiveRoundStep(gameId, liveStep);
+  const answerLocked = isOverlayAnswerLocked();
+  const lockLabel = answerLocked ? "Unlock answer" : "Lock answer";
+  const confirmDisabled = answerLocked ? "" : "disabled";
+  const actions = [];
+
+  if (gameId === "trivia") {
+    const triviaRoundState = getOrCreateTriviaRoundState();
+    const selectedCategory = state.trivia.categories.find((entry) => entry.id === triviaRoundState.selectedCategoryId);
+    const isUsedCategory =
+      selectedCategory && triviaRoundState.usedCategoryIds.includes(selectedCategory.id);
+    const hasTopic = Boolean(selectedCategory && !isUsedCategory);
+    const flowComplete = isGameFlowComplete("trivia");
+
+    if (liveStep === "topic-select") {
+      if (hasTopic) {
+        actions.push({ tone: "primary-btn", action: "live-step-bet-screen", label: "Go to Bet Screen" });
+      }
+      actions.push({ tone: "secondary-btn", action: "trivia-reset-used", label: "Reset topics" });
+    } else if (liveStep === "bet-screen") {
+      actions.push({ tone: "primary-btn", action: "trivia-confirm-bet", label: "Confirm Bet" });
+      actions.push({ tone: "secondary-btn", action: "live-step-topic-select", label: "Back to Topics" });
+    } else if (liveStep === "question-screen") {
+      actions.push({ tone: "primary-btn", action: "trivia-start-round", label: "Start Round" });
+      actions.push({ tone: "secondary-btn", action: "live-step-bet-screen", label: "Back to Bet" });
+    } else if (liveStep === "answer-screen") {
+      actions.push({ tone: "secondary-btn", action: "toggle-answer-lock", label: lockLabel });
+      actions.push({ tone: "primary-btn", action: "trivia-confirm-answer", label: "Confirm Answer" });
+    } else if (liveStep === "result-screen") {
+      actions.push({
+        tone: "primary-btn",
+        action: flowComplete ? "finish-game-return" : "trivia-next-topic",
+        label: flowComplete ? "Finish Trivia" : "Next Topic"
+      });
+      actions.push({ tone: "secondary-btn", action: "go-leaderboard", label: "Open Leaderboard" });
+    }
+
+    actions.push({ tone: "secondary-btn", action: "next-game", label: "Next game" });
+    return renderFlowActionButtons(actions);
+  }
+
+  if (liveStep === firstStateId) {
+    actions.push({
+      tone: "primary-btn",
+      action: "live-step-next",
+      label: `Start ${getLiveStepLabel(gameId, nextStateId)}`
+    });
+  } else if (liveStep !== payoutStateId && liveStep !== lastStateId) {
+    actions.push({
+      tone: "primary-btn",
+      action: "live-step-next",
+      label: `Go to ${getLiveStepLabel(gameId, nextStateId)}`
+    });
+  } else {
+    actions.push({ tone: "secondary-btn", action: "toggle-answer-lock", label: lockLabel });
+    if (gameId === "trivia") {
+      actions.push({ tone: "primary-btn", action: "trivia-correct", label: `Confirm correct${confirmDisabled ? " (lock first)" : ""}` });
+      actions.push({ tone: "danger-btn", action: "trivia-wrong", label: `Confirm wrong${confirmDisabled ? " (lock first)" : ""}` });
+    } else if (gameId === "pretul-corect") {
+      actions.push({ tone: "primary-btn", action: "pretul-evaluate", label: `Confirm answer${confirmDisabled ? " (lock first)" : ""}` });
+    } else if (gameId === "film-joc-franciza-fun-fact") {
+      actions.push({ tone: "primary-btn", action: "film-apply", label: `Confirm answer${confirmDisabled ? " (lock first)" : ""}` });
+    } else if (gameId === "cel-mai-bun-samsar") {
+      actions.push({ tone: "primary-btn", action: "samsar-apply", label: `Confirm answer${confirmDisabled ? " (lock first)" : ""}` });
+    } else if (isManualMatchGame(gameId)) {
+      actions.push({ tone: "primary-btn", action: "manual-apply", label: `Confirm answer${confirmDisabled ? " (lock first)" : ""}` });
+    } else if (gameId === "curse-de-cai") {
+      actions.push({ tone: "primary-btn", action: "curse-apply", label: `Confirm answer${confirmDisabled ? " (lock first)" : ""}` });
+    }
+    actions.push({ tone: "secondary-btn", action: "go-reveal", label: "Reveal" });
+  }
+  if (liveStep !== firstStateId && prevStateId !== liveStep) {
+    actions.push({ tone: "secondary-btn", action: "live-step-prev", label: `Back to ${getLiveStepLabel(gameId, prevStateId)}` });
+  }
+  if (liveStep !== lastStateId && liveStep !== payoutStateId && nextStateId !== liveStep) {
+    actions.push({ tone: "secondary-btn", action: "live-step-next", label: "Next step" });
+  }
+  actions.push({ tone: "secondary-btn", action: "next-round", label: "Next round" });
+  actions.push({ tone: "secondary-btn", action: "next-game", label: "Next game" });
+  return renderFlowActionButtons(actions);
+}
+
+function buildLiveRoundHostDrawer(gameId) {
+  return `
+    <details class="show-host-drawer">
+      <summary>Advanced host controls for this round</summary>
+      <div class="show-host-drawer-content">
+        ${buildLegacyLiveRoundContent(gameId, { minimal: true })}
+      </div>
+    </details>
+  `;
+}
+
+function buildLiveRoundContent(gameId) {
+  const liveStep = getLiveRoundStep(gameId);
+  return `
+    ${renderShowStageControls()}
+    ${renderShowJokerControl()}
+    ${renderLiveRoundFlowRail(gameId, liveStep)}
+    ${buildLiveRoundExperienceContent(gameId, liveStep)}
+    ${buildLiveRoundHostDrawer(gameId)}
+    ${buildLiveRoundQuickActions(gameId, liveStep)}
   `;
 }
 
@@ -3608,11 +4747,20 @@ function buildShowScreenContent(screenId) {
   const summary = state.progress.lastResultSummary || DEFAULT_RESULT_SUMMARY;
 
   if (screenId === "show-home") {
+    const hasStarted = Boolean(state.showUi.gameNightStarted);
+    const completed = getCompletedGameCount();
+    const total = GAME_ORDER.length;
+    const remaining = getRemainingGameCount();
+    const statusLine = isGameNightComplete()
+      ? "Toate jocurile sunt completate. Poti deschide End Screen."
+      : hasStarted
+        ? `Progres game night: ${completed}/${total} jocuri complete (${remaining} ramase).`
+        : "Apasa Start Game Night pentru a intra in loop-ul global.";
     return `
       <div class="show-round-card">
-        <p class="show-info-label">Tonight</p>
+        <p class="show-info-label">Game Night</p>
         <p class="show-round-title">${escapeHtml(state.settings.showTitle)}</p>
-        <p class="show-round-copy">Welcome to the show. Current focus is ${escapeHtml(gameLabel)}, round ${state.progress.currentRound}.</p>
+        <p class="show-round-copy">${escapeHtml(statusLine)}</p>
       </div>
       <div class="show-info-grid">
         <div class="show-info-card">
@@ -3627,20 +4775,29 @@ function buildShowScreenContent(screenId) {
         </div>
       </div>
       <div class="show-action-footer">
-        <button class="primary-btn" type="button" data-show-action="go-game-select">Game select</button>
-        <button class="secondary-btn" type="button" data-show-action="go-game-intro">Game intro</button>
-        <button class="secondary-btn" type="button" data-show-action="go-live-round">Live round</button>
+        <button class="primary-btn" type="button" data-show-action="start-game-night">${
+          hasStarted ? "Restart Game Night" : "Start Game Night"
+        }</button>
+        <button class="secondary-btn" type="button" data-show-action="go-game-select">Open Game Select</button>
+        <button class="secondary-btn" type="button" data-show-action="go-end-screen">Final End Screen</button>
       </div>
     `;
   }
 
   if (screenId === "game-select") {
+    const completedGameIds = state.showUi.completedGameIds;
+    const completedCount = completedGameIds.length;
+    const totalCount = GAME_ORDER.length;
+    const progressLine = `Complete: ${completedCount}/${totalCount} jocuri`;
     const gameCards = GAME_CONFIG.map((game) => {
       const isCurrent = game.id === state.progress.currentGame;
-      const currentClass = isCurrent ? "show-leader-row is-leading" : "show-leader-row";
+      const isDone = completedGameIds.includes(game.id);
+      const currentClass = isCurrent ? "show-leader-row is-leading show-game-card" : "show-leader-row show-game-card";
+      const statusLabel = isDone ? "DONE" : "READY";
       return `
         <button class="${currentClass}" type="button" data-show-select-game="${game.id}">
           <p class="show-info-label">${escapeHtml(game.label)}</p>
+          <p class="show-info-value">${statusLabel}</p>
           <p class="show-info-sub">Max bet: ${game.maxBetPercent}%</p>
         </button>
       `;
@@ -3648,21 +4805,15 @@ function buildShowScreenContent(screenId) {
 
     return `
       <div class="show-control-card">
-        <h3>Game Select</h3>
-        <label class="show-info-label" for="showGameSelectDropdown">Current game</label>
-        <select id="showGameSelectDropdown" class="text-input" data-show-current-game>
-          ${GAME_CONFIG.map(
-            (game) =>
-              `<option value="${game.id}" ${game.id === state.progress.currentGame ? "selected" : ""}>${escapeHtml(game.label)}</option>`
-          ).join("")}
-        </select>
-        <label class="show-info-label spaced" for="showRoundPickerInput">Current round</label>
-        <input id="showRoundPickerInput" class="text-input compact-input" type="number" min="1" step="1" value="${state.progress.currentRound}" data-show-current-round>
+        <h3>Select Next Mini-Game</h3>
+        <p class="show-control-note">${progressLine}</p>
+        <p class="show-control-note">Alege un card de joc pentru a intra direct in flow-ul lui.</p>
       </div>
-      <div class="show-leaderboard">${gameCards}</div>
+      <div class="show-leaderboard show-game-select-grid">${gameCards}</div>
       <div class="show-action-footer">
-        <button class="primary-btn" type="button" data-show-action="go-game-intro">Continue to Game Intro</button>
-        <button class="secondary-btn" type="button" data-show-action="go-live-round">Skip to Live Round</button>
+        <button class="secondary-btn" type="button" data-show-action="go-show-home">Back to Show Home</button>
+        <button class="primary-btn" type="button" data-show-action="go-game-intro">Continue with current game</button>
+        <button class="secondary-btn" type="button" data-show-action="go-end-screen">Open Final End Screen</button>
       </div>
     `;
   }
@@ -3692,6 +4843,7 @@ function buildShowScreenContent(screenId) {
 
   if (screenId === "reveal-result") {
     const gameResult = getCurrentRoundResultForShow(gameId);
+    const gameFinishedByRule = isGameFlowComplete(gameId);
     const detailText =
       gameResult && gameResult !== summary
         ? gameResult
@@ -3701,12 +4853,59 @@ function buildShowScreenContent(screenId) {
         <p class="show-info-label">Latest Outcome</p>
         <p class="show-round-title">${escapeHtml(summary)}</p>
         <p class="show-round-copy">${escapeHtml(detailText)}</p>
+        <p class="show-round-copy">${escapeHtml(
+          gameFinishedByRule
+            ? `Game flow complete for ${getGameLabel(gameId)}. Use Finish game to return to Game Select.`
+            : getFlowRoundReturn(gameId)
+        )}</p>
       </div>
       <div class="show-action-footer">
-        <button class="primary-btn" type="button" data-show-action="next-round">Next round</button>
-        <button class="secondary-btn" type="button" data-show-action="next-game">Next game</button>
+        <button class="primary-btn" type="button" data-show-action="${gameFinishedByRule ? "finish-game-return" : "next-round"}">${
+          gameFinishedByRule ? "Finish game" : "Next round"
+        }</button>
+        <button class="secondary-btn" type="button" data-show-action="go-end-of-game">End this game</button>
         <button class="secondary-btn" type="button" data-show-action="go-leaderboard">Open leaderboard</button>
         <button class="secondary-btn" type="button" data-show-action="go-live-round">Back to live round</button>
+      </div>
+    `;
+  }
+
+  if (screenId === "end-of-game") {
+    const gameTitle = getGameLabel(gameId);
+    const scoreLine = `${escapeHtml(state.teams.teamA.name)} ${state.teams.teamA.score} - ${state.teams.teamB.score} ${escapeHtml(
+      state.teams.teamB.name
+    )}`;
+    const moneyLine = `${escapeHtml(state.teams.teamA.name)} ${formatMoney(state.teams.teamA.money)} | ${escapeHtml(
+      state.teams.teamB.name
+    )} ${formatMoney(state.teams.teamB.money)}`;
+    let completionHint = "Finalizeaza jocul curent si revino la Game Select pentru urmatorul mini-game.";
+    if (gameId === "cel-mai-bun-samsar") {
+      const totalRounds = Math.max(1, state.samsarGame?.roundsData?.length || 6);
+      completionHint =
+        state.progress.currentRound >= totalRounds
+          ? "Samsar a ajuns la finalul celor 6 runde. Poti merge direct la Game Select."
+          : `Samsar are ${totalRounds} runde totale. Inca esti la runda ${state.progress.currentRound}.`;
+    }
+    return `
+      <div class="show-round-card">
+        <p class="show-info-label">End of Game</p>
+        <p class="show-round-title">${escapeHtml(gameTitle)} complete</p>
+        <p class="show-round-copy">${escapeHtml(completionHint)}</p>
+      </div>
+      <div class="show-info-grid">
+        <div class="show-info-card">
+          <p class="show-info-label">Score snapshot</p>
+          <p class="show-info-value">${scoreLine}</p>
+        </div>
+        <div class="show-info-card">
+          <p class="show-info-label">Money snapshot</p>
+          <p class="show-info-value">${moneyLine}</p>
+        </div>
+      </div>
+      <div class="show-action-footer">
+        <button class="primary-btn" type="button" data-show-action="finish-game-return">Finish game & return to Game Select</button>
+        <button class="secondary-btn" type="button" data-show-action="go-game-select">Back to Game Select</button>
+        <button class="secondary-btn" type="button" data-show-action="go-end-screen">Open Final End Screen</button>
       </div>
     `;
   }
@@ -3809,6 +5008,139 @@ function renderHostPanelState() {
   }
 }
 
+function getAdminFixTeamKey() {
+  if (elements.adminFixTeamSelect?.value === "teamB") {
+    return "teamB";
+  }
+  return "teamA";
+}
+
+function renderAdminFixPlayerOptions() {
+  if (!elements.adminFixPlayerSelect) {
+    return;
+  }
+
+  const teamKey = getAdminFixTeamKey();
+  const team = state.teams[teamKey];
+  const previousValue = elements.adminFixPlayerSelect.value;
+
+  if (!team || !Array.isArray(team.players) || team.players.length === 0) {
+    elements.adminFixPlayerSelect.innerHTML = `<option value="">No players in ${escapeHtml(team?.name || "team")}</option>`;
+    elements.adminFixPlayerSelect.disabled = true;
+    return;
+  }
+
+  elements.adminFixPlayerSelect.disabled = false;
+  elements.adminFixPlayerSelect.innerHTML = team.players
+    .map(
+      (player) =>
+        `<option value="${escapeHtml(player.id)}">${escapeHtml(player.name)} (${escapeHtml(player.status)})</option>`
+    )
+    .join("");
+
+  const isPreviousValid = team.players.some((player) => player.id === previousValue);
+  elements.adminFixPlayerSelect.value = isPreviousValid ? previousValue : team.players[0].id;
+}
+
+function applyAdminTimerOverride() {
+  const nextDuration = clampNumber(
+    Math.round(sanitizeNumber(elements.adminTimerDurationInput?.value, state.timer.duration)),
+    10,
+    600
+  );
+  const nextRemaining = clampNumber(
+    Math.round(sanitizeNumber(elements.adminTimerRemainingInput?.value, state.timer.remaining)),
+    0,
+    nextDuration
+  );
+
+  state.timer.duration = nextDuration;
+  state.timer.remaining = nextRemaining;
+  state.timer.isRunning = false;
+  state.timer.lastTickMs = null;
+  stopTimerLoop();
+  renderTimer();
+  setLastResultSummary(`Timer override applied: ${nextRemaining}s / ${nextDuration}s.`);
+  renderShowUi();
+  saveState("Admin timer override applied.");
+}
+
+function applyAdminPlayerFix() {
+  const teamKey = getAdminFixTeamKey();
+  const team = state.teams[teamKey];
+  const action = String(elements.adminFixActionSelect?.value || "activate");
+  const playerId = String(elements.adminFixPlayerSelect?.value || "");
+
+  if (!team) {
+    return;
+  }
+
+  if (action === "clear-all") {
+    state.roundSelection.activeByTeam.teamA = [];
+    state.roundSelection.activeByTeam.teamB = [];
+    state.roundSelection.jokerAssignment = "out";
+    saveCurrentRoundSnapshot();
+    renderAll();
+    setLastResultSummary("Admin fix: cleared all active players and moved Joker out.");
+    saveState("Admin player fix: clear all active.");
+    return;
+  }
+
+  if (action === "clear-team") {
+    state.roundSelection.activeByTeam[teamKey] = [];
+    if (state.roundSelection.jokerAssignment === teamKey) {
+      state.roundSelection.jokerAssignment = "out";
+    }
+    saveCurrentRoundSnapshot();
+    renderAll();
+    setLastResultSummary(`Admin fix: cleared active players for ${team.name}.`);
+    saveState("Admin player fix: clear team active.");
+    return;
+  }
+
+  const player = findPlayer(teamKey, playerId);
+  if (!player) {
+    setLastResultSummary("Admin fix failed: player not found.");
+    saveState("Admin player fix failed.");
+    return;
+  }
+
+  if (action === "activate") {
+    if (player.status !== "available") {
+      setLastResultSummary(`Admin fix blocked: ${player.name} is ${player.status}. Set status to available first.`);
+      saveState("Admin player fix blocked.");
+      return;
+    }
+
+    const activeIds = state.roundSelection.activeByTeam[teamKey];
+    const jokerSlot = state.roundSelection.jokerAssignment === teamKey ? 1 : 0;
+    const allowed = Math.max(0, MAX_ACTIVE_PER_TEAM - jokerSlot);
+    if (!activeIds.includes(player.id) && activeIds.length >= allowed) {
+      setLastResultSummary(`Admin fix blocked: ${team.name} reached max ${MAX_ACTIVE_PER_TEAM} active players.`);
+      saveState("Admin player fix blocked: active limit.");
+      return;
+    }
+    if (!activeIds.includes(player.id)) {
+      activeIds.push(player.id);
+    }
+  } else if (action === "deactivate") {
+    state.roundSelection.activeByTeam[teamKey] = state.roundSelection.activeByTeam[teamKey].filter((id) => id !== player.id);
+  } else if (action === "status-available") {
+    player.status = "available";
+  } else if (action === "status-bench") {
+    player.status = "bench";
+    state.roundSelection.activeByTeam[teamKey] = state.roundSelection.activeByTeam[teamKey].filter((id) => id !== player.id);
+  } else if (action === "status-unavailable") {
+    player.status = "unavailable";
+    state.roundSelection.activeByTeam[teamKey] = state.roundSelection.activeByTeam[teamKey].filter((id) => id !== player.id);
+  }
+
+  saveCurrentRoundSnapshot();
+  renderAll();
+  setLastResultSummary(`Admin fix applied: ${action} for ${player.name} (${team.name}).`);
+  saveState("Admin player fix applied.");
+}
+
 function renderHostAdminPanel() {
   if (elements.adminMoneyTeamAInput) {
     elements.adminMoneyTeamAInput.value = String(Math.max(0, Math.round(sanitizeNumber(state.teams.teamA.money, 0))));
@@ -3822,15 +5154,25 @@ function renderHostAdminPanel() {
   if (elements.adminRoundInput) {
     elements.adminRoundInput.value = String(state.progress.currentRound);
   }
+  if (elements.adminTimerDurationInput) {
+    elements.adminTimerDurationInput.value = String(state.timer.duration);
+  }
+  if (elements.adminTimerRemainingInput) {
+    elements.adminTimerRemainingInput.value = String(state.timer.remaining);
+  }
+  if (elements.adminFixTeamSelect) {
+    const selected = getAdminFixTeamKey();
+    elements.adminFixTeamSelect.innerHTML = `
+      <option value="teamA">${escapeHtml(state.teams.teamA.name)}</option>
+      <option value="teamB">${escapeHtml(state.teams.teamB.name)}</option>
+    `;
+    elements.adminFixTeamSelect.value = selected;
+  }
+  renderAdminFixPlayerOptions();
 }
 
 function renderShowUi() {
-  if (!state.showUi || typeof state.showUi !== "object") {
-    state.showUi = { ...DEFAULT_STATE.showUi };
-  }
-  if (!SHOW_SCREEN_IDS.includes(state.showUi.activeScreen)) {
-    state.showUi.activeScreen = DEFAULT_STATE.showUi.activeScreen;
-  }
+  ensureShowUiState();
 
   const activeScreen = state.showUi.activeScreen;
   elements.showScreenButtons.forEach((button) => {
@@ -3868,9 +5210,7 @@ function renderShowUi() {
 
 function setHostPanelOpen(nextOpen, options = {}) {
   const persist = options.persist !== false;
-  if (!state.showUi || typeof state.showUi !== "object") {
-    state.showUi = { ...DEFAULT_STATE.showUi };
-  }
+  ensureShowUiState();
   state.showUi.hostPanelOpen = Boolean(nextOpen);
   if (!state.showUi.hostPanelOpen) {
     state.showUi.adminAdvancedOpen = false;
@@ -3883,9 +5223,7 @@ function setHostPanelOpen(nextOpen, options = {}) {
 
 function setHostAdvancedOpen(nextOpen, options = {}) {
   const persist = options.persist !== false;
-  if (!state.showUi || typeof state.showUi !== "object") {
-    state.showUi = { ...DEFAULT_STATE.showUi };
-  }
+  ensureShowUiState();
   state.showUi.adminAdvancedOpen = Boolean(nextOpen);
   renderHostPanelState();
   if (persist) {
@@ -3899,10 +5237,14 @@ function setShowScreen(screenId, options = {}) {
   }
   const persist = options.persist !== false;
   const syncSection = options.syncSection !== false;
+  const allowIncompleteEndScreen = options.allowIncompleteEndScreen === true;
 
-  if (!state.showUi || typeof state.showUi !== "object") {
-    state.showUi = { ...DEFAULT_STATE.showUi };
+  if (screenId === "end-screen" && !allowIncompleteEndScreen && !isGameNightComplete()) {
+    setLastResultSummary("End Screen final se deschide dupa ce termini toate jocurile.");
+    screenId = "game-select";
   }
+
+  ensureShowUiState();
   state.showUi.activeScreen = screenId;
 
   if (syncSection) {
@@ -4043,9 +5385,22 @@ function handleShowOverlayAction(action, trigger) {
   if (!action) {
     return;
   }
+  const answerResultActions = new Set([
+    "trivia-correct",
+    "trivia-wrong",
+    "pretul-evaluate",
+    "film-apply",
+    "samsar-apply",
+    "manual-apply",
+    "curse-apply"
+  ]);
 
   if (action === "go-show-home") {
     setShowScreen("show-home");
+    return;
+  }
+  if (action === "start-game-night") {
+    startGameNightFlow();
     return;
   }
   if (action === "go-game-select") {
@@ -4060,6 +5415,10 @@ function handleShowOverlayAction(action, trigger) {
     setShowScreen("live-round");
     return;
   }
+  if (action === "go-end-of-game") {
+    setShowScreen("end-of-game");
+    return;
+  }
   if (action === "go-reveal") {
     setShowScreen("reveal-result");
     return;
@@ -4069,7 +5428,17 @@ function handleShowOverlayAction(action, trigger) {
     return;
   }
   if (action === "go-end-screen") {
+    if (!isGameNightComplete()) {
+      setLastResultSummary("Finalizeaza toate jocurile din Game Select pentru End Screen final.");
+      setShowScreen("game-select", { persist: false });
+      saveState("End screen blocked: game night not complete.");
+      return;
+    }
     setShowScreen("end-screen");
+    return;
+  }
+  if (action === "finish-game-return") {
+    finishCurrentGameAndReturn();
     return;
   }
   if (action === "timer-start") {
@@ -4088,14 +5457,67 @@ function handleShowOverlayAction(action, trigger) {
     toggleRoundSelectionLock();
     return;
   }
+  if (action === "toggle-answer-lock") {
+    setOverlayAnswerLocked(!isOverlayAnswerLocked());
+    return;
+  }
+  if (action === "trivia-confirm-bet") {
+    confirmTriviaBetAndContinue();
+    return;
+  }
+  if (action === "trivia-start-round") {
+    startTriviaQuestionRound();
+    return;
+  }
+  if (action === "trivia-confirm-answer") {
+    confirmTriviaAnswerFromOverlay();
+    return;
+  }
+  if (action === "trivia-next-topic") {
+    advanceTriviaToNextTopic();
+    return;
+  }
+  if (action === "live-step-next") {
+    const currentGameId = state.progress.currentGame;
+    setLiveRoundStep(getNextLiveRoundStep(currentGameId, getLiveRoundStep(currentGameId)));
+    return;
+  }
+  if (action === "live-step-prev") {
+    const currentGameId = state.progress.currentGame;
+    setLiveRoundStep(getPrevLiveRoundStep(currentGameId, getLiveRoundStep(currentGameId)));
+    return;
+  }
+  if (action.startsWith("live-step-")) {
+    const stepId = action.replace("live-step-", "");
+    if (getGameFlowState(state.progress.currentGame, stepId)) {
+      setLiveRoundStep(stepId);
+    }
+    return;
+  }
   if (action === "next-round") {
+    const currentGameId = state.progress.currentGame;
+    if (currentGameId === "trivia" && getLiveRoundStep(currentGameId) === "result-screen") {
+      advanceTriviaToNextTopic();
+      return;
+    }
+    if (isGameFlowComplete(currentGameId)) {
+      setLastResultSummary(`${getGameLabel(currentGameId)} reached its flow end. Returning to Game Select.`);
+      finishCurrentGameAndReturn();
+      return;
+    }
     setCurrentRound(state.progress.currentRound + 1);
-    setShowScreen("game-intro", { persist: false });
+    setShowScreen("live-round", { persist: false });
     saveState("Next round opened.");
     return;
   }
   if (action === "next-game") {
     nextGame();
+    return;
+  }
+  if (answerResultActions.has(action) && !isOverlayAnswerLocked()) {
+    setLastResultSummary("Lock answer first, then confirm result.");
+    renderShowUi();
+    saveState("Overlay confirm blocked: answer not locked.");
     return;
   }
   if (action === "clear-team-active") {
@@ -4104,13 +5526,19 @@ function handleShowOverlayAction(action, trigger) {
     return;
   }
   if (action === "trivia-correct") {
-    applyTriviaRoundResult(true);
-    setShowScreen("reveal-result", { persist: false });
+    const triviaRoundState = getOrCreateTriviaRoundState();
+    applyTriviaRoundResult(true, { selectedOptionIndex: triviaRoundState.selectedOptionIndex });
+    setOverlayAnswerLocked(false, { persist: false });
+    setLiveRoundStep("result-screen", { persist: false });
+    setShowScreen("live-round", { persist: false });
     return;
   }
   if (action === "trivia-wrong") {
-    applyTriviaRoundResult(false);
-    setShowScreen("reveal-result", { persist: false });
+    const triviaRoundState = getOrCreateTriviaRoundState();
+    applyTriviaRoundResult(false, { selectedOptionIndex: triviaRoundState.selectedOptionIndex });
+    setOverlayAnswerLocked(false, { persist: false });
+    setLiveRoundStep("result-screen", { persist: false });
+    setShowScreen("live-round", { persist: false });
     return;
   }
   if (action === "trivia-reset-used") {
@@ -4120,6 +5548,7 @@ function handleShowOverlayAction(action, trigger) {
   if (action === "pretul-evaluate") {
     syncPretulOverlayIntoState();
     applyPretulRoundResult();
+    setOverlayAnswerLocked(false, { persist: false });
     setShowScreen("reveal-result", { persist: false });
     return;
   }
@@ -4129,6 +5558,7 @@ function handleShowOverlayAction(action, trigger) {
   }
   if (action === "film-apply") {
     applyFilmRoundResult();
+    setOverlayAnswerLocked(false, { persist: false });
     setShowScreen("reveal-result", { persist: false });
     return;
   }
@@ -4139,12 +5569,14 @@ function handleShowOverlayAction(action, trigger) {
   if (action === "samsar-apply") {
     syncSamsarOverlayIntoHostInputs();
     applySamsarRoundResult();
+    setOverlayAnswerLocked(false, { persist: false });
     setShowScreen("reveal-result", { persist: false });
     return;
   }
   if (action === "manual-apply") {
     syncManualOverlayIntoHostInputs();
     applyManualMatchRoundResult();
+    setOverlayAnswerLocked(false, { persist: false });
     setShowScreen("reveal-result", { persist: false });
     return;
   }
@@ -4165,6 +5597,7 @@ function handleShowOverlayAction(action, trigger) {
   }
   if (action === "curse-apply") {
     applyCurseRacePayout();
+    setOverlayAnswerLocked(false, { persist: false });
     setShowScreen("reveal-result", { persist: false });
     return;
   }
@@ -4220,11 +5653,7 @@ function handleShowOverlayChange(target) {
     return;
   }
   if (target.matches("[data-show-trivia-bet]")) {
-    if (elements.triviaBetAmountInput) {
-      elements.triviaBetAmountInput.value = String(target.value);
-    }
-    renderTriviaControls();
-    saveState("Trivia bet adjusted from overlay.");
+    setTriviaBetAmount(target.value, { persist: true, render: true });
     return;
   }
   if (target.matches("[data-show-trivia-bonus]")) {
@@ -4364,10 +5793,26 @@ function handleShowOverlayClick(event) {
   if (selectGameButton) {
     const gameId = selectGameButton.getAttribute("data-show-select-game");
     if (GAME_ORDER.includes(gameId)) {
+      ensureShowUiState();
+      state.showUi.gameNightStarted = true;
       setCurrentGame(gameId, { keepRound: true, navigateToSection: false });
       setShowScreen("game-intro", { persist: false });
       saveState(`Game selected from overlay: ${getGameLabel(gameId)}.`);
     }
+    return;
+  }
+
+  const triviaTopicButton = event.target.closest("[data-show-trivia-topic]");
+  if (triviaTopicButton) {
+    const topicId = triviaTopicButton.getAttribute("data-show-trivia-topic");
+    selectTriviaTopicFromOverlay(topicId);
+    return;
+  }
+
+  const triviaAnswerButton = event.target.closest("[data-show-trivia-option]");
+  if (triviaAnswerButton) {
+    const optionIndex = triviaAnswerButton.getAttribute("data-show-trivia-option");
+    setTriviaSelectedOption(optionIndex);
     return;
   }
 
@@ -4596,7 +6041,7 @@ function renderSettingsRulesSnapshot() {
     `Fixed bonus: Trivia +${formatMoney(triviaBonus)} on correct answer. ` +
     "No fixed bonus for Guess the Right Order, Pretul corect, Film/Joc/Franciza/Fun Fact, Cel mai bun samsar, Beer Pong, Shot Fake, or Curse de cai.";
   elements.settingsTriviaRuleLine.textContent =
-    "Trivia de grup: one-team-only round. Only the selected team bets and plays; correct gives fixed bonus + bet win, wrong loses the bet; used categories are disabled.";
+    "Trivia de grup: one-team-per-round with automatic turn switch. Active team picks a multiple-choice topic, places bet, answers under timer, and result is auto-checked.";
   elements.settingsPretulRuleLine.textContent =
     "Pretul corect: both teams submit answer + bet, and winner is auto-detected by closest value to real price; equal distance is tie.";
   elements.settingsFilmRuleLine.textContent =
@@ -4629,7 +6074,11 @@ function renderTriviaControls() {
   const playingTeamKey = triviaRoundState.teamKey;
   const playingTeam = state.teams[playingTeamKey];
   const maxAllowedBet = getMaxBetAmount(playingTeam.money, "trivia");
-  const normalizedBet = normalizeBetAmount(elements.triviaBetAmountInput.value);
+  const normalizedBet = Math.min(
+    normalizeBetAmount(triviaRoundState.betAmount || elements.triviaBetAmountInput.value || 100),
+    maxAllowedBet
+  );
+  triviaRoundState.betAmount = normalizedBet;
 
   elements.triviaPlayingTeamSelect.options[0].text = state.teams.teamA.name;
   elements.triviaPlayingTeamSelect.options[1].text = state.teams.teamB.name;
@@ -4658,7 +6107,7 @@ function renderTriviaControls() {
   elements.triviaFixedBonusInput.value = String(bonus);
   elements.triviaBetAmountInput.value = String(normalizedBet);
   elements.triviaBetRuleInfo.textContent =
-    `Only ${playingTeam.name} can bet this Trivia round. Max 10% and rounded to 10. ` +
+    `Only ${playingTeam.name} can bet this Trivia round (auto turn mode). Max 10% and rounded to 10. ` +
     `Max now: ${formatMoney(maxAllowedBet)}. Correct payout: +${formatMoney(bonus)} bonus + bet win.`;
 
   if (elements.triviaActiveSelectionInfo) {
@@ -4674,11 +6123,16 @@ function renderTriviaControls() {
     .map((category) => {
       const isUsed = triviaRoundState.usedCategoryIds.includes(category.id);
       const cardClass = isUsed ? "trivia-category-card is-used" : "trivia-category-card";
+      const options = getTriviaCategoryOptions(category);
+      const correctIndex = getTriviaCorrectOptionIndex(category);
       return `
         <article class="${cardClass}">
           <h4>${category.title}</h4>
           <p><strong>Q:</strong> ${category.question}</p>
-          <p><strong>A:</strong> ${category.answer}</p>
+          <p><strong>Options:</strong> ${options
+            .map((option, index) => `${String.fromCharCode(65 + index)}. ${escapeHtml(option)}`)
+            .join(" | ")}</p>
+          <p><strong>Correct:</strong> ${String.fromCharCode(65 + correctIndex)}. ${escapeHtml(options[correctIndex])}</p>
           <button
             class="pill-btn"
             type="button"
@@ -4818,7 +6272,7 @@ function renderPretulControls() {
       return `
         <article class="pretul-item-card ${isUsed ? "is-used" : ""}">
           <h4>${escapeHtml(item.name)}</h4>
-          <p class="muted">Placeholder real price: <strong>${formatMoney(item.referencePrice)}</strong></p>
+          <p class="muted">Reference real price: <strong>${formatMoney(item.referencePrice)}</strong></p>
           <button
             class="pill-btn"
             type="button"
@@ -6675,6 +8129,7 @@ function setTriviaPlayingTeam(teamKey) {
   if (!["teamA", "teamB"].includes(teamKey)) {
     return;
   }
+  state.trivia.turnTeamKey = teamKey;
   const triviaRoundState = getOrCreateTriviaRoundState();
   triviaRoundState.teamKey = teamKey;
   enforceTriviaRoundTeamRestrictions();
@@ -6694,6 +8149,13 @@ function setTriviaSelectedCategory(categoryId) {
     return;
   }
   triviaRoundState.selectedCategoryId = categoryId;
+  triviaRoundState.selectedOptionIndex = -1;
+  triviaRoundState.lockedOptionIndex = -1;
+  triviaRoundState.resultChecked = false;
+  triviaRoundState.isCorrect = null;
+  triviaRoundState.lastDelta = 0;
+  triviaRoundState.resultCategoryId = "";
+  triviaRoundState.lastResult = "";
   renderTriviaControls();
   saveState("Trivia category selected.");
 }
@@ -6719,36 +8181,274 @@ function markTriviaCategoryUsed(categoryId) {
 }
 
 function resetTriviaUsedCategories() {
+  for (const roundState of Object.values(state.trivia.rounds)) {
+    const safeRound = sanitizeTriviaRoundState(roundState);
+    safeRound.usedCategoryIds = [];
+    safeRound.selectedCategoryId = state.trivia.categories[0]?.id || "";
+    safeRound.selectedOptionIndex = -1;
+    safeRound.lockedOptionIndex = -1;
+    safeRound.resultChecked = false;
+    safeRound.isCorrect = null;
+    safeRound.lastDelta = 0;
+    safeRound.resultCategoryId = "";
+    safeRound.lastResult = "";
+  }
+  state.trivia.turnTeamKey = "teamA";
   const triviaRoundState = getOrCreateTriviaRoundState();
+  triviaRoundState.teamKey = state.trivia.turnTeamKey;
   triviaRoundState.usedCategoryIds = [];
   triviaRoundState.selectedCategoryId = state.trivia.categories[0]?.id || "";
+  triviaRoundState.selectedOptionIndex = -1;
+  triviaRoundState.lockedOptionIndex = -1;
+  triviaRoundState.resultChecked = false;
+  triviaRoundState.isCorrect = null;
+  triviaRoundState.lastDelta = 0;
+  triviaRoundState.resultCategoryId = "";
+  triviaRoundState.lastResult = "";
+  if (elements.triviaBetAmountInput) {
+    elements.triviaBetAmountInput.value = "100";
+  }
+  setLiveRoundStep("topic-select", { persist: false });
   renderTriviaControls();
   setLastResultSummary("Trivia used categories reset for current round.");
   saveState("Trivia categories reset.");
 }
 
-function applyTriviaRoundResult(isCorrect) {
+function getTriviaCategoryOptions(category) {
+  const rawOptions = Array.isArray(category?.options)
+    ? category.options.map((option) => sanitizeString(option, "").trim()).filter((option) => option.length > 0)
+    : [];
+  if (rawOptions.length >= 2) {
+    return rawOptions;
+  }
+  const fallbackAnswer = sanitizeString(category?.answer, "Raspuns demo").trim() || "Raspuns demo";
+  return [fallbackAnswer, "Optiunea B", "Optiunea C", "Optiunea D"];
+}
+
+function getTriviaCorrectOptionIndex(category) {
+  const options = getTriviaCategoryOptions(category);
+  let index = Math.round(sanitizeNumber(category?.correctOptionIndex, -1));
+  if (index < 0 || index >= options.length) {
+    const answer = sanitizeString(category?.answer, "").trim();
+    index = options.findIndex((option) => normalizeTextToken(option) === normalizeTextToken(answer));
+  }
+  if (index < 0 || index >= options.length) {
+    index = 0;
+  }
+  return index;
+}
+
+function setTriviaBetAmount(rawBetAmount, options = {}) {
+  const persist = options.persist !== false;
+  const render = options.render !== false;
+  const triviaRoundState = getOrCreateTriviaRoundState();
+  const playingTeam = state.teams[triviaRoundState.teamKey];
+  const maxAllowedBet = getMaxBetAmount(playingTeam.money, "trivia");
+  const normalized = normalizeBetAmount(rawBetAmount);
+  const effective = maxAllowedBet > 0 ? Math.min(normalized, maxAllowedBet) : 0;
+  triviaRoundState.betAmount = effective;
+  if (elements.triviaBetAmountInput) {
+    elements.triviaBetAmountInput.value = String(effective);
+  }
+  if (render) {
+    renderTriviaControls();
+    renderShowUi();
+  }
+  if (persist) {
+    saveState("Trivia bet amount updated.");
+  }
+}
+
+function selectTriviaTopicFromOverlay(categoryId) {
+  const triviaRoundState = getOrCreateTriviaRoundState();
+  if (!state.trivia.categories.some((category) => category.id === categoryId)) {
+    return;
+  }
+  if (triviaRoundState.usedCategoryIds.includes(categoryId)) {
+    return;
+  }
+  triviaRoundState.selectedCategoryId = categoryId;
+  triviaRoundState.selectedOptionIndex = -1;
+  triviaRoundState.lockedOptionIndex = -1;
+  triviaRoundState.resultChecked = false;
+  triviaRoundState.isCorrect = null;
+  triviaRoundState.lastDelta = 0;
+  triviaRoundState.resultCategoryId = "";
+  triviaRoundState.lastResult = "";
+  setOverlayAnswerLocked(false, { persist: false });
+  setLiveRoundStep("bet-screen", { persist: false });
+  renderTriviaControls();
+  renderShowUi();
+  saveState(`Trivia topic selected: ${categoryId}.`);
+}
+
+function confirmTriviaBetAndContinue() {
+  const triviaRoundState = getOrCreateTriviaRoundState();
+  const category = state.trivia.categories.find((entry) => entry.id === triviaRoundState.selectedCategoryId);
+  if (!category) {
+    setLastResultSummary("Selecteaza un topic valid inainte de bet.");
+    renderShowUi();
+    saveState("Trivia bet confirm blocked: no topic selected.");
+    return;
+  }
+  setTriviaBetAmount(
+    elements.triviaBetAmountInput?.value || triviaRoundState.betAmount || 100,
+    { persist: false, render: false }
+  );
+  const playingTeam = state.teams[triviaRoundState.teamKey];
+  if (triviaRoundState.betAmount <= 0 || playingTeam.money <= 0) {
+    setLastResultSummary(`${playingTeam.name} nu poate paria in aceasta runda.`);
+    renderShowUi();
+    saveState("Trivia bet confirm blocked: no valid bet.");
+    return;
+  }
+  setOverlayAnswerLocked(false, { persist: false });
+  setLiveRoundStep("question-screen", { persist: false });
+  setLastResultSummary(`${playingTeam.name} confirmed bet ${formatMoney(triviaRoundState.betAmount)}.`);
+  renderShowUi();
+  saveState("Trivia bet confirmed.");
+}
+
+function startTriviaQuestionRound() {
+  const triviaRoundState = getOrCreateTriviaRoundState();
+  if (!triviaRoundState.selectedCategoryId) {
+    setLastResultSummary("Selecteaza topicul inainte de Start Round.");
+    renderShowUi();
+    saveState("Trivia start blocked: no topic.");
+    return;
+  }
+  resetTimer();
+  setOverlayAnswerLocked(false, { persist: false });
+  startTimer();
+  setLiveRoundStep("answer-screen", { persist: false });
+  setLastResultSummary("Trivia round started. Timer running.");
+  renderShowUi();
+  saveState("Trivia round started.");
+}
+
+function setTriviaSelectedOption(optionIndex) {
+  const triviaRoundState = getOrCreateTriviaRoundState();
+  const category = state.trivia.categories.find((entry) => entry.id === triviaRoundState.selectedCategoryId);
+  const options = getTriviaCategoryOptions(category);
+  const safeIndex = Math.round(sanitizeNumber(optionIndex, -1));
+  if (safeIndex < 0 || safeIndex >= options.length) {
+    return;
+  }
+  triviaRoundState.selectedOptionIndex = safeIndex;
+  renderShowUi();
+  saveState(`Trivia answer option selected: ${safeIndex + 1}.`);
+}
+
+function confirmTriviaAnswerFromOverlay() {
+  const triviaRoundState = getOrCreateTriviaRoundState();
+  const category = state.trivia.categories.find((entry) => entry.id === triviaRoundState.selectedCategoryId);
+  if (!category) {
+    setLastResultSummary("Topic invalid pentru answer confirm.");
+    renderShowUi();
+    saveState("Trivia answer confirm blocked: invalid topic.");
+    return;
+  }
+  const options = getTriviaCategoryOptions(category);
+  const selectedIndex = Math.round(sanitizeNumber(triviaRoundState.selectedOptionIndex, -1));
+  if (selectedIndex < 0 || selectedIndex >= options.length) {
+    setLastResultSummary("Alege un raspuns inainte sa confirmi.");
+    renderShowUi();
+    saveState("Trivia answer confirm blocked: no selected option.");
+    return;
+  }
+
+  triviaRoundState.lockedOptionIndex = selectedIndex;
+  setOverlayAnswerLocked(true, { persist: false });
+  pauseTimer();
+
+  const correctIndex = getTriviaCorrectOptionIndex(category);
+  const isCorrect = selectedIndex === correctIndex;
+  applyTriviaRoundResult(isCorrect, { selectedOptionIndex: selectedIndex });
+  setLiveRoundStep("result-screen", { persist: false });
+  setShowScreen("live-round", { persist: false });
+  renderShowUi();
+  saveState("Trivia answer confirmed.");
+}
+
+function advanceTriviaToNextTopic() {
+  if (isGameFlowComplete("trivia")) {
+    setLastResultSummary("Trivia complete. Returning to Game Select.");
+    finishCurrentGameAndReturn();
+    return;
+  }
+
+  const currentRoundState = getOrCreateTriviaRoundState();
+  const currentTeam = currentRoundState.teamKey === "teamA" ? "teamA" : "teamB";
+  const nextTeam = currentTeam === "teamA" ? "teamB" : "teamA";
+  const nextRound = state.progress.currentRound + 1;
+
+  state.trivia.turnTeamKey = nextTeam;
+  switchRoundContext("trivia", nextRound, { navigateToSection: false });
+  const nextRoundState = getOrCreateTriviaRoundState(nextRound);
+  nextRoundState.teamKey = nextTeam;
+  nextRoundState.betAmount = 100;
+  nextRoundState.selectedOptionIndex = -1;
+  nextRoundState.lockedOptionIndex = -1;
+  nextRoundState.resultChecked = false;
+  nextRoundState.isCorrect = null;
+  nextRoundState.lastDelta = 0;
+  nextRoundState.resultCategoryId = "";
+  nextRoundState.lastResult = "";
+
+  setOverlayAnswerLocked(false, { persist: false });
+  resetTimer();
+  if (elements.triviaBetAmountInput) {
+    elements.triviaBetAmountInput.value = "100";
+  }
+  setLiveRoundStep("topic-select", { persist: false });
+  setShowScreen("live-round", { persist: false });
+  setLastResultSummary(`Next Trivia round: ${state.teams[nextTeam].name} chooses the next topic.`);
+  renderAll();
+  saveState("Trivia moved to next topic.");
+}
+
+function applyTriviaRoundResult(isCorrect, options = {}) {
   if (state.progress.currentGame !== "trivia") {
     switchRoundContext("trivia", state.progress.currentRound, { navigateToSection: false });
   }
 
   const triviaRoundState = getOrCreateTriviaRoundState();
+  const selectedCategory = state.trivia.categories.find((entry) => entry.id === triviaRoundState.selectedCategoryId);
+  if (!selectedCategory) {
+    setLastResultSummary("Selecteaza un topic valid inainte de rezultat.");
+    renderTriviaControls();
+    renderShowUi();
+    saveState("Trivia result blocked: no category selected.");
+    return;
+  }
+
   const playingTeamKey = triviaRoundState.teamKey;
   const playingTeam = state.teams[playingTeamKey];
-  const bonus = Math.max(0, Math.round(sanitizeNumber(elements.triviaFixedBonusInput.value, state.trivia.fixedBonus)));
+  const bonus = Math.max(
+    0,
+    Math.round(sanitizeNumber(elements.triviaFixedBonusInput?.value, state.trivia.fixedBonus))
+  );
   state.trivia.fixedBonus = bonus;
 
-  const normalizedBet = normalizeBetAmount(elements.triviaBetAmountInput.value);
+  const sourceBet =
+    options.betAmount ??
+    triviaRoundState.betAmount ??
+    normalizeBetAmount(elements.triviaBetAmountInput?.value || 100);
+  const normalizedBet = normalizeBetAmount(sourceBet);
   const maxAllowedBet = getMaxBetAmount(playingTeam.money, "trivia");
   if (maxAllowedBet <= 0) {
     setLastResultSummary(`${playingTeam.name} cannot place Trivia bet now (max allowed is 0).`);
     renderTriviaControls();
+    renderShowUi();
     saveState("Trivia bet blocked.");
     return;
   }
 
   const effectiveBet = Math.min(normalizedBet, maxAllowedBet);
-  elements.triviaBetAmountInput.value = String(effectiveBet);
+  triviaRoundState.betAmount = effectiveBet;
+  if (elements.triviaBetAmountInput) {
+    elements.triviaBetAmountInput.value = String(effectiveBet);
+  }
   const teamDelta = isCorrect ? effectiveBet + bonus : -effectiveBet;
   pushResultUndoSnapshot("Trivia round result");
 
@@ -6757,20 +8457,30 @@ function applyTriviaRoundResult(isCorrect) {
     triviaRoundState.usedCategoryIds.push(selectedCategoryId);
   }
 
+  const selectedOptionIndex = Math.round(
+    sanitizeNumber(options.selectedOptionIndex, triviaRoundState.selectedOptionIndex)
+  );
+  triviaRoundState.lockedOptionIndex = selectedOptionIndex;
+  triviaRoundState.resultCategoryId = selectedCategoryId;
+  triviaRoundState.resultChecked = true;
+  triviaRoundState.isCorrect = Boolean(isCorrect);
+  triviaRoundState.lastDelta = teamDelta;
+  state.trivia.turnTeamKey = playingTeamKey === "teamA" ? "teamB" : "teamA";
+
   if (isCorrect) {
     const gain = effectiveBet + bonus;
     playingTeam.money += gain;
-    setLastResultSummary(
+    triviaRoundState.lastResult =
       `${playingTeam.name} answered Trivia correctly: +${formatMoney(bonus)} bonus +${formatMoney(
         effectiveBet
-      )} bet win. Total money ${formatMoney(playingTeam.money)}.`
-    );
+      )} bet win. Total money ${formatMoney(playingTeam.money)}.`;
+    setLastResultSummary(triviaRoundState.lastResult);
   } else {
     playingTeam.money = Math.max(0, playingTeam.money - effectiveBet);
-    setLastResultSummary(
+    triviaRoundState.lastResult =
       `${playingTeam.name} answered Trivia wrong: -${formatMoney(effectiveBet)} bet. ` +
-        `Total money ${formatMoney(playingTeam.money)}.`
-    );
+        `Total money ${formatMoney(playingTeam.money)}.`;
+    setLastResultSummary(triviaRoundState.lastResult);
   }
 
   applyRoundPlayerStats({
@@ -6797,17 +8507,13 @@ function applyTriviaRoundResult(isCorrect) {
         : null
   });
 
-  const nextAvailable = state.trivia.categories.find(
-    (category) => !triviaRoundState.usedCategoryIds.includes(category.id)
-  );
-  triviaRoundState.selectedCategoryId = nextAvailable?.id || "";
-
   enforceTriviaRoundTeamRestrictions();
   saveCurrentRoundSnapshot();
   renderTeams();
   renderRoundSelection();
   renderBettingInfo();
   renderTriviaControls();
+  renderShowUi();
   saveState(isCorrect ? "Trivia correct payout applied." : "Trivia wrong payout applied.");
 }
 
@@ -7048,6 +8754,9 @@ function switchRoundContext(nextGameId, nextRound, options = {}) {
   state.progress.currentGame = nextGameId;
   state.progress.currentRound = Math.max(1, Math.round(sanitizeNumber(nextRound, 1)));
   state.roundSelection.locked = false;
+  ensureShowUiState();
+  state.showUi.liveRoundStep = getDefaultFlowStateId(nextGameId);
+  state.showUi.answerLocked = false;
 
   loadCurrentRoundSnapshot();
 
@@ -7112,6 +8821,13 @@ function resetMoney() {
 
 function resetCurrentGame() {
   const currentGameId = state.progress.currentGame;
+  if (currentGameId === "trivia") {
+    state.trivia.rounds = {};
+    state.trivia.turnTeamKey = "teamA";
+    if (elements.triviaBetAmountInput) {
+      elements.triviaBetAmountInput.value = "100";
+    }
+  }
   for (const key of Object.keys(state.roundSelection.history)) {
     if (key.startsWith(`${currentGameId}::`)) {
       delete state.roundSelection.history[key];
@@ -7806,6 +9522,35 @@ function bindEvents() {
       resetSession();
     });
   }
+  if (elements.adminApplyTimerBtn) {
+    elements.adminApplyTimerBtn.addEventListener("click", () => {
+      applyAdminTimerOverride();
+    });
+  }
+  if (elements.adminPauseTimerBtn) {
+    elements.adminPauseTimerBtn.addEventListener("click", () => {
+      pauseTimer();
+      setLastResultSummary("Timer paused from host panel.");
+      saveState("Admin timer paused.");
+    });
+  }
+  if (elements.adminResetTimerBtn) {
+    elements.adminResetTimerBtn.addEventListener("click", () => {
+      resetTimer();
+      setLastResultSummary("Timer reset from host panel.");
+      saveState("Admin timer reset.");
+    });
+  }
+  if (elements.adminFixTeamSelect) {
+    elements.adminFixTeamSelect.addEventListener("change", () => {
+      renderAdminFixPlayerOptions();
+    });
+  }
+  if (elements.adminApplyPlayerFixBtn) {
+    elements.adminApplyPlayerFixBtn.addEventListener("click", () => {
+      applyAdminPlayerFix();
+    });
+  }
   if (elements.adminApplySummaryBtn) {
     elements.adminApplySummaryBtn.addEventListener("click", () => {
       const summaryText = String(elements.adminSummaryInput?.value || "").trim();
@@ -8374,6 +10119,7 @@ function bindEvents() {
 
 function init() {
   state = sanitizeState(state);
+  ensureShowUiState();
   state.showUi.hostPanelOpen = false;
   state.showUi.adminAdvancedOpen = false;
   if (state.activeSection === "manual-match" && !isManualMatchGame(state.progress.currentGame)) {
