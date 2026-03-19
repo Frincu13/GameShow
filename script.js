@@ -7,6 +7,7 @@ const SAMSAR_STANDARD_BET = 100;
 const RESULT_UNDO_LIMIT = 30;
 const SAVE_EXPORT_FORMAT_VERSION = 1;
 const CURSE_RACE_TICK_MS = 520;
+const CURSE_RACE_FINISH_REVEAL_DELAY_MS = 1500;
 
 const SECTION_IDS = [
   "home",
@@ -59,7 +60,7 @@ const STANDARD_FIXED_BONUS_BY_GAME = {
   "pretul-corect": 50,
   "cel-mai-bun-samsar": 100,
   "beer-pong": 100,
-  "shot-fake": 0,
+  "shot-fake": 100,
   "curse-de-cai": 0
 };
 const GAME_ROUND_LIMITS = {
@@ -273,21 +274,21 @@ const GAME_FLOW_DEFINITIONS = {
       {
         id: "sidebet-setup",
         label: "Side Bet Setup",
-        description: "Prepare base bets, side bets, and multiplier for confirmed lineup.",
-        visible: ["side bet list", "multiplier", "lineup snapshot"],
+        description: "Prepare base bets and side bets for confirmed lineup.",
+        visible: ["side bet list", "active-player multipliers", "lineup snapshot"],
         actions: ["set bets", "add/remove side bets"]
       },
       {
         id: "live-round",
         label: "Live Round",
-        description: "Run live round with transfer preview.",
-        visible: ["special transfer preview", "scoreline"],
+        description: "Run live round with payout preview.",
+        visible: ["bet x active-opponents preview", "scoreline"],
         actions: ["continue to result"]
       },
       {
         id: "result-screen",
         label: "Result Screen",
-        description: "Lock answer and apply bet-only settlement.",
+        description: "Lock answer and apply settlement (winner bonus + bet multiplier + side bets).",
         visible: ["net preview", "settlement controls"],
         actions: ["apply settlement", "next round / finish game"],
         payout: true
@@ -749,7 +750,7 @@ const SECTION_NOTES_DEFAULTS = {
   samsarRules:
     "- Joc in 6 runde, fiecare cu persona si cerinte clare.\n- Fiecare echipa trimite un jucator activ.\n- Scor mai mare castiga, scor egal = draw.\n- Payout standard Samsar cu limita de bet a jocului.",
   manualMatchups:
-    "Guess the Right Order - team vs team, payout standard, draw permis.\nBeer Pong - team vs team, payout standard, draw permis.\nShot Fake - bet-only, draw permis, side bets + regula x * jucatori activi adversi.",
+    "Guess the Right Order - team vs team, payout standard, draw permis.\nBeer Pong - team vs team, payout standard, draw permis.\nShot Fake - ambele echipe pot paria, castigatorul primeste bonus fix + bet x jucatori activi adversi, draw permis, side bets.",
   curseBets:
     "- Bet-only mode, fara bonus fix.\n- Multi-bet permis pe mai multi cai.\n- Cursa ruleaza automat prin card draw.\n- Doar pariul pe calul castigator plateste x4.\n- Restul pariurilor se pierd.\n- Limita de echipa ramane 30%, rotunjit la 10."
 };
@@ -1115,7 +1116,8 @@ let resultUndoStack = [];
 let curseRaceRuntime = {
   intervalId: null,
   isRunning: false,
-  roundKey: ""
+  roundKey: "",
+  finishTimeoutId: null
 };
 
 function cloneDefaultState() {
@@ -4095,9 +4097,9 @@ function getGameIntroRules(gameId) {
   }
   if (gameId === "shot-fake") {
     return [
-      "Bet-only mode with no fixed round bonus.",
-      "Round can include multiple side bets.",
-      "Special transfer uses x * active players from both teams in current game lineup.",
+      "Team-vs-team with winner bonus + winning bet multiplied by active opponents.",
+      "Both teams can place bets each round.",
+      "Round can include multiple side bets and optional manual adjust.",
       `${getGameRoundLimit("shot-fake")} rounds total (3 per side).`
     ];
   }
@@ -4770,7 +4772,7 @@ function buildLegacyLiveRoundContent(gameId, options = {}) {
     )} ${formatMoney(maxBetB)}`;
     const shotFakeLine =
       manualGameId === "shot-fake"
-        ? `<p class="show-round-copy">Shot Fake transfer preview: ${formatMoney(settlement.specialTransfer)} (x${roundState.shotFake.multiplier}, active ${settlement.activeCountA} vs ${settlement.activeCountB}).</p>`
+        ? `<p class="show-round-copy">Shot Fake main payout preview: ${formatMoney(settlement.winnerBetPayout)} | Team 1 win bet x${settlement.shotFakeBetMultiplierTeamA}, Team 2 win bet x${settlement.shotFakeBetMultiplierTeamB}.</p>`
         : "";
     const sideBetsBlock =
       manualGameId === "shot-fake"
@@ -4846,8 +4848,11 @@ function buildLegacyLiveRoundContent(gameId, options = {}) {
               ? `
             <div class="show-mini-grid">
               <div>
-                <label class="show-info-label" for="showShotFakeMultiplier">Multiplier x</label>
-                <input id="showShotFakeMultiplier" class="text-input compact-input" type="number" min="0" step="1" value="${roundState.shotFake.multiplier}" data-show-shot-multiplier>
+                <label class="show-info-label">Auto payout multiplier</label>
+                <p class="show-info-sub">If ${escapeHtml(state.teams.teamA.name)} wins: x${settlement.shotFakeBetMultiplierTeamA} | If ${escapeHtml(
+                  state.teams.teamB.name
+                )} wins: x${settlement.shotFakeBetMultiplierTeamB}</p>
+                <p class="show-info-sub">Winner bonus: +${formatMoney(settlement.fixedBonus)}</p>
               </div>
               <div>
                 <label class="show-info-label" for="showShotAdjustA">Manual adjust Team 1</label>
@@ -5758,9 +5763,11 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
             ${renderSetupParticipantPicker("manual", "teamB", roundState.participantsTeamB)}
           </div>
           <article class="show-stage-mini-card">
-            <p class="show-info-label">Multiplier (x)</p>
-            <input class="text-input compact-input" type="number" min="0" step="1" value="${roundState.shotFake.multiplier}" data-show-shot-multiplier>
-            <p class="show-round-copy">Special transfer preview: ${formatMoney(settlement.specialTransfer)}.</p>
+            <p class="show-info-label">Auto payout multipliers</p>
+            <p class="show-round-copy">If ${escapeHtml(state.teams.teamA.name)} wins: bet x${settlement.shotFakeBetMultiplierTeamA}.</p>
+            <p class="show-round-copy">If ${escapeHtml(state.teams.teamB.name)} wins: bet x${settlement.shotFakeBetMultiplierTeamB}.</p>
+            <p class="show-round-copy">Winner bonus: +${formatMoney(settlement.fixedBonus)}.</p>
+            <p class="show-round-copy">Current winner payout preview: ${formatMoney(settlement.winnerBetPayout)}.</p>
           </article>
           <div class="show-sidebet-list">
             ${roundState.shotFake.sideBets
@@ -5794,7 +5801,7 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
           <p class="show-round-title">${escapeHtml(state.teams.teamA.name)} vs ${escapeHtml(state.teams.teamB.name)}</p>
           <p class="show-round-copy">${
             manualGameId === "shot-fake"
-              ? `Bet-only round. Transfer preview: ${formatMoney(settlement.specialTransfer)}.`
+              ? `Winner bonus +${formatMoney(settlement.fixedBonus)}. Main payout preview: ${formatMoney(settlement.winnerBetPayout)}.`
               : "Play the live challenge, then move to Result Screen."
           }</p>
         </section>
@@ -6988,7 +6995,14 @@ function syncManualOverlayIntoHostInputs() {
     elements.manualBetTeamBInput.value = String(roundState.betTeamB);
   }
   if (elements.shotFakeMultiplierInput) {
-    elements.shotFakeMultiplierInput.value = String(roundState.shotFake.multiplier);
+    const settlement = calculateManualMatchSettlement(gameId, roundState);
+    const previewMultiplier =
+      roundState.winner === "teamA"
+        ? settlement.shotFakeBetMultiplierTeamA
+        : roundState.winner === "teamB"
+          ? settlement.shotFakeBetMultiplierTeamB
+          : Math.max(settlement.shotFakeBetMultiplierTeamA, settlement.shotFakeBetMultiplierTeamB);
+    elements.shotFakeMultiplierInput.value = String(previewMultiplier);
   }
   if (elements.shotFakeManualAdjustTeamAInput) {
     elements.shotFakeManualAdjustTeamAInput.value = String(roundState.shotFake.manualAdjustTeamA);
@@ -7903,10 +7917,12 @@ function renderSettingsRulesSnapshot() {
   elements.settingsBonusesLine.textContent =
     `Fixed bonuses: Trivia +${formatMoney(getStandardFixedBonus("trivia"))}, Guess the Right Order +${formatMoney(
       getStandardFixedBonus("guess-right-order")
-    )}, Pretul corect +${formatMoney(getStandardFixedBonus("pretul-corect"))}, Cel mai bun samsar +${formatMoney(
+    )}, Pretul corect +${formatMoney(getStandardFixedBonus("pretul-corect"))}, Shot Fake +${formatMoney(
+      getStandardFixedBonus("shot-fake")
+    )}, Cel mai bun samsar +${formatMoney(
       getStandardFixedBonus("cel-mai-bun-samsar")
     )}, Beer Pong +${formatMoney(getStandardFixedBonus("beer-pong"))}. ` +
-    "Shot Fake and Curse de cai are bet-only (no fixed bonus).";
+    "Curse de cai remains bet-only (no fixed bonus).";
   elements.settingsTriviaRuleLine.textContent =
     "Trivia de grup: one-team-per-round with automatic turn switch. Active team picks a multiple-choice topic, places bet, answers, and result is auto-checked.";
   elements.settingsPretulRuleLine.textContent =
@@ -7916,7 +7932,7 @@ function renderSettingsRulesSnapshot() {
   elements.settingsSamsarRuleLine.textContent =
     "Cel mai bun samsar: 6 rounds cu persona/cerinte editabile, no link fields, one duelist per team, higher score wins, equal score draw, payout standard + fixed bonus.";
   elements.settingsShotFakeRuleLine.textContent =
-    "Shot Fake: bet-only team-vs-team mode with no fixed bonus, draw allowed, multiple side bets, and special x * active opponents transfer.";
+    "Shot Fake: team-vs-team mode, both teams can bet, winner gets fixed bonus + winning bet x active opponents, draw allowed, plus side bets/manual adjust.";
   elements.settingsCurseRuleLine.textContent =
     "Curse de cai: bet-only race mode, multi-bet on horses enabled, only winning-horse bet pays x4, other horse bets are lost, winner is auto-detected.";
   elements.settingsSelectionRuleLine.textContent =
@@ -9329,26 +9345,36 @@ function calculateManualMatchSettlement(gameId, roundState) {
     return paid;
   };
 
-  const fixedBonus = gameId === "shot-fake" ? 0 : getStandardFixedBonus(gameId);
-  if (winner === "teamA") {
-    addToTeam("teamA", fixedBonus + effectiveBetA);
-    deductFromTeam("teamB", effectiveBetB);
-  } else if (winner === "teamB") {
-    addToTeam("teamB", fixedBonus + effectiveBetB);
-    deductFromTeam("teamA", effectiveBetA);
-  }
-
   const activeCountA = countActiveWithJoker("teamA");
   const activeCountB = countActiveWithJoker("teamB");
+  const shotFakeBetMultiplierTeamA = Math.max(1, activeCountB);
+  const shotFakeBetMultiplierTeamB = Math.max(1, activeCountA);
+  const fixedBonus = getStandardFixedBonus(gameId);
+  let winnerBetMultiplier = 0;
+  let winnerBetPayout = 0;
   let specialTransfer = 0;
 
-  if (gameId === "shot-fake") {
+  if (gameId !== "shot-fake") {
     if (winner === "teamA") {
-      const amount = normalizedRoundState.shotFake.multiplier * activeCountA * activeCountB;
-      specialTransfer = transferBetweenTeams("teamB", "teamA", amount);
+      addToTeam("teamA", fixedBonus + effectiveBetA);
+      deductFromTeam("teamB", effectiveBetB);
     } else if (winner === "teamB") {
-      const amount = normalizedRoundState.shotFake.multiplier * activeCountA * activeCountB;
-      specialTransfer = transferBetweenTeams("teamA", "teamB", amount);
+      addToTeam("teamB", fixedBonus + effectiveBetB);
+      deductFromTeam("teamA", effectiveBetA);
+    }
+  } else {
+    if (winner === "teamA") {
+      winnerBetMultiplier = shotFakeBetMultiplierTeamA;
+      winnerBetPayout = effectiveBetA * winnerBetMultiplier;
+      specialTransfer = winnerBetPayout;
+      addToTeam("teamA", fixedBonus + winnerBetPayout);
+      deductFromTeam("teamB", effectiveBetB);
+    } else if (winner === "teamB") {
+      winnerBetMultiplier = shotFakeBetMultiplierTeamB;
+      winnerBetPayout = effectiveBetB * winnerBetMultiplier;
+      specialTransfer = winnerBetPayout;
+      addToTeam("teamB", fixedBonus + winnerBetPayout);
+      deductFromTeam("teamA", effectiveBetA);
     }
 
     for (const sideBet of normalizedRoundState.shotFake.sideBets) {
@@ -9380,6 +9406,10 @@ function calculateManualMatchSettlement(gameId, roundState) {
     effectiveBetB,
     activeCountA,
     activeCountB,
+    shotFakeBetMultiplierTeamA,
+    shotFakeBetMultiplierTeamB,
+    winnerBetMultiplier,
+    winnerBetPayout,
     specialTransfer,
     deltaA,
     deltaB,
@@ -9494,9 +9524,12 @@ function renderManualMatchControls() {
   elements.manualBetTeamAInput.value = String(settlement.effectiveBetA);
   elements.manualBetTeamBInput.value = String(settlement.effectiveBetB);
   if (gameId === "shot-fake") {
+    const fixedBonus = getStandardFixedBonus("shot-fake");
     elements.manualBetRuleInfo.textContent =
       `Shot Fake max bet: Team 1 ${formatMoney(settlement.maxBetA)}, Team 2 ${formatMoney(settlement.maxBetB)}. ` +
-      "Draw is allowed. Bet-only mode (no fixed bonus) with base bets + side bets + special x * active opponents transfer.";
+      `Draw is allowed. Winner gets +${formatMoney(fixedBonus)} bonus and winning bet x active opponents (` +
+      `Team 1 win: x${settlement.shotFakeBetMultiplierTeamA}, Team 2 win: x${settlement.shotFakeBetMultiplierTeamB}). ` +
+      "Both teams can bet. Side bets and manual adjust still apply.";
   } else {
     const fixedBonus = getStandardFixedBonus(gameId);
     elements.manualBetRuleInfo.textContent =
@@ -9518,7 +9551,15 @@ function renderManualMatchControls() {
 
   if (showShotFake) {
     if (elements.shotFakeMultiplierInput) {
-      elements.shotFakeMultiplierInput.value = String(roundState.shotFake.multiplier);
+      const previewMultiplier =
+        roundState.winner === "teamA"
+          ? settlement.shotFakeBetMultiplierTeamA
+          : roundState.winner === "teamB"
+            ? settlement.shotFakeBetMultiplierTeamB
+            : Math.max(settlement.shotFakeBetMultiplierTeamA, settlement.shotFakeBetMultiplierTeamB);
+      elements.shotFakeMultiplierInput.value = String(previewMultiplier);
+      elements.shotFakeMultiplierInput.disabled = true;
+      elements.shotFakeMultiplierInput.title = "Auto from active players in opposite team.";
     }
     if (elements.shotFakeManualAdjustTeamAInput) {
       elements.shotFakeManualAdjustTeamAInput.value = String(roundState.shotFake.manualAdjustTeamA);
@@ -9531,11 +9572,15 @@ function renderManualMatchControls() {
       const previewDeltaA = settlement.deltaA >= 0 ? `+${formatMoney(settlement.deltaA)}` : `-${formatMoney(Math.abs(settlement.deltaA))}`;
       const previewDeltaB = settlement.deltaB >= 0 ? `+${formatMoney(settlement.deltaB)}` : `-${formatMoney(Math.abs(settlement.deltaB))}`;
       elements.shotFakeRulePreview.textContent =
-        `Special transfer preview: ${formatMoney(settlement.specialTransfer)} based on active counts ` +
-        `(${settlement.activeCountA} vs ${settlement.activeCountB}) and x=${roundState.shotFake.multiplier}. ` +
+        `Main payout preview: Team 1 win -> bet x${settlement.shotFakeBetMultiplierTeamA}, Team 2 win -> bet x${settlement.shotFakeBetMultiplierTeamB}. ` +
+        `Current winner payout: ${formatMoney(settlement.winnerBetPayout)} plus fixed bonus ${formatMoney(settlement.fixedBonus)}. ` +
         `Net preview: Team 1 ${previewDeltaA}, Team 2 ${previewDeltaB}.`;
     }
   } else if (elements.shotFakeRulePreview) {
+    if (elements.shotFakeMultiplierInput) {
+      elements.shotFakeMultiplierInput.disabled = false;
+      elements.shotFakeMultiplierInput.title = "";
+    }
     elements.shotFakeRulePreview.textContent =
       "Shot Fake preview appears when Shot Fake is selected from the game dropdown.";
   }
@@ -9799,10 +9844,6 @@ function applyManualMatchRoundResult() {
   roundState.betTeamB = normalizeBetAmount(elements.manualBetTeamBInput?.value);
 
   if (gameId === "shot-fake") {
-    roundState.shotFake.multiplier = Math.max(
-      0,
-      Math.round(sanitizeNumber(elements.shotFakeMultiplierInput?.value, roundState.shotFake.multiplier))
-    );
     roundState.shotFake.manualAdjustTeamA = Math.round(
       sanitizeNumber(elements.shotFakeManualAdjustTeamAInput?.value, roundState.shotFake.manualAdjustTeamA)
     );
@@ -9834,7 +9875,7 @@ function applyManualMatchRoundResult() {
   const deltaLabelB = settlement.deltaB >= 0 ? `+${formatMoney(settlement.deltaB)}` : `-${formatMoney(Math.abs(settlement.deltaB))}`;
   const shotFakeSuffix =
     gameId === "shot-fake"
-      ? ` Special transfer: ${formatMoney(settlement.specialTransfer)} (${settlement.activeCountA} vs ${settlement.activeCountB} active).`
+      ? ` Main bet payout: ${formatMoney(settlement.winnerBetPayout)} (Team 1 win x${settlement.shotFakeBetMultiplierTeamA}, Team 2 win x${settlement.shotFakeBetMultiplierTeamB}; active ${settlement.activeCountA} vs ${settlement.activeCountB}).`
       : "";
   const standardBonusSuffix =
     settlement.fixedBonus > 0 ? ` Fixed winner bonus: ${formatMoney(settlement.fixedBonus)}.` : "";
@@ -9906,7 +9947,11 @@ function stopCurseRaceSimulation(options = {}) {
   if (Number.isFinite(curseRaceRuntime.intervalId)) {
     window.clearInterval(curseRaceRuntime.intervalId);
   }
+  if (Number.isFinite(curseRaceRuntime.finishTimeoutId)) {
+    window.clearTimeout(curseRaceRuntime.finishTimeoutId);
+  }
   curseRaceRuntime.intervalId = null;
+  curseRaceRuntime.finishTimeoutId = null;
   curseRaceRuntime.isRunning = false;
   curseRaceRuntime.roundKey = "";
 
@@ -10537,17 +10582,35 @@ function runCurseRaceAuto() {
 
   const finishRace = (activeRoundState, saveReason) => {
     const winnerHorse = state.curseRace.horses.find((horse) => horse.id === activeRoundState.winnerHorseId);
+    const trackLength = Math.max(1, Math.round(sanitizeNumber(state.curseRace.trackLength, 1)));
+    if (winnerHorse?.id) {
+      activeRoundState.positions[winnerHorse.id] = Math.max(
+        trackLength,
+        Math.round(sanitizeNumber(activeRoundState.positions?.[winnerHorse.id], trackLength))
+      );
+    }
     const headline = winnerHorse
       ? `Race finished: ${winnerHorse.symbol} ${winnerHorse.name} won after ${turn} card draws.`
       : `Race finished after ${turn} draws.`;
     stopCurseRaceSimulation({ render: false, persist: false });
+    renderRaceFrame(activeRoundState, false);
     setLastResultSummary(headline);
-    if (state.progress.currentGame === "curse-de-cai") {
-      setLiveRoundStep("winner-screen", { persist: false });
-      setShowScreen("live-round", { persist: false });
-    }
-    renderCurseControls();
-    saveState(saveReason);
+    curseRaceRuntime.finishTimeoutId = window.setTimeout(() => {
+      curseRaceRuntime.finishTimeoutId = null;
+      const stillSameGame = state.progress.currentGame === "curse-de-cai";
+      const stillSameRound = getCurseRoundKey(state.progress.currentRound) === roundKey;
+      if (!stillSameGame || !stillSameRound) {
+        renderCurseControls();
+        saveState(saveReason);
+        return;
+      }
+      if (state.progress.currentGame === "curse-de-cai") {
+        setLiveRoundStep("winner-screen", { persist: false });
+        setShowScreen("live-round", { persist: false });
+      }
+      renderCurseControls();
+      saveState(saveReason);
+    }, CURSE_RACE_FINISH_REVEAL_DELAY_MS);
   };
 
   curseRaceRuntime.intervalId = null;
