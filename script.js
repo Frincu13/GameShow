@@ -3483,16 +3483,16 @@ function getTeamLineupHudHtml(teamKey) {
   return `<div class="show-team-chip-list">${chips}</div>`;
 }
 
-function renderGameStageTeamPanel(teamKey) {
+function renderLiveRoundTeamSummary(teamKey) {
   const team = state.teams[teamKey];
   return `
-    <aside class="show-game-stage-team show-game-stage-team-${teamKey}">
+    <article class="show-live-team-compact show-live-team-${teamKey}">
       <p class="show-info-label">${escapeHtml(team.name)}</p>
-      <p class="show-game-stage-team-money">${formatMoney(team.money)}</p>
-      <div class="show-game-stage-lineup">
+      <p class="show-live-team-money">${formatMoney(team.money)}</p>
+      <div class="show-live-team-lineup">
         ${getTeamLineupHudHtml(teamKey)}
       </div>
-    </aside>
+    </article>
   `;
 }
 
@@ -3597,16 +3597,16 @@ function renderShowStageControls(gameId = state.progress.currentGame, liveStep =
   const infoLabel = activeGameTeam
     ? `One-team mode: ${state.teams[activeGameTeam].name}`
     : "Team-vs-team mode";
-  const showTimerCore = !(gameId === "trivia" && liveStep === "question-screen");
+  const compactStatus = `${getGameLabel(gameId)} | Round ${state.progress.currentRound}`;
+  const timerTone = state.timer.remaining <= 10 ? "is-danger" : "";
 
   return `
     <div class="show-control-strip">
-      <p class="show-control-note">${escapeHtml(infoLabel)}</p>
-      ${
-        showTimerCore
-          ? `<div class="show-live-timer-core" data-show-live-timer-core>${formatTimer(state.timer.remaining)}</div>`
-          : ""
-      }
+      <div class="show-control-context">
+        <p class="show-control-subnote">${escapeHtml(compactStatus)}</p>
+        <p class="show-control-note">${escapeHtml(infoLabel)}</p>
+      </div>
+      <div class="show-live-timer-core ${timerTone}" data-show-live-timer-core>${formatTimer(state.timer.remaining)}</div>
       <div class="show-control-buttons">
         <button class="pill-btn" type="button" data-show-action="timer-start">Start</button>
         <button class="pill-btn" type="button" data-show-action="timer-pause">Pause</button>
@@ -4647,13 +4647,9 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
 
     if (liveStep === "question-screen") {
       return `
-        <div class="show-round-card show-trivia-qa-stage">
+        <section class="show-trivia-qa-stage">
           <p class="show-info-label">Question Round</p>
           <p class="show-round-title">${escapeHtml(category?.title || "No topic selected")}</p>
-          <div class="show-trivia-timer-hero ${state.timer.remaining <= 10 ? "is-danger" : ""}" data-show-trivia-timer-hero>
-            <span>Time left</span>
-            <strong data-show-trivia-timer-value>${formatTimer(state.timer.remaining)}</strong>
-          </div>
           <p class="show-round-copy show-trivia-question">${escapeHtml(category?.question || "Select a topic to continue.")}</p>
           <div class="show-trivia-options-grid">
             ${options
@@ -4668,7 +4664,7 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
               })
               .join("")}
           </div>
-        </div>
+        </section>
       `;
     }
 
@@ -5006,15 +5002,17 @@ function buildLiveRoundContent(gameId) {
   const stageActions = buildLiveRoundQuickActions(gameId, liveStep);
   return `
     <section class="show-live-screen show-shared-game-stage" data-game-stage="${escapeHtml(gameId)}">
-      <div class="show-game-stage-grid">
-        ${renderGameStageTeamPanel("teamA")}
-        <section class="show-game-stage-center">
+      <div class="show-live-top-layout">
+        ${renderLiveRoundTeamSummary("teamA")}
+        <section class="show-live-control-hub">
           ${stageControls}
-          ${stageExperience}
         </section>
-        ${renderGameStageTeamPanel("teamB")}
+        ${renderLiveRoundTeamSummary("teamB")}
       </div>
-      <footer class="show-game-stage-actions">
+      <section class="show-live-stage-main">
+        ${stageExperience}
+      </section>
+      <footer class="show-live-bottom-actions">
         ${stageActions}
       </footer>
     </section>
@@ -6383,13 +6381,10 @@ function renderTimer() {
     elements.showStageTimer.textContent = formatTimer(state.timer.remaining);
   }
   if (elements.showScreenContent) {
-    const triviaTimerValue = elements.showScreenContent.querySelector("[data-show-trivia-timer-value]");
-    if (triviaTimerValue) {
-      triviaTimerValue.textContent = formatTimer(state.timer.remaining);
-    }
-    const triviaTimerHero = elements.showScreenContent.querySelector("[data-show-trivia-timer-hero]");
-    if (triviaTimerHero) {
-      triviaTimerHero.classList.toggle("is-danger", state.timer.remaining <= 10);
+    const liveTimerCore = elements.showScreenContent.querySelector("[data-show-live-timer-core]");
+    if (liveTimerCore) {
+      liveTimerCore.textContent = formatTimer(state.timer.remaining);
+      liveTimerCore.classList.toggle("is-danger", state.timer.remaining <= 10);
     }
     const quickRemainingInput = elements.showScreenContent.querySelector("[data-show-timer-remaining]");
     if (quickRemainingInput) {
