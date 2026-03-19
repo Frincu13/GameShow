@@ -14,7 +14,6 @@ Static host dashboard architecture for a game show with 2 teams.
 - bench / unavailable statuses for players
 - game lineup lock to prevent accidental changes
 - up to `6` active players per team per game lineup
-- persistent round timer (start, pause, reset, duration)
 - undo last result (restores money, round history snapshot, and player stats)
 - export/import full save in JSON format
 - fullscreen toggle for TV/laptop host mode

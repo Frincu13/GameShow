@@ -6,6 +6,7 @@ const BET_ROUNDING_STEP = 10;
 const SAMSAR_STANDARD_BET = 100;
 const RESULT_UNDO_LIMIT = 30;
 const SAVE_EXPORT_FORMAT_VERSION = 1;
+const CURSE_RACE_TICK_MS = 800;
 
 const SECTION_IDS = [
   "home",
@@ -91,8 +92,8 @@ const GAME_FLOW_DEFINITIONS = {
       {
         id: "question-screen",
         label: "Question + Answers",
-        description: "Question stays visible while timer runs and team locks one answer.",
-        visible: ["question prompt", "multiple choice options", "live timer", "confirm answer"],
+        description: "Question stays visible while team locks one answer.",
+        visible: ["question prompt", "multiple choice options", "confirm answer"],
         actions: ["pick option", "confirm/lock answer"],
         payout: true
       },
@@ -126,23 +127,9 @@ const GAME_FLOW_DEFINITIONS = {
       },
       {
         id: "product-reveal",
-        label: "Product Reveal",
-        description: "Reveal product card before answer entry.",
-        visible: ["product card", "round context"],
-        actions: ["continue to answers"]
-      },
-      {
-        id: "answer-entry",
-        label: "Answer Entry",
-        description: "Both teams submit their estimated prices.",
-        visible: ["team answers"],
-        actions: ["input estimates", "continue"]
-      },
-      {
-        id: "price-reveal",
-        label: "Price Reveal",
-        description: "Reveal real price and preview distances.",
-        visible: ["real price", "distance preview"],
+        label: "Product + Guesses",
+        description: "Show product image and enter both guesses on the same stage.",
+        visible: ["product image", "both guesses", "real price input"],
         actions: ["auto winner + payout"]
       },
       {
@@ -200,8 +187,8 @@ const GAME_FLOW_DEFINITIONS = {
         id: "live-duel",
         label: "Live Duel",
         description: "Show persona, pick duelists, and run the live 1v1.",
-        visible: ["persona card", "duelist selectors", "timer"],
-        actions: ["select duelists", "timer control", "continue to result"]
+        visible: ["persona card", "duelist selectors"],
+        actions: ["select duelists", "continue to result"]
       },
       {
         id: "result-screen",
@@ -229,8 +216,8 @@ const GAME_FLOW_DEFINITIONS = {
         id: "live-round",
         label: "Live Round",
         description: "Play the order challenge live.",
-        visible: ["timer", "challenge focus"],
-        actions: ["timer control", "continue to result"]
+        visible: ["challenge focus"],
+        actions: ["continue to result"]
       },
       {
         id: "result-screen",
@@ -257,9 +244,9 @@ const GAME_FLOW_DEFINITIONS = {
       {
         id: "live-round",
         label: "Live Round",
-        description: "Play live with timer and visible scoreline.",
-        visible: ["timer", "matchup focus"],
-        actions: ["timer control", "continue to result"]
+        description: "Play live with visible scoreline.",
+        visible: ["matchup focus"],
+        actions: ["continue to result"]
       },
       {
         id: "result-screen",
@@ -287,8 +274,8 @@ const GAME_FLOW_DEFINITIONS = {
         id: "live-round",
         label: "Live Round",
         description: "Run live round with transfer preview.",
-        visible: ["special transfer preview", "timer", "scoreline"],
-        actions: ["timer control", "continue to result"]
+        visible: ["special transfer preview", "scoreline"],
+        actions: ["continue to result"]
       },
       {
         id: "result-screen",
@@ -315,16 +302,16 @@ const GAME_FLOW_DEFINITIONS = {
       {
         id: "bet-screen",
         label: "Bet Screen",
-        description: "Set multi-bets and bettors for both teams.",
-        visible: ["multi-bet board", "bettor selectors"],
+        description: "Set multi-bets for both teams before the race starts.",
+        visible: ["multi-bet board", "team totals"],
         actions: ["set bets", "continue to race"]
       },
       {
         id: "race-screen",
         label: "Race Screen",
-        description: "Move horses manually on track and handle push-back.",
-        visible: ["visual track", "move controls"],
-        actions: ["move horse", "timer control"]
+        description: "Run automatic race simulation with card draws and push-back logic.",
+        visible: ["visual track", "draw log", "leader"],
+        actions: ["run race"]
       },
       {
         id: "winner-screen",
@@ -698,52 +685,43 @@ const DEFAULT_SAMSAR_ROUNDS = [
 const DEFAULT_CURSE_HORSES = [
   {
     id: "horse-1",
-    name: "Storm Arrow",
-    symbol: ">>",
+    name: "Thunder Hoof",
+    symbol: "🐎",
     story:
-      "Storm Arrow porneste mai lent, dar recupereaza puternic in a doua jumatate a cursei. " +
-      "The horse is known for steady rhythm and late acceleration."
+      "Thunder Hoof pleaca exploziv si se simte excelent pe starturile rapide. " +
+      "Daca prinde culoar liber, poate inchide cursa in cateva carti."
   },
   {
     id: "horse-2",
-    name: "Crimson Dust",
-    symbol: "**",
+    name: "Blaze Runner",
+    symbol: "🔥",
     story:
-      "Crimson Dust forteaza startul si castiga rapid teren in primele mutari. " +
-      "The horse can lose momentum near the finish if timing is not controlled."
+      "Blaze Runner iubeste rundele haotice si urca agresiv cand ritmul devine intens. " +
+      "Este periculos cand primeste carti consecutive de sprint."
   },
   {
     id: "horse-3",
-    name: "Night Echo",
-    symbol: "##",
+    name: "Frost Dash",
+    symbol: "❄️",
     story:
-      "Night Echo raspunde bine la presiune si performeaza in curse tactice. " +
-      "The horse is favored in rounds with many close lane collisions."
+      "Frost Dash este calm si constant, recuperand teren mutare dupa mutare. " +
+      "Rareori domina startul, dar termina puternic pe final."
   },
   {
     id: "horse-4",
-    name: "Silver Bolt",
-    symbol: "!!",
+    name: "Lucky Star",
+    symbol: "⭐",
     story:
-      "Silver Bolt este cel mai constant cal din grup, cu ritm echilibrat. " +
-      "This horse is reliable for conservative bet strategies."
-  },
-  {
-    id: "horse-5",
-    name: "Iron Comet",
-    symbol: "$$",
-    story:
-      "Iron Comet devine periculos pe final cand pista este libera. " +
-      "The horse is hard to stop once it reaches mid-track advantage."
-  },
-  {
-    id: "horse-6",
-    name: "Wild Orbit",
-    symbol: "@@",
-    story:
-      "Wild Orbit este imprevizibil si poate avea atat runde slabe, cat si runde dominante. " +
-      "Hosts usually keep this horse for high-variance moments."
+      "Lucky Star este imprevizibil: poate ramane in spate sau poate face un comeback nebun. " +
+      "Cand norocul tine cu el, urca instant in frunte."
   }
+];
+const CURSE_RACE_CARD_DECK = [
+  { label: "Sprint", emoji: "🃏", steps: 1 },
+  { label: "Turbo", emoji: "⚡", steps: 2 },
+  { label: "Nitro", emoji: "🚀", steps: 3 },
+  { label: "Slipstream", emoji: "💨", steps: 2 },
+  { label: "Steady Pace", emoji: "🎴", steps: 1 }
 ];
 const DEFAULT_MANUAL_SIDEBET = {
   id: "shot-side-1",
@@ -766,7 +744,7 @@ const SECTION_NOTES_DEFAULTS = {
   manualMatchups:
     "Guess the Right Order - team vs team, payout standard, draw permis.\nBeer Pong - team vs team, payout standard, draw permis.\nShot Fake - bet-only, draw permis, side bets + regula x * jucatori activi adversi.",
   curseBets:
-    "- Bet-only mode, fara bonus fix.\n- Multi-bet permis pe mai multi cai.\n- Doar pariul pe calul castigator plateste x4.\n- Restul pariurilor se pierd.\n- Limita de echipa ramane 30%, rotunjit la 10."
+    "- Bet-only mode, fara bonus fix.\n- Multi-bet permis pe mai multi cai.\n- Cursa ruleaza automat prin card draw.\n- Doar pariul pe calul castigator plateste x4.\n- Restul pariurilor se pierd.\n- Limita de echipa ramane 30%, rotunjit la 10."
 };
 const LEGACY_SECTION_NOTES = {
   triviaRules: "Seteaza timeout, modul de challenge si regula de tie-break.",
@@ -818,12 +796,6 @@ const DEFAULT_STATE = {
         { id: "teamB-p4", name: "Daria", status: "available" }
       ]
     }
-  },
-  timer: {
-    duration: 60,
-    remaining: 60,
-    isRunning: false,
-    lastTickMs: null
   },
   progress: {
     currentGame: "trivia",
@@ -897,7 +869,7 @@ const DEFAULT_STATE = {
     manualLog:
       "Log arbitraj: noteaza deciziile manuale, contestatiile si ajustarile finale de scor.",
     curseTrack:
-      "Pista: 12 pasi pana la finish\nEveniment optional: la pasul 6 se poate aplica boost +1 pentru un cal ales manual",
+      "Pista: 12 pasi pana la finish\nCursa ruleaza automat prin card draw si afiseaza un log al cartilor extrase.",
     curseBets:
       SECTION_NOTES_DEFAULTS.curseBets,
     awardsCategories:
@@ -946,11 +918,6 @@ const elements = {
   adminApplyStateBtn: document.getElementById("adminApplyStateBtn"),
   adminResetGameBtn: document.getElementById("adminResetGameBtn"),
   adminFullResetBtn: document.getElementById("adminFullResetBtn"),
-  adminTimerDurationInput: document.getElementById("adminTimerDurationInput"),
-  adminTimerRemainingInput: document.getElementById("adminTimerRemainingInput"),
-  adminApplyTimerBtn: document.getElementById("adminApplyTimerBtn"),
-  adminPauseTimerBtn: document.getElementById("adminPauseTimerBtn"),
-  adminResetTimerBtn: document.getElementById("adminResetTimerBtn"),
   adminFixTeamSelect: document.getElementById("adminFixTeamSelect"),
   adminFixActionSelect: document.getElementById("adminFixActionSelect"),
   adminFixPlayerSelect: document.getElementById("adminFixPlayerSelect"),
@@ -967,8 +934,6 @@ const elements = {
   showScreenContent: document.getElementById("showScreenContent"),
   showResultCard: document.getElementById("showResultCard"),
   showLatestResult: document.getElementById("showLatestResult"),
-  roundDuration: document.getElementById("roundDuration"),
-  timerDisplay: document.getElementById("timerDisplay"),
   currentGameSelect: document.getElementById("currentGameSelect"),
   currentRoundInput: document.getElementById("currentRoundInput"),
   currentGameLabel: document.getElementById("currentGameLabel"),
@@ -1041,6 +1006,8 @@ const elements = {
   samsarPlayerTeamBSelect: document.getElementById("samsarPlayerTeamBSelect"),
   samsarScoreTeamAInput: document.getElementById("samsarScoreTeamAInput"),
   samsarScoreTeamBInput: document.getElementById("samsarScoreTeamBInput"),
+  samsarBetTeamAInput: document.getElementById("samsarBetTeamAInput"),
+  samsarBetTeamBInput: document.getElementById("samsarBetTeamBInput"),
   samsarRuleInfo: document.getElementById("samsarRuleInfo"),
   samsarApplyResultBtn: document.getElementById("samsarApplyResultBtn"),
   samsarRoundResult: document.getElementById("samsarRoundResult"),
@@ -1121,9 +1088,6 @@ const elements = {
   saveTransferArea: document.getElementById("saveTransferArea"),
   saveTransferStatus: document.getElementById("saveTransferStatus"),
   fullscreenToggleBtn: document.getElementById("fullscreenToggleBtn"),
-  startTimerBtn: document.getElementById("startTimerBtn"),
-  pauseTimerBtn: document.getElementById("pauseTimerBtn"),
-  resetTimerBtn: document.getElementById("resetTimerBtn"),
   saveNowBtn: document.getElementById("saveNowBtn"),
   resetAllBtn: document.getElementById("resetAllBtn"),
   saveStatus: document.getElementById("saveStatus"),
@@ -1140,9 +1104,12 @@ const elements = {
 };
 
 let state = loadState();
-let timerIntervalId = null;
-let lastSavedTimerSecond = null;
 let resultUndoStack = [];
+let curseRaceRuntime = {
+  intervalId: null,
+  isRunning: false,
+  roundKey: ""
+};
 
 function cloneDefaultState() {
   return JSON.parse(JSON.stringify(DEFAULT_STATE));
@@ -1318,14 +1285,16 @@ function shouldUseDemoSamsarRounds(roundsData) {
 }
 
 function shouldUseDemoHorseSet(horses) {
-  if (!Array.isArray(horses) || horses.length < 4) {
+  if (!Array.isArray(horses) || horses.length !== 4) {
     return true;
   }
   return horses.every((horse) => {
     const name = normalizeTextToken(horse?.name);
     const story = normalizeTextToken(horse?.story);
+    const symbol = normalizeTextToken(horse?.symbol);
     const genericName = /^horse \d+$/.test(name) || /^cal \d+$/.test(name) || name.includes("placeholder");
-    return genericName || story.includes("placeholder");
+    const legacyAsciiSymbol = /^[><*!#@$]+$/.test(symbol);
+    return genericName || story.includes("placeholder") || legacyAsciiSymbol;
   });
 }
 
@@ -1488,12 +1457,20 @@ function isManualMatchGame(gameId) {
   return MANUAL_MATCH_GAME_IDS.includes(gameId);
 }
 
+function isScorelessManualMatchGame(gameId) {
+  return gameId === "guess-right-order" || gameId === "beer-pong";
+}
+
 function getGameLabel(gameId) {
   return getGameConfig(gameId).label;
 }
 
 function getGameSection(gameId) {
   return getGameConfig(gameId).section;
+}
+
+function isGameLineupRequired(gameId) {
+  return gameId !== "curse-de-cai";
 }
 
 function getBetPercent(gameId) {
@@ -1860,6 +1837,20 @@ function sanitizePretulRoundState(rawRoundState) {
   return safeState;
 }
 
+function getPretulUsedItemIdSet() {
+  const itemIdSet = new Set(state.pretul.items.map((item) => item.id));
+  const used = new Set();
+  for (const rawRoundState of Object.values(state.pretul.rounds || {})) {
+    const safeRoundState = sanitizePretulRoundState(rawRoundState);
+    for (const itemId of safeRoundState.usedItemIds) {
+      if (itemIdSet.has(itemId)) {
+        used.add(itemId);
+      }
+    }
+  }
+  return used;
+}
+
 function getPretulRoundKey(roundNumber = state.progress.currentRound) {
   return `pretul::R${roundNumber}`;
 }
@@ -1869,13 +1860,13 @@ function getOrCreatePretulRoundState(roundNumber = state.progress.currentRound) 
   if (!state.pretul.rounds[roundKey]) {
     const previousRoundKey = getPretulRoundKey(Math.max(1, roundNumber - 1));
     const previousRound = sanitizePretulRoundState(state.pretul.rounds[previousRoundKey]);
-    const carryUsed = Array.isArray(previousRound.usedItemIds) ? [...previousRound.usedItemIds] : [];
-    const nextAvailable = state.pretul.items.find((item) => !carryUsed.includes(item.id));
+    const globalUsed = Array.from(getPretulUsedItemIdSet());
+    const nextAvailable = state.pretul.items.find((item) => !globalUsed.includes(item.id));
     const defaultParticipantsA = getAvailablePlayersForTeam("teamA").map((player) => player.id);
     const defaultParticipantsB = getAvailablePlayersForTeam("teamB").map((player) => player.id);
     state.pretul.rounds[roundKey] = sanitizePretulRoundState({
       selectedItemId: nextAvailable?.id || state.pretul.items[0]?.id || "",
-      usedItemIds: carryUsed,
+      usedItemIds: globalUsed,
       chooserTeamKey: Math.max(1, Math.round(sanitizeNumber(roundNumber, 1))) % 2 === 0 ? "teamB" : "teamA",
       participantsTeamA: previousRound.participantsTeamA.length > 0 ? previousRound.participantsTeamA : defaultParticipantsA,
       participantsTeamB: previousRound.participantsTeamB.length > 0 ? previousRound.participantsTeamB : defaultParticipantsB,
@@ -1889,6 +1880,8 @@ function getOrCreatePretulRoundState(roundNumber = state.progress.currentRound) 
     });
   }
   const roundState = sanitizePretulRoundState(state.pretul.rounds[roundKey]);
+  const globalUsed = getPretulUsedItemIdSet();
+  roundState.usedItemIds = Array.from(globalUsed);
   state.pretul.rounds[roundKey] = roundState;
   return roundState;
 }
@@ -2109,6 +2102,8 @@ function sanitizeSamsarRoundState(rawRoundState) {
     activePlayerTeamBId: "",
     scoreTeamA: 0,
     scoreTeamB: 0,
+    betTeamA: SAMSAR_STANDARD_BET,
+    betTeamB: SAMSAR_STANDARD_BET,
     payoutApplied: false,
     lastResult: ""
   };
@@ -2121,6 +2116,8 @@ function sanitizeSamsarRoundState(rawRoundState) {
   safeState.activePlayerTeamBId = sanitizeString(rawRoundState.activePlayerTeamBId, "");
   safeState.scoreTeamA = Math.max(0, Math.round(sanitizeNumber(rawRoundState.scoreTeamA, 0)));
   safeState.scoreTeamB = Math.max(0, Math.round(sanitizeNumber(rawRoundState.scoreTeamB, 0)));
+  safeState.betTeamA = Math.max(0, normalizeBetAmount(rawRoundState.betTeamA ?? SAMSAR_STANDARD_BET));
+  safeState.betTeamB = Math.max(0, normalizeBetAmount(rawRoundState.betTeamB ?? SAMSAR_STANDARD_BET));
   safeState.payoutApplied = Boolean(rawRoundState.payoutApplied);
   safeState.lastResult = sanitizeString(rawRoundState.lastResult, "");
   return safeState;
@@ -2144,6 +2141,8 @@ function getOrCreateSamsarRoundState(roundNumber = state.progress.currentRound) 
       activePlayerTeamBId: "",
       scoreTeamA: 0,
       scoreTeamB: 0,
+      betTeamA: SAMSAR_STANDARD_BET,
+      betTeamB: SAMSAR_STANDARD_BET,
       payoutApplied: false,
       lastResult: ""
     });
@@ -2295,7 +2294,10 @@ function sanitizeCurseHorses(rawHorses) {
     sanitized.push(horse);
   }
 
-  return sanitized.length >= 4 ? sanitized : fallback;
+  if (sanitized.length < 4) {
+    return fallback;
+  }
+  return sanitized.slice(0, 4);
 }
 
 function normalizeOptionalBetAmount(rawAmount) {
@@ -2326,6 +2328,7 @@ function sanitizeCurseRoundState(rawRoundState, horseIds = state.curseRace?.hors
     moveHorseId: fallbackHorseId,
     moveSteps: 1,
     winnerHorseId: "",
+    cardHistory: [],
     payoutApplied: false,
     lastResult: "",
     participantsTeamA: [],
@@ -2346,6 +2349,12 @@ function sanitizeCurseRoundState(rawRoundState, horseIds = state.curseRace?.hors
   safe.moveHorseId = safeHorseIds.includes(rawRoundState.moveHorseId) ? rawRoundState.moveHorseId : fallbackHorseId;
   safe.moveSteps = Math.max(1, Math.round(sanitizeNumber(rawRoundState.moveSteps, 1)));
   safe.winnerHorseId = safeHorseIds.includes(rawRoundState.winnerHorseId) ? rawRoundState.winnerHorseId : "";
+  safe.cardHistory = Array.isArray(rawRoundState.cardHistory)
+    ? rawRoundState.cardHistory
+        .map((entry) => sanitizeString(entry, "").trim())
+        .filter((entry) => Boolean(entry))
+        .slice(-12)
+    : [];
   safe.payoutApplied = Boolean(rawRoundState.payoutApplied) && Boolean(safe.winnerHorseId);
   safe.lastResult = sanitizeString(rawRoundState.lastResult, "");
   safe.participantsTeamA = sanitizeRoundParticipantIds(rawRoundState.participantsTeamA, "teamA");
@@ -2485,15 +2494,6 @@ function sanitizeState(rawState) {
   clean.progress.currentRound = Math.max(1, Math.round(sanitizeNumber(source.progress?.currentRound, 1)));
   clean.progress.lastResultSummary =
     sanitizeString(source.progress?.lastResultSummary, DEFAULT_RESULT_SUMMARY) || DEFAULT_RESULT_SUMMARY;
-
-  clean.timer.duration = clampNumber(Math.round(sanitizeNumber(source.timer?.duration, 60)), 10, 600);
-  clean.timer.remaining = clampNumber(
-    Math.round(sanitizeNumber(source.timer?.remaining, clean.timer.duration)),
-    0,
-    clean.timer.duration
-  );
-  clean.timer.isRunning = Boolean(source.timer?.isRunning);
-  clean.timer.lastTickMs = source.timer?.lastTickMs ? Number(source.timer.lastTickMs) : null;
 
   clean.trivia.fixedBonus = getStandardFixedBonus("trivia");
   clean.trivia.turnTeamKey = ["teamA", "teamB"].includes(source.trivia?.turnTeamKey)
@@ -3258,13 +3258,6 @@ function renderEndScreen() {
     (state.sections.finalTitles || "").trim() || "Multumim pentru participare! Felicitari echipei castigatoare!";
 }
 
-function formatTimer(totalSeconds) {
-  const seconds = Math.max(0, Math.round(totalSeconds));
-  const minutesPart = String(Math.floor(seconds / 60)).padStart(2, "0");
-  const secondsPart = String(seconds % 60).padStart(2, "0");
-  return `${minutesPart}:${secondsPart}`;
-}
-
 function setSaveStatus(message) {
   elements.saveStatus.textContent = message;
 }
@@ -3316,14 +3309,6 @@ function pushResultUndoSnapshot(label) {
   renderUndoControlState();
 }
 
-function syncTimerLoopWithState() {
-  stopTimerLoop();
-  if (state.timer.isRunning) {
-    state.timer.lastTickMs = Date.now();
-    startTimerLoop();
-  }
-}
-
 function undoLastAppliedResult() {
   if (resultUndoStack.length === 0) {
     setLastResultSummary("No result to undo yet.");
@@ -3332,16 +3317,14 @@ function undoLastAppliedResult() {
     return;
   }
 
+  stopCurseRaceSimulation({ render: false, persist: false });
   const undoEntry = resultUndoStack.pop();
   renderUndoControlState();
 
   try {
-    stopTimerLoop();
     state = sanitizeState(JSON.parse(undoEntry.snapshot));
     loadCurrentRoundSnapshot();
-    applyElapsedTime();
     renderAll();
-    syncTimerLoopWithState();
 
     const message = `Undo applied for: ${undoEntry.label}.`;
     setLastResultSummary(message);
@@ -3432,13 +3415,11 @@ function importSaveDataFromText(rawText) {
       throw new Error("Invalid payload");
     }
 
-    stopTimerLoop();
+    stopCurseRaceSimulation({ render: false, persist: false });
     state = sanitizeState(importedState);
     loadCurrentRoundSnapshot();
-    applyElapsedTime();
     resultUndoStack = [];
     renderAll();
-    syncTimerLoopWithState();
     renderFullscreenToggleLabel();
     renderUndoControlState();
 
@@ -3752,9 +3733,8 @@ function isGameFlowComplete(gameId) {
     return total > 0 && roundState.usedCategoryIds.length >= total;
   }
   if (gameId === "pretul-corect") {
-    const roundState = getOrCreatePretulRoundState();
     const total = Math.min(getGameRoundLimit("pretul-corect"), Math.max(0, state.pretul.items.length));
-    return total > 0 && roundState.usedItemIds.length >= total;
+    return total > 0 && getPretulUsedItemIdSet().size >= total;
   }
   if (gameId === "film-joc-franciza-fun-fact") {
     const roundState = getOrCreateFilmRoundState();
@@ -3809,6 +3789,9 @@ function ensureShowUiState() {
     if (typeof state.showUi.lineupReadyByGame[gameId] !== "boolean") {
       state.showUi.lineupReadyByGame[gameId] = false;
     }
+    if (!isGameLineupRequired(gameId)) {
+      state.showUi.lineupReadyByGame[gameId] = true;
+    }
   }
   if (typeof state.showUi.gameNightStarted !== "boolean") {
     state.showUi.gameNightStarted = false;
@@ -3829,13 +3812,20 @@ function ensureShowUiState() {
       state.showUi.liveRoundStep = "result-screen";
     }
   }
-  if (state.showUi.activeScreen === "live-round" && !Boolean(state.showUi.lineupReadyByGame[currentGameId])) {
+  if (
+    state.showUi.activeScreen === "live-round" &&
+    isGameLineupRequired(currentGameId) &&
+    !Boolean(state.showUi.lineupReadyByGame[currentGameId])
+  ) {
     state.showUi.activeScreen = "game-intro";
   }
 }
 
 function isGameLineupReady(gameId = state.progress.currentGame) {
   ensureShowUiState();
+  if (!isGameLineupRequired(gameId)) {
+    return true;
+  }
   return Boolean(state.showUi.lineupReadyByGame[gameId]);
 }
 
@@ -3844,6 +3834,10 @@ function setGameLineupReady(gameId, nextReady) {
     return;
   }
   ensureShowUiState();
+  if (!isGameLineupRequired(gameId)) {
+    state.showUi.lineupReadyByGame[gameId] = true;
+    return;
+  }
   state.showUi.lineupReadyByGame[gameId] = Boolean(nextReady);
 }
 
@@ -3945,6 +3939,9 @@ function setLiveRoundStep(nextStep, options = {}) {
   if (!getGameFlowState(currentGameId, nextStep)) {
     return;
   }
+  if (currentGameId === "curse-de-cai" && isCurseRaceRunning(getCurseRoundKey(state.progress.currentRound)) && nextStep !== "race-screen") {
+    stopCurseRaceSimulation({ render: false, persist: false });
+  }
   ensureShowUiState();
   state.showUi.liveRoundStep = nextStep;
   renderShowUi();
@@ -4021,7 +4018,7 @@ function getGameIntroRules(gameId) {
   if (gameId === "trivia") {
     return [
       "One team plays each round; turn switches automatically after result.",
-      "Flow: Topic Select -> Bet -> Question+Answers (timer live) -> Result -> next topic.",
+      "Flow: Topic Select -> Bet -> Question+Answers -> Result -> next topic.",
       `Multiple choice topics are disabled after use; correct gives +${formatMoney(getStandardFixedBonus("trivia"))} bonus + bet win.`,
       `Game ends after ${getGameRoundLimit("trivia")} topics.`
     ];
@@ -4075,7 +4072,7 @@ function getGameIntroRules(gameId) {
   }
   if (gameId === "curse-de-cai") {
     return [
-      "Bet-only horse race with manual movement by symbol.",
+      "Bet-only horse race with automatic card-draw simulation.",
       "Multiple horse bets are allowed per team.",
       "Only the winning horse bet pays x4; all others lose.",
       `${getGameRoundLimit("curse-de-cai")} races total.`
@@ -4104,21 +4101,12 @@ function renderShowStageControls(gameId = state.progress.currentGame, liveStep =
     ? `${state.teams[activeGameTeam].name} is up`
     : `${state.teams.teamA.name} vs ${state.teams.teamB.name}`;
   const compactStatus = `${getGameLabel(gameId)} - Round ${state.progress.currentRound}`;
-  const timerTone = state.timer.remaining <= 10 ? "is-danger" : "";
 
   return `
     <div class="show-control-strip">
       <div class="show-control-context">
         <p class="show-control-subnote">${escapeHtml(compactStatus)}</p>
         <p class="show-control-note">${escapeHtml(infoLabel)}</p>
-      </div>
-      <div class="show-live-timer-core ${timerTone}" data-show-live-timer-core>${formatTimer(state.timer.remaining)}</div>
-      <div class="show-control-buttons">
-        <button class="pill-btn show-timer-btn" type="button" data-show-action="timer-start">Start</button>
-        <button class="pill-btn show-timer-btn" type="button" data-show-action="timer-pause">Pause</button>
-        <button class="pill-btn show-timer-btn" type="button" data-show-action="timer-reset">Reset</button>
-        <button class="pill-btn show-timer-btn" type="button" data-show-action="timer-minus-10">-10s</button>
-        <button class="pill-btn show-timer-btn" type="button" data-show-action="timer-plus-10">+10s</button>
       </div>
     </div>
   `;
@@ -4673,6 +4661,10 @@ function buildLegacyLiveRoundContent(gameId, options = {}) {
           )
       )
       .join("");
+    const maxBetA = getMaxBetAmount(state.teams.teamA.money, "cel-mai-bun-samsar");
+    const maxBetB = getMaxBetAmount(state.teams.teamB.money, "cel-mai-bun-samsar");
+    roundState.betTeamA = maxBetA <= 0 ? 0 : Math.min(normalizeBetAmount(roundState.betTeamA), maxBetA);
+    roundState.betTeamB = maxBetB <= 0 ? 0 : Math.min(normalizeBetAmount(roundState.betTeamB), maxBetB);
 
     return `
       ${topBlock}
@@ -4708,6 +4700,16 @@ function buildLegacyLiveRoundContent(gameId, options = {}) {
             <div>
               <label class="show-info-label" for="showSamsarScoreB">Score Team 2</label>
               <input id="showSamsarScoreB" class="text-input compact-input" type="number" min="0" step="1" value="${roundState.scoreTeamB}" data-show-samsar-score-teamb>
+            </div>
+            <div>
+              <label class="show-info-label" for="showSamsarBetA">Bet Team 1</label>
+              <input id="showSamsarBetA" class="text-input compact-input" type="number" min="0" step="10" max="${maxBetA}" value="${roundState.betTeamA}" data-show-samsar-bet-teama>
+              <p class="show-info-sub">Max: ${formatMoney(maxBetA)}</p>
+            </div>
+            <div>
+              <label class="show-info-label" for="showSamsarBetB">Bet Team 2</label>
+              <input id="showSamsarBetB" class="text-input compact-input" type="number" min="0" step="10" max="${maxBetB}" value="${roundState.betTeamB}" data-show-samsar-bet-teamb>
+              <p class="show-info-sub">Max: ${formatMoney(maxBetB)}</p>
             </div>
           </div>
           <div class="show-action-footer">
@@ -4857,26 +4859,17 @@ function buildLegacyLiveRoundContent(gameId, options = {}) {
     horsePositions.sort((left, right) => right.position - left.position);
     const leader = horsePositions[0];
     const winnerHorse = state.curseRace.horses.find((horse) => horse.id === roundState.winnerHorseId);
-    const horseOptions = state.curseRace.horses
-      .map(
-        (horse) =>
-          `<option value="${horse.id}" ${roundState.moveHorseId === horse.id ? "selected" : ""}>${escapeHtml(horse.symbol)} ${escapeHtml(
-            horse.name
-          )}</option>`
-      )
-      .join("");
-    const bettorOptionsA = getCurseBettorOptions("teamA")
-      .map((option) => `<option value="${option.id}" ${roundState.bets.teamA.bettorId === option.id ? "selected" : ""}>${escapeHtml(option.label)}</option>`)
-      .join("");
-    const bettorOptionsB = getCurseBettorOptions("teamB")
-      .map((option) => `<option value="${option.id}" ${roundState.bets.teamB.bettorId === option.id ? "selected" : ""}>${escapeHtml(option.label)}</option>`)
-      .join("");
+    const latestCard =
+      Array.isArray(roundState.cardHistory) && roundState.cardHistory.length > 0
+        ? roundState.cardHistory[roundState.cardHistory.length - 1]
+        : "No cards drawn yet.";
     return `
       ${topBlock}
       <div class="show-round-card">
         <p class="show-info-label">Race Status</p>
         <p class="show-round-title">${winnerHorse ? `Winner: ${winnerHorse.symbol} ${winnerHorse.name}` : "Race in progress"}</p>
         <p class="show-round-copy">Leader: ${leader ? `${leader.horse.symbol} ${leader.horse.name} (${leader.position}/${state.curseRace.trackLength})` : "No movement yet"}.</p>
+        <p class="show-round-copy">Latest draw: ${escapeHtml(latestCard)}</p>
       </div>
       <div class="show-info-grid">
         <div class="show-info-card">
@@ -4895,30 +4888,11 @@ function buildLegacyLiveRoundContent(gameId, options = {}) {
           <h3>Race Controls</h3>
           <label class="show-info-label" for="showCurseRound">Round</label>
           <input id="showCurseRound" class="text-input compact-input" type="number" min="1" step="1" value="${state.progress.currentRound}" data-show-curse-round>
-          <div class="show-mini-grid">
-            <div>
-              <label class="show-info-label" for="showCurseHorse">Horse</label>
-              <select id="showCurseHorse" class="text-input compact-input" data-show-curse-move-horse>${horseOptions}</select>
-            </div>
-            <div>
-              <label class="show-info-label" for="showCurseSteps">Steps</label>
-              <input id="showCurseSteps" class="text-input compact-input" type="number" min="1" step="1" value="${roundState.moveSteps}" data-show-curse-move-steps>
-            </div>
-          </div>
           <div class="show-action-footer">
-            <button class="secondary-btn" type="button" data-show-action="curse-move">Move horse</button>
+            <button class="secondary-btn" type="button" data-show-action="curse-move">Run Auto Race</button>
             <button class="primary-btn" type="button" data-show-action="curse-apply">Apply payout</button>
             <button class="secondary-btn" type="button" data-show-action="curse-reset">Reset race</button>
           </div>
-
-          <label class="show-info-label spaced" for="showCurseBettorA">${escapeHtml(state.teams.teamA.name)} bettor</label>
-          <select id="showCurseBettorA" class="text-input compact-input" data-show-curse-bettor-teama>
-            <option value="">No bettor principal</option>${bettorOptionsA}
-          </select>
-          <label class="show-info-label spaced" for="showCurseBettorB">${escapeHtml(state.teams.teamB.name)} bettor</label>
-          <select id="showCurseBettorB" class="text-input compact-input" data-show-curse-bettor-teamb>
-            <option value="">No bettor principal</option>${bettorOptionsB}
-          </select>
         </article>
         <article class="show-control-card">
           <h3>Horse Bets</h3>
@@ -4942,10 +4916,6 @@ function buildLegacyLiveRoundContent(gameId, options = {}) {
           </div>
         </article>
       </div>
-      <div class="show-overlay-grid two-col">
-        ${renderShowPlayerSelectionBlock("teamA", playerSelectionOptions)}
-        ${renderShowPlayerSelectionBlock("teamB", playerSelectionOptions)}
-      </div>
       ${minimal ? "" : renderShowActionFooter()}
     `;
   }
@@ -4966,7 +4936,8 @@ function renderFlowActionButtons(buttons) {
       ${buttons
         .map((button) => {
           const tone = button.tone || "secondary-btn";
-          return `<button class="${tone}" type="button" data-show-action="${button.action}">${escapeHtml(button.label)}</button>`;
+          const disabled = button.disabled ? "disabled" : "";
+          return `<button class="${tone}" type="button" data-show-action="${button.action}" ${disabled}>${escapeHtml(button.label)}</button>`;
         })
         .join("")}
     </div>
@@ -5251,9 +5222,16 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
   }
   if (gameId === "pretul-corect") {
     const roundState = getOrCreatePretulRoundState();
-    const item = state.pretul.items.find((entry) => entry.id === roundState.selectedItemId) || state.pretul.items[0];
+    const usedItemIds = getPretulUsedItemIdSet();
+    if (!state.pretul.items.some((entry) => entry.id === roundState.selectedItemId) || usedItemIds.has(roundState.selectedItemId)) {
+      const firstAvailable = state.pretul.items.find((entry) => !usedItemIds.has(entry.id));
+      roundState.selectedItemId = firstAvailable?.id || "";
+    }
+    const item = state.pretul.items.find((entry) => entry.id === roundState.selectedItemId) || null;
     const maxBetA = getMaxBetAmount(state.teams.teamA.money, "pretul-corect");
     const maxBetB = getMaxBetAmount(state.teams.teamB.money, "pretul-corect");
+    roundState.betTeamA = maxBetA <= 0 ? 0 : Math.min(normalizeBetAmount(roundState.betTeamA), maxBetA);
+    roundState.betTeamB = maxBetB <= 0 ? 0 : Math.min(normalizeBetAmount(roundState.betTeamB), maxBetB);
     if (roundState.participantsTeamA.length === 0) {
       roundState.participantsTeamA = getAvailablePlayersForTeam("teamA").map((player) => player.id);
     }
@@ -5283,7 +5261,7 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
     if (liveStep === "topic-select") {
       const cards = state.pretul.items
         .map((entry) => {
-          const isUsed = roundState.usedItemIds.includes(entry.id);
+          const isUsed = usedItemIds.has(entry.id);
           const isSelected = entry.id === roundState.selectedItemId;
           return `
             <button class="show-stage-topic-card ${isUsed ? "is-used" : ""} ${isSelected ? "is-selected" : ""}" type="button" data-show-pretul-item="${
@@ -5343,10 +5321,10 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
       `;
     }
 
-    if (liveStep === "product-reveal") {
+    if (["product-reveal", "answer-entry", "price-reveal"].includes(liveStep)) {
       return `
-        <section class="show-stage-stack show-stage-focus-card">
-          <p class="show-info-label">Product Reveal</p>
+        <section class="show-stage-stack">
+          <p class="show-info-label">Product + Guesses</p>
           <p class="show-round-title">${escapeHtml(item?.name || "No product selected")}</p>
           <p class="show-round-copy">Category: ${escapeHtml(item?.categoryTitle || "N/A")}</p>
           <figure class="show-film-stage-figure">
@@ -5355,52 +5333,32 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
             )}">
             <figcaption>${escapeHtml(item?.name || "No product selected")}</figcaption>
           </figure>
-          <p class="show-round-copy">Teams now lock their estimates.</p>
-        </section>
-      `;
-    }
-
-    if (liveStep === "answer-entry") {
-      return `
-        <section class="show-stage-stack">
-          <p class="show-info-label">Answer Entry</p>
           <p class="show-round-copy">${escapeHtml(chooserTeam.name)} enters openly. ${escapeHtml(
             state.teams[hiddenTeamKey].name
-          )} input is masked until reveal.</p>
+          )} input stays masked until result.</p>
           <div class="show-vs-input-grid">
             <article class="show-stage-mini-card">
-              <p class="show-info-label">${escapeHtml(state.teams.teamA.name)} Estimate</p>
+              <p class="show-info-label">${escapeHtml(state.teams.teamA.name)} Guess</p>
               <input class="text-input show-stage-money-input" type="${
                 roundState.chooserTeamKey === "teamA" ? "number" : "password"
               }" min="0" step="1" value="${roundState.answerTeamA}" data-show-pretul-answer-teama>
             </article>
             <article class="show-stage-mini-card">
-              <p class="show-info-label">${escapeHtml(state.teams.teamB.name)} Estimate</p>
+              <p class="show-info-label">${escapeHtml(state.teams.teamB.name)} Guess</p>
               <input class="text-input show-stage-money-input" type="${
                 roundState.chooserTeamKey === "teamB" ? "number" : "password"
               }" min="0" step="1" value="${roundState.answerTeamB}" data-show-pretul-answer-teamb>
             </article>
           </div>
+          <p class="show-round-copy">Real price stays hidden until result reveal. Press <strong>Auto Winner + Payout</strong> when ready.</p>
         </section>
       `;
     }
 
-    if (liveStep === "price-reveal") {
-      return `
-        <section class="show-stage-stack">
-          <p class="show-info-label">Price Reveal</p>
-          <div class="show-stage-price-reveal">
-            <label class="show-info-label" for="showPretulRealPriceFlow">Real Price</label>
-            <input id="showPretulRealPriceFlow" class="text-input show-stage-money-input" type="number" min="0" step="1" value="${
-              roundState.realPrice
-            }" data-show-pretul-real-price>
-            <p class="show-round-copy">${escapeHtml(state.teams.teamA.name)} distance: ${formatMoney(diffA)}</p>
-            <p class="show-round-copy">${escapeHtml(state.teams.teamB.name)} distance: ${formatMoney(diffB)}</p>
-          </div>
-        </section>
-      `;
-    }
-
+    const fixedBonus = getStandardFixedBonus("pretul-corect");
+    const winnerTeamKey = diffA < diffB ? "teamA" : diffB < diffA ? "teamB" : "draw";
+    const winnerPayout = winnerTeamKey === "teamA" ? fixedBonus + roundState.betTeamA : winnerTeamKey === "teamB" ? fixedBonus + roundState.betTeamB : 0;
+    const loserPayout = winnerTeamKey === "teamA" ? roundState.betTeamB : winnerTeamKey === "teamB" ? roundState.betTeamA : 0;
     return `
       <section class="show-stage-stack show-stage-result-card">
         <p class="show-info-label">Auto Winner</p>
@@ -5418,9 +5376,27 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
             state.teams.teamB.name
           )}: ${formatMoney(roundState.answerTeamB)}</div>
         </div>
-        <p class="show-round-copy">${escapeHtml(state.teams.teamA.name)} distance ${formatMoney(diffA)} | ${escapeHtml(
-          state.teams.teamB.name
-        )} distance ${formatMoney(diffB)}</p>
+        <div class="show-vs-input-grid">
+          <article class="show-stage-mini-card">
+            <p class="show-info-label">${escapeHtml(state.teams.teamA.name)} difference</p>
+            <p class="show-info-value">${formatMoney(diffA)}</p>
+          </article>
+          <article class="show-stage-mini-card">
+            <p class="show-info-label">${escapeHtml(state.teams.teamB.name)} difference</p>
+            <p class="show-info-value">${formatMoney(diffB)}</p>
+          </article>
+        </div>
+        <div class="show-stage-mini-card">
+          ${
+            winnerTeamKey === "draw"
+              ? `<p class="show-round-copy">Round is draw. Distances are equal, no team payout is applied.</p>`
+              : `<p class="show-round-copy"><strong>${escapeHtml(state.teams[winnerTeamKey].name)}</strong> wins <strong>+${formatMoney(
+                  winnerPayout
+                )}</strong> (bonus + bet), while <strong>${
+                  winnerTeamKey === "teamA" ? escapeHtml(state.teams.teamB.name) : escapeHtml(state.teams.teamA.name)
+                }</strong> loses <strong>-${formatMoney(loserPayout)}</strong>.</p>`
+          }
+        </div>
         <p class="show-round-copy">${escapeHtml(roundState.lastResult || "Apply payout to generate round result.")}</p>
       </section>
     `;
@@ -5574,8 +5550,10 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
     const teamBOptions = selectableTeamB
       .map((player) => `<option value="${player.id}" ${roundState.activePlayerTeamBId === player.id ? "selected" : ""}>${escapeHtml(player.name)}</option>`)
       .join("");
-    const maxBetA = Math.min(SAMSAR_STANDARD_BET, getMaxBetAmount(state.teams.teamA.money, "cel-mai-bun-samsar"));
-    const maxBetB = Math.min(SAMSAR_STANDARD_BET, getMaxBetAmount(state.teams.teamB.money, "cel-mai-bun-samsar"));
+    const maxBetA = getMaxBetAmount(state.teams.teamA.money, "cel-mai-bun-samsar");
+    const maxBetB = getMaxBetAmount(state.teams.teamB.money, "cel-mai-bun-samsar");
+    roundState.betTeamA = maxBetA <= 0 ? 0 : Math.min(normalizeBetAmount(roundState.betTeamA), maxBetA);
+    roundState.betTeamB = maxBetB <= 0 ? 0 : Math.min(normalizeBetAmount(roundState.betTeamB), maxBetB);
     const duelistA = selectableTeamA.find((player) => player.id === roundState.activePlayerTeamAId);
     const duelistB = selectableTeamB.find((player) => player.id === roundState.activePlayerTeamBId);
 
@@ -5583,16 +5561,18 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
       return `
         <section class="show-stage-stack">
           <p class="show-info-label">Bet Screen</p>
-          <p class="show-round-title">Round ${roundNumber} stakes</p>
+          <p class="show-round-title">Round ${roundNumber} bets</p>
           <p class="show-round-copy">Winner gets +${formatMoney(getStandardFixedBonus("cel-mai-bun-samsar"))} bonus + bet win.</p>
           <div class="show-vs-input-grid">
             <article class="show-stage-mini-card">
-              <p class="show-info-label">${escapeHtml(state.teams.teamA.name)} stake</p>
-              <p class="show-info-value">${formatMoney(maxBetA)}</p>
+              <p class="show-info-label">${escapeHtml(state.teams.teamA.name)} Bet</p>
+              <input class="text-input show-stage-money-input" type="number" min="0" step="10" max="${maxBetA}" value="${roundState.betTeamA}" data-show-samsar-bet-teama>
+              <p class="show-info-sub">Max: ${formatMoney(maxBetA)}</p>
             </article>
             <article class="show-stage-mini-card">
-              <p class="show-info-label">${escapeHtml(state.teams.teamB.name)} stake</p>
-              <p class="show-info-value">${formatMoney(maxBetB)}</p>
+              <p class="show-info-label">${escapeHtml(state.teams.teamB.name)} Bet</p>
+              <input class="text-input show-stage-money-input" type="number" min="0" step="10" max="${maxBetB}" value="${roundState.betTeamB}" data-show-samsar-bet-teamb>
+              <p class="show-info-sub">Max: ${formatMoney(maxBetB)}</p>
             </article>
           </div>
         </section>
@@ -5661,6 +5641,9 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
         <p class="show-round-copy">${escapeHtml(state.teams.teamA.name)} ${roundState.scoreTeamA} - ${roundState.scoreTeamB} ${escapeHtml(
           state.teams.teamB.name
         )}</p>
+        <p class="show-round-copy">Bets: ${escapeHtml(state.teams.teamA.name)} ${formatMoney(roundState.betTeamA)} | ${escapeHtml(
+          state.teams.teamB.name
+        )} ${formatMoney(roundState.betTeamB)}</p>
         <p class="show-round-copy">${escapeHtml(roundState.lastResult || "Apply result to settle round payout.")}</p>
       </section>
     `;
@@ -5783,7 +5766,7 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
         <p class="show-info-label">${escapeHtml(getGameLabel(manualGameId))} / Result Screen</p>
         <p class="show-stage-result-headline">${escapeHtml(resultHeadline)}</p>
         ${
-          manualGameId === "guess-right-order"
+          isScorelessManualMatchGame(manualGameId)
             ? ""
             : `
         <div class="show-vs-input-grid">
@@ -5816,15 +5799,11 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
   }
   if (gameId === "curse-de-cai") {
     const roundState = getOrCreateCurseRoundState(state.progress.currentRound);
-    if (roundState.participantsTeamA.length === 0) {
-      roundState.participantsTeamA = getAvailablePlayersForTeam("teamA").map((player) => player.id);
-    }
-    if (roundState.participantsTeamB.length === 0) {
-      roundState.participantsTeamB = getAvailablePlayersForTeam("teamB").map((player) => player.id);
-    }
     if (!roundState.winnerHorseId) {
       detectCurseWinner(roundState);
     }
+    const roundKey = getCurseRoundKey(state.progress.currentRound);
+    const raceRunning = isCurseRaceRunning(roundKey);
     const winnerHorse = state.curseRace.horses.find((horse) => horse.id === roundState.winnerHorseId);
     const leader = state.curseRace.horses
       .map((horse) => ({
@@ -5837,8 +5816,6 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
     const totalBetA = getCurseTeamBetTotal(roundState, "teamA");
     const totalBetB = getCurseTeamBetTotal(roundState, "teamB");
     const settlement = winnerHorse ? calculateCursePayout(roundState) : null;
-    const bettorOptionsA = getCurseBettorOptions("teamA", roundState);
-    const bettorOptionsB = getCurseBettorOptions("teamB", roundState);
     const trackLength = state.curseRace.trackLength;
 
     if (liveStep === "race-intro") {
@@ -5868,41 +5845,18 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
         <section class="show-stage-stack">
           <p class="show-info-label">Bet Screen</p>
           <p class="show-round-title">Multi-bet board</p>
+          <p class="show-round-copy">Team vs Team: set bets, then run one automatic race simulation.</p>
           <div class="show-vs-input-grid">
             <article class="show-stage-mini-card">
-              <p class="show-info-label">${escapeHtml(state.teams.teamA.name)} bettor</p>
-              <select class="text-input" data-show-curse-bettor-teama>
-                <option value="">No bettor principal</option>
-                ${bettorOptionsA
-                  .map(
-                    (option) =>
-                      `<option value="${option.id}" ${
-                        roundState.bets.teamA.bettorId === option.id ? "selected" : ""
-                      }>${escapeHtml(option.label)}</option>`
-                  )
-                  .join("")}
-              </select>
-              <p class="show-info-sub">Total: ${formatMoney(totalBetA)} / max ${formatMoney(maxBetA)}</p>
+              <p class="show-info-label">${escapeHtml(state.teams.teamA.name)} total bet</p>
+              <p class="show-info-value">${formatMoney(totalBetA)}</p>
+              <p class="show-info-sub">Max: ${formatMoney(maxBetA)}</p>
             </article>
             <article class="show-stage-mini-card">
-              <p class="show-info-label">${escapeHtml(state.teams.teamB.name)} bettor</p>
-              <select class="text-input" data-show-curse-bettor-teamb>
-                <option value="">No bettor principal</option>
-                ${bettorOptionsB
-                  .map(
-                    (option) =>
-                      `<option value="${option.id}" ${
-                        roundState.bets.teamB.bettorId === option.id ? "selected" : ""
-                      }>${escapeHtml(option.label)}</option>`
-                  )
-                  .join("")}
-              </select>
-              <p class="show-info-sub">Total: ${formatMoney(totalBetB)} / max ${formatMoney(maxBetB)}</p>
+              <p class="show-info-label">${escapeHtml(state.teams.teamB.name)} total bet</p>
+              <p class="show-info-value">${formatMoney(totalBetB)}</p>
+              <p class="show-info-sub">Max: ${formatMoney(maxBetB)}</p>
             </article>
-          </div>
-          <div class="show-vs-input-grid">
-            ${renderSetupParticipantPicker("curse-de-cai", "teamA", roundState.participantsTeamA)}
-            ${renderSetupParticipantPicker("curse-de-cai", "teamB", roundState.participantsTeamB)}
           </div>
           <div class="show-stage-race-bets">
             ${state.curseRace.horses
@@ -5912,12 +5866,12 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
                 return `
                   <article class="show-stage-race-bet-row">
                     <p class="show-stage-race-bet-horse">${escapeHtml(horse.symbol)} ${escapeHtml(horse.name)}</p>
-                    <input class="text-input show-stage-money-input" type="number" min="0" step="10" value="${betA}" data-show-curse-bet data-team="teamA" data-horse-id="${
+                    <input class="text-input show-stage-money-input" type="number" min="0" step="10" max="${maxBetA}" value="${betA}" data-show-curse-bet data-team="teamA" data-horse-id="${
                       horse.id
-                    }">
-                    <input class="text-input show-stage-money-input" type="number" min="0" step="10" value="${betB}" data-show-curse-bet data-team="teamB" data-horse-id="${
+                    }" ${raceRunning || roundState.winnerHorseId || roundState.payoutApplied ? "disabled" : ""}>
+                    <input class="text-input show-stage-money-input" type="number" min="0" step="10" max="${maxBetB}" value="${betB}" data-show-curse-bet data-team="teamB" data-horse-id="${
                       horse.id
-                    }">
+                    }" ${raceRunning || roundState.winnerHorseId || roundState.payoutApplied ? "disabled" : ""}>
                   </article>
                 `;
               })
@@ -5932,31 +5886,16 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
         <section class="show-stage-stack">
           <p class="show-info-label">Race Screen</p>
           <p class="show-round-title">${
-            winnerHorse ? `Winner detected: ${escapeHtml(winnerHorse.symbol)} ${escapeHtml(winnerHorse.name)}` : "Race in progress"
+            winnerHorse
+              ? `Winner detected: ${escapeHtml(winnerHorse.symbol)} ${escapeHtml(winnerHorse.name)}`
+              : raceRunning
+                ? "Race running live..."
+                : "Race ready"
           }</p>
           <p class="show-round-copy">Leader: ${
             leader ? `${escapeHtml(leader.horse.symbol)} ${escapeHtml(leader.horse.name)} (${leader.position}/${trackLength})` : "No movement yet"
           }.</p>
-          <article class="show-stage-race-move-bar">
-            <div class="show-stage-race-move-grid">
-              <label class="show-control-cell">
-                <span class="show-info-label">Move horse</span>
-                <select class="text-input" data-show-curse-move-horse>
-                  ${state.curseRace.horses
-                    .map((horse) => {
-                      const selected = roundState.moveHorseId === horse.id ? "selected" : "";
-                      return `<option value="${horse.id}" ${selected}>${escapeHtml(horse.symbol)} ${escapeHtml(horse.name)}</option>`;
-                    })
-                    .join("")}
-                </select>
-              </label>
-              <label class="show-control-cell">
-                <span class="show-info-label">Steps</span>
-                <input class="text-input compact-input" type="number" min="1" step="1" value="${roundState.moveSteps}" data-show-curse-move-steps>
-              </label>
-            </div>
-            <p class="show-round-copy">If horse lands on another horse, that horse is pushed back by 1.</p>
-          </article>
+          <p class="show-round-copy">Race is generated by card draw. Push-back applies automatically on lane collision.</p>
           <div class="show-stage-race-track-grid">
             ${state.curseRace.horses
               .map((horse) => {
@@ -5971,11 +5910,20 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
                     </div>
                     <div class="show-stage-race-track-bar">
                       <span style="width:${progress}%"></span>
+                      <strong class="show-stage-race-track-token" style="left:${progress}%">${escapeHtml(horse.symbol)}</strong>
                     </div>
                   </article>
                 `;
               })
               .join("")}
+          </div>
+          <div class="show-stage-race-draw-log">
+            <p class="show-info-label">Draw Log</p>
+            ${
+              Array.isArray(roundState.cardHistory) && roundState.cardHistory.length > 0
+                ? `<ul>${roundState.cardHistory.map((entry) => `<li>${escapeHtml(entry)}</li>`).join("")}</ul>`
+                : '<p class="show-round-copy">No cards drawn yet. Press "Run Auto Race".</p>'
+            }
           </div>
         </section>
       `;
@@ -6069,14 +6017,11 @@ function buildLiveRoundQuickActions(gameId, liveStep) {
     } else if (liveStep === "bet-screen") {
       actions.push({ tone: "primary-btn", action: "live-step-product-reveal", label: "Continue to Product" });
       actions.push({ tone: "secondary-btn", action: "live-step-topic-select", label: "Back to Topics" });
-    } else if (liveStep === "product-reveal") {
-      actions.push({ tone: "primary-btn", action: "live-step-answer-entry", label: "Enter Answers" });
-    } else if (liveStep === "answer-entry") {
-      actions.push({ tone: "primary-btn", action: "live-step-price-reveal", label: "Reveal Price" });
-    } else if (liveStep === "price-reveal") {
+    } else if (["product-reveal", "answer-entry", "price-reveal"].includes(liveStep)) {
       if (!roundState.payoutApplied) {
         actions.push({ tone: "primary-btn", action: "pretul-evaluate", label: "Auto Winner + Payout" });
       }
+      actions.push({ tone: "secondary-btn", action: "live-step-bet-screen", label: "Back to Bet" });
     } else if (liveStep === "auto-winner") {
       actions.push({
         tone: "primary-btn",
@@ -6084,7 +6029,7 @@ function buildLiveRoundQuickActions(gameId, liveStep) {
         label: flowComplete ? "Finish Pretul Corect" : "Next Topic"
       });
     }
-    if (!["price-reveal", "auto-winner"].includes(liveStep)) {
+    if (!["product-reveal", "answer-entry", "price-reveal", "auto-winner"].includes(liveStep)) {
       actions.push({ tone: "secondary-btn", action: "go-game-intro", label: "Lineup substitution" });
     }
     return renderFlowActionButtons(actions);
@@ -6193,21 +6138,33 @@ function buildLiveRoundQuickActions(gameId, liveStep) {
   if (gameId === "curse-de-cai") {
     const roundState = getOrCreateCurseRoundState(state.progress.currentRound);
     const raceSettled = Boolean(roundState.payoutApplied);
+    const raceRunning = isCurseRaceRunning(getCurseRoundKey(state.progress.currentRound));
     const flowComplete = isGameFlowComplete(gameId);
     if (liveStep === "race-intro") {
       actions.push({ tone: "primary-btn", action: "live-step-bet-screen", label: "Go to Bets" });
     } else if (liveStep === "bet-screen") {
       actions.push({ tone: "primary-btn", action: "live-step-race-screen", label: "Start Race" });
     } else if (liveStep === "race-screen") {
-      actions.push({ tone: "primary-btn", action: "curse-move", label: "Move Horse" });
-      actions.push({ tone: "secondary-btn", action: "live-step-winner-screen", label: "Check Winner" });
-      actions.push({ tone: "secondary-btn", action: "curse-reset", label: "Reset Race" });
+      if (!roundState.winnerHorseId) {
+        actions.push({
+          tone: raceRunning ? "secondary-btn" : "primary-btn",
+          action: "curse-move",
+          label: raceRunning ? "Race Running..." : "Run Auto Race",
+          disabled: raceRunning
+        });
+      } else {
+        actions.push({ tone: "secondary-btn", action: "live-step-winner-screen", label: "Open Winner" });
+      }
+      actions.push({ tone: "secondary-btn", action: "curse-reset", label: raceRunning ? "Stop & Reset Race" : "Reset Race" });
     } else if (liveStep === "winner-screen") {
       actions.push({ tone: "primary-btn", action: "live-step-payout-screen", label: "Continue to Payout" });
       actions.push({ tone: "secondary-btn", action: "live-step-race-screen", label: "Back to Race" });
     } else if (liveStep === "payout-screen") {
-      if (!raceSettled) {
+      if (!raceSettled && !raceRunning) {
         actions.push({ tone: "primary-btn", action: "curse-apply", label: "Apply Payout" });
+      }
+      if (raceRunning) {
+        actions.push({ tone: "secondary-btn", action: "curse-move", label: "Race Running...", disabled: true });
       }
       if (raceSettled) {
         actions.push({
@@ -6216,9 +6173,6 @@ function buildLiveRoundQuickActions(gameId, liveStep) {
           label: flowComplete ? "Finish Game" : "Next Race"
         });
       }
-    }
-    if (!["race-screen", "winner-screen", "payout-screen"].includes(liveStep)) {
-      actions.push({ tone: "secondary-btn", action: "go-game-intro", label: "Lineup substitution" });
     }
     return renderFlowActionButtons(actions);
   }
@@ -6623,29 +6577,6 @@ function renderAdminFixPlayerOptions() {
   elements.adminFixPlayerSelect.value = isPreviousValid ? previousValue : team.players[0].id;
 }
 
-function applyAdminTimerOverride() {
-  const nextDuration = clampNumber(
-    Math.round(sanitizeNumber(elements.adminTimerDurationInput?.value, state.timer.duration)),
-    10,
-    600
-  );
-  const nextRemaining = clampNumber(
-    Math.round(sanitizeNumber(elements.adminTimerRemainingInput?.value, state.timer.remaining)),
-    0,
-    nextDuration
-  );
-
-  state.timer.duration = nextDuration;
-  state.timer.remaining = nextRemaining;
-  state.timer.isRunning = false;
-  state.timer.lastTickMs = null;
-  stopTimerLoop();
-  renderTimer();
-  setLastResultSummary(`Timer override applied: ${nextRemaining}s / ${nextDuration}s.`);
-  renderShowUi();
-  saveState("Admin timer override applied.");
-}
-
 function applyAdminPlayerFix() {
   const teamKey = getAdminFixTeamKey();
   const team = state.teams[teamKey];
@@ -6732,12 +6663,6 @@ function renderHostAdminPanel() {
   if (elements.adminRoundInput) {
     elements.adminRoundInput.value = String(state.progress.currentRound);
   }
-  if (elements.adminTimerDurationInput) {
-    elements.adminTimerDurationInput.value = String(state.timer.duration);
-  }
-  if (elements.adminTimerRemainingInput) {
-    elements.adminTimerRemainingInput.value = String(state.timer.remaining);
-  }
   if (elements.adminFixTeamSelect) {
     const selected = getAdminFixTeamKey();
     elements.adminFixTeamSelect.innerHTML = `
@@ -6757,11 +6682,9 @@ function renderShowUi() {
 
   const activeScreen = state.showUi.activeScreen;
   const isLiveRoundFocus = activeScreen === "live-round";
-  const hideHudTimer = isLiveRoundFocus;
 
   if (elements.showShell) {
     elements.showShell.classList.toggle("is-live-round-focus", isLiveRoundFocus);
-    elements.showShell.classList.toggle("hide-hud-timer", hideHudTimer);
   }
 
   elements.showScreenButtons.forEach((button) => {
@@ -6779,9 +6702,6 @@ function renderShowUi() {
   }
   if (elements.showStageRoundLabel) {
     elements.showStageRoundLabel.textContent = String(state.progress.currentRound);
-  }
-  if (elements.showStageTimer) {
-    elements.showStageTimer.textContent = formatTimer(state.timer.remaining);
   }
   if (elements.showActivePlayersTeamA) {
     elements.showActivePlayersTeamA.innerHTML = getTeamLineupHudHtml("teamA");
@@ -6914,7 +6834,7 @@ function syncPretulOverlayIntoState() {
   };
   const readBet = (selector, fallback = 0) => normalizeBetAmount(readNumber(selector, fallback));
   const selectedItemId = root.querySelector("[data-show-pretul-item]")?.value || roundState.selectedItemId;
-  if (state.pretul.items.some((item) => item.id === selectedItemId) && !roundState.usedItemIds.includes(selectedItemId)) {
+  if (state.pretul.items.some((item) => item.id === selectedItemId) && !getPretulUsedItemIdSet().has(selectedItemId)) {
     roundState.selectedItemId = selectedItemId;
   }
   roundState.answerTeamA = Math.max(0, readNumber("[data-show-pretul-answer-teama]", roundState.answerTeamA));
@@ -6945,11 +6865,33 @@ function syncPretulOverlayIntoState() {
 
 function syncSamsarOverlayIntoHostInputs() {
   const roundState = getOrCreateSamsarRoundState(getSamsarRoundNumber());
+  const root = elements.showScreenContent;
+  const readValue = (selector, fallback) => {
+    if (!root) {
+      return fallback;
+    }
+    const node = root.querySelector(selector);
+    return node?.value ?? fallback;
+  };
+  const maxBetA = getMaxBetAmount(state.teams.teamA.money, "cel-mai-bun-samsar");
+  const maxBetB = getMaxBetAmount(state.teams.teamB.money, "cel-mai-bun-samsar");
+  roundState.scoreTeamA = Math.max(0, Math.round(sanitizeNumber(readValue("[data-show-samsar-score-teama]", roundState.scoreTeamA), roundState.scoreTeamA)));
+  roundState.scoreTeamB = Math.max(0, Math.round(sanitizeNumber(readValue("[data-show-samsar-score-teamb]", roundState.scoreTeamB), roundState.scoreTeamB)));
+  roundState.betTeamA =
+    maxBetA <= 0 ? 0 : Math.min(normalizeBetAmount(readValue("[data-show-samsar-bet-teama]", roundState.betTeamA)), maxBetA);
+  roundState.betTeamB =
+    maxBetB <= 0 ? 0 : Math.min(normalizeBetAmount(readValue("[data-show-samsar-bet-teamb]", roundState.betTeamB)), maxBetB);
   if (elements.samsarScoreTeamAInput) {
     elements.samsarScoreTeamAInput.value = String(roundState.scoreTeamA);
   }
   if (elements.samsarScoreTeamBInput) {
     elements.samsarScoreTeamBInput.value = String(roundState.scoreTeamB);
+  }
+  if (elements.samsarBetTeamAInput) {
+    elements.samsarBetTeamAInput.value = String(roundState.betTeamA);
+  }
+  if (elements.samsarBetTeamBInput) {
+    elements.samsarBetTeamBInput.value = String(roundState.betTeamB);
   }
 }
 
@@ -7072,26 +7014,6 @@ function handleShowOverlayAction(action, trigger) {
     finishCurrentGameAndReturn();
     return;
   }
-  if (action === "timer-start") {
-    startTimer();
-    return;
-  }
-  if (action === "timer-pause") {
-    pauseTimer();
-    return;
-  }
-  if (action === "timer-reset") {
-    resetTimer();
-    return;
-  }
-  if (action === "timer-plus-10") {
-    adjustTimerRemaining(10);
-    return;
-  }
-  if (action === "timer-minus-10") {
-    adjustTimerRemaining(-10);
-    return;
-  }
   if (action === "toggle-round-lock") {
     toggleRoundSelectionLock();
     return;
@@ -7122,6 +7044,7 @@ function handleShowOverlayAction(action, trigger) {
       return;
     }
     setCurrentRound(state.progress.currentRound + 1);
+    setLiveRoundStep("topic-select", { persist: false });
     setShowScreen("live-round", { persist: false });
     saveState("Pretul corect next topic.");
     return;
@@ -7285,10 +7208,27 @@ function handleShowOverlayAction(action, trigger) {
     return;
   }
   if (action === "curse-move") {
-    moveCurseHorseBySymbol();
+    const runningKey = getCurseRoundKey(state.progress.currentRound);
+    if (isCurseRaceRunning(runningKey)) {
+      setLastResultSummary("Race already running...");
+      renderShowUi();
+      saveState("Curse auto-run blocked: already running.");
+      return;
+    }
+    const started = moveCurseHorseBySymbol();
+    if (started) {
+      setLiveRoundStep("race-screen", { persist: false });
+      setShowScreen("live-round", { persist: false });
+    }
     return;
   }
   if (action === "curse-apply") {
+    if (isCurseRaceRunning(getCurseRoundKey(state.progress.currentRound))) {
+      setLastResultSummary("Race still running. Apply payout after winner is locked.");
+      renderShowUi();
+      saveState("Curse payout blocked: race running.");
+      return;
+    }
     const applied = applyCurseRacePayout();
     if (!applied) {
       return;
@@ -7300,6 +7240,8 @@ function handleShowOverlayAction(action, trigger) {
   }
   if (action === "curse-reset") {
     resetCurseRace();
+    setLiveRoundStep("race-screen", { persist: false });
+    setShowScreen("live-round", { persist: false });
     return;
   }
 }
@@ -7316,17 +7258,6 @@ function handleShowOverlayChange(target) {
   }
   if (target.matches("[data-show-current-round]")) {
     setCurrentRound(target.value);
-    return;
-  }
-  if (target.matches("[data-show-timer-duration]")) {
-    if (elements.roundDuration) {
-      elements.roundDuration.value = String(target.value);
-    }
-    updateRoundDuration();
-    return;
-  }
-  if (target.matches("[data-show-timer-remaining]")) {
-    setTimerRemaining(target.value);
     return;
   }
   if (target.matches("[data-show-player-toggle]")) {
@@ -7435,6 +7366,14 @@ function handleShowOverlayChange(target) {
   }
   if (target.matches("[data-show-samsar-score-teamb]")) {
     setSamsarScore("teamB", target.value);
+    return;
+  }
+  if (target.matches("[data-show-samsar-bet-teama]")) {
+    setSamsarBet("teamA", target.value);
+    return;
+  }
+  if (target.matches("[data-show-samsar-bet-teamb]")) {
+    setSamsarBet("teamB", target.value);
     return;
   }
   if (target.matches("[data-show-manual-game]")) {
@@ -7623,7 +7562,7 @@ function handleShowOverlayClick(event) {
     const gameId = getCurrentManualMatchGame();
     const roundState = getOrCreateManualMatchRoundState(gameId, state.progress.currentRound);
     if (winner === "teamA" || winner === "teamB" || winner === "draw") {
-      if (gameId !== "guess-right-order") {
+      if (!isScorelessManualMatchGame(gameId)) {
         if (winner === "teamA") {
           const nextScore = Math.max(1, roundState.scoreTeamB + 1);
           setManualRoundScore("teamA", nextScore);
@@ -7774,35 +7713,6 @@ function renderBoundFields() {
   });
 }
 
-function renderTimer() {
-  if (elements.roundDuration) {
-    elements.roundDuration.value = String(state.timer.duration);
-  }
-  if (elements.timerDisplay) {
-    elements.timerDisplay.textContent = formatTimer(state.timer.remaining);
-  }
-  if (elements.showStageTimer) {
-    elements.showStageTimer.textContent = formatTimer(state.timer.remaining);
-  }
-  if (elements.showScreenContent) {
-    const liveTimerCore = elements.showScreenContent.querySelector("[data-show-live-timer-core]");
-    if (liveTimerCore) {
-      liveTimerCore.textContent = formatTimer(state.timer.remaining);
-      liveTimerCore.classList.toggle("is-danger", state.timer.remaining <= 10);
-    }
-    const quickRemainingInput = elements.showScreenContent.querySelector("[data-show-timer-remaining]");
-    if (quickRemainingInput) {
-      quickRemainingInput.value = String(Math.max(0, Math.round(sanitizeNumber(state.timer.remaining, 0))));
-    }
-  }
-  if (elements.startTimerBtn) {
-    elements.startTimerBtn.disabled = state.timer.isRunning;
-  }
-  if (elements.pauseTimerBtn) {
-    elements.pauseTimerBtn.disabled = !state.timer.isRunning;
-  }
-}
-
 function renderProgress() {
   const gameId = state.progress.currentGame;
   const gameLabel = getGameLabel(gameId);
@@ -7898,7 +7808,7 @@ function renderSettingsRulesSnapshot() {
     )}, Beer Pong +${formatMoney(getStandardFixedBonus("beer-pong"))}. ` +
     "Shot Fake and Curse de cai are bet-only (no fixed bonus).";
   elements.settingsTriviaRuleLine.textContent =
-    "Trivia de grup: one-team-per-round with automatic turn switch. Active team picks a multiple-choice topic, places bet, answers under timer, and result is auto-checked.";
+    "Trivia de grup: one-team-per-round with automatic turn switch. Active team picks a multiple-choice topic, places bet, answers, and result is auto-checked.";
   elements.settingsPretulRuleLine.textContent =
     "Pretul corect: both teams submit answer + bet, and winner is auto-detected by closest value to real price; equal distance is tie.";
   elements.settingsFilmRuleLine.textContent =
@@ -8076,13 +7986,14 @@ function renderPretulControls() {
   const maxBetA = getMaxBetAmount(teamA.money, "pretul-corect");
   const maxBetB = getMaxBetAmount(teamB.money, "pretul-corect");
   const itemIdSet = new Set(state.pretul.items.map((item) => item.id));
+  const usedItemIds = getPretulUsedItemIdSet();
 
-  roundState.usedItemIds = roundState.usedItemIds.filter((id) => itemIdSet.has(id));
+  roundState.usedItemIds = Array.from(usedItemIds).filter((id) => itemIdSet.has(id));
   if (
     !itemIdSet.has(roundState.selectedItemId) ||
-    roundState.usedItemIds.includes(roundState.selectedItemId)
+    usedItemIds.has(roundState.selectedItemId)
   ) {
-    const firstAvailable = state.pretul.items.find((item) => !roundState.usedItemIds.includes(item.id));
+    const firstAvailable = state.pretul.items.find((item) => !usedItemIds.has(item.id));
     roundState.selectedItemId = firstAvailable?.id || "";
   }
 
@@ -8108,7 +8019,7 @@ function renderPretulControls() {
 
   elements.pretulItemSelect.innerHTML = state.pretul.items
     .map((item) => {
-      const isUsed = roundState.usedItemIds.includes(item.id);
+      const isUsed = usedItemIds.has(item.id);
       const isSelected = item.id === roundState.selectedItemId ? "selected" : "";
       const disabled = isUsed ? "disabled" : "";
       return `
@@ -8137,7 +8048,7 @@ function renderPretulControls() {
 
   elements.pretulItemsBoard.innerHTML = state.pretul.items
     .map((item) => {
-      const isUsed = roundState.usedItemIds.includes(item.id);
+      const isUsed = usedItemIds.has(item.id);
       return `
         <article class="pretul-item-card ${isUsed ? "is-used" : ""}">
           <h4>${escapeHtml(item.categoryTitle || item.name)}</h4>
@@ -8163,7 +8074,7 @@ function setPretulSelectedItem(itemId) {
   if (!state.pretul.items.some((item) => item.id === itemId)) {
     return;
   }
-  if (roundState.usedItemIds.includes(itemId)) {
+  if (getPretulUsedItemIdSet().has(itemId)) {
     return;
   }
 
@@ -8264,6 +8175,14 @@ function markPretulItemUsed(itemId) {
 
 function resetPretulUsedItems() {
   const roundState = getOrCreatePretulRoundState();
+  for (const roundKey of Object.keys(state.pretul.rounds || {})) {
+    const safeRound = sanitizePretulRoundState(state.pretul.rounds[roundKey]);
+    safeRound.usedItemIds = [];
+    if (safeRound.payoutApplied) {
+      safeRound.payoutApplied = false;
+    }
+    state.pretul.rounds[roundKey] = safeRound;
+  }
   roundState.usedItemIds = [];
   roundState.selectedItemId = state.pretul.items[0]?.id || "";
   roundState.chooserTeamKey = "teamA";
@@ -8389,7 +8308,10 @@ function applyPretulRoundResult() {
   if (!roundState.usedItemIds.includes(selectedItemId)) {
     roundState.usedItemIds.push(selectedItemId);
   }
-  const nextAvailable = state.pretul.items.find((entry) => !roundState.usedItemIds.includes(entry.id));
+  const usedItemIds = getPretulUsedItemIdSet();
+  usedItemIds.add(selectedItemId);
+  roundState.usedItemIds = Array.from(usedItemIds);
+  const nextAvailable = state.pretul.items.find((entry) => !usedItemIds.has(entry.id));
   roundState.selectedItemId = nextAvailable?.id || "";
   roundState.payoutApplied = true;
   roundState.lastResult = resultText;
@@ -8960,6 +8882,8 @@ function renderSamsarControls() {
     !elements.samsarPlayerTeamBSelect ||
     !elements.samsarScoreTeamAInput ||
     !elements.samsarScoreTeamBInput ||
+    !elements.samsarBetTeamAInput ||
+    !elements.samsarBetTeamBInput ||
     !elements.samsarRuleInfo ||
     !elements.samsarRoundResult
   ) {
@@ -9008,13 +8932,16 @@ function renderSamsarControls() {
 
   const maxBetA = getMaxBetAmount(state.teams.teamA.money, "cel-mai-bun-samsar");
   const maxBetB = getMaxBetAmount(state.teams.teamB.money, "cel-mai-bun-samsar");
-  const stakeA = maxBetA <= 0 ? 0 : Math.min(SAMSAR_STANDARD_BET, maxBetA);
-  const stakeB = maxBetB <= 0 ? 0 : Math.min(SAMSAR_STANDARD_BET, maxBetB);
+  roundState.betTeamA = maxBetA <= 0 ? 0 : Math.min(normalizeBetAmount(roundState.betTeamA), maxBetA);
+  roundState.betTeamB = maxBetB <= 0 ? 0 : Math.min(normalizeBetAmount(roundState.betTeamB), maxBetB);
+  elements.samsarBetTeamAInput.value = String(roundState.betTeamA);
+  elements.samsarBetTeamBInput.value = String(roundState.betTeamB);
+  elements.samsarBetTeamAInput.max = String(maxBetA);
+  elements.samsarBetTeamBInput.max = String(maxBetB);
   const fixedBonus = getStandardFixedBonus("cel-mai-bun-samsar");
   elements.samsarRuleInfo.textContent =
     `Rule: higher score wins, equal score is draw. Winner gets +${formatMoney(fixedBonus)} bonus + bet win. ` +
-    `Base bet ${formatMoney(SAMSAR_STANDARD_BET)}, capped at 20% per team. ` +
-    `${state.teams.teamA.name} stake now: ${formatMoney(stakeA)} | ${state.teams.teamB.name} stake now: ${formatMoney(stakeB)}.`;
+    `${state.teams.teamA.name} max ${formatMoney(maxBetA)} | ${state.teams.teamB.name} max ${formatMoney(maxBetB)}.`;
   elements.samsarRoundResult.textContent = roundState.lastResult || "Rezultatul rundei va aparea aici.";
 
   if (elements.samsarRoundButtons) {
@@ -9081,6 +9008,26 @@ function setSamsarScore(teamKey, rawScore) {
   saveState("Samsar score updated.");
 }
 
+function setSamsarBet(teamKey, rawBet) {
+  if (!["teamA", "teamB"].includes(teamKey)) {
+    return;
+  }
+  const roundState = getOrCreateSamsarRoundState(getSamsarRoundNumber());
+  const maxBet = getMaxBetAmount(state.teams[teamKey].money, "cel-mai-bun-samsar");
+  const normalized = maxBet <= 0 ? 0 : Math.min(normalizeBetAmount(rawBet), maxBet);
+
+  if (teamKey === "teamA") {
+    roundState.betTeamA = normalized;
+  } else {
+    roundState.betTeamB = normalized;
+  }
+
+  roundState.payoutApplied = false;
+  roundState.lastResult = "";
+  renderSamsarControls();
+  saveState("Samsar bet updated.");
+}
+
 function goToSamsarRound(roundNumber) {
   const targetRound = clampNumber(
     Math.round(sanitizeNumber(roundNumber, 1)),
@@ -9102,6 +9049,22 @@ function applySamsarRoundResult() {
   const roundState = getOrCreateSamsarRoundState(roundNumber);
   roundState.scoreTeamA = Math.max(0, Math.round(sanitizeNumber(elements.samsarScoreTeamAInput.value, roundState.scoreTeamA)));
   roundState.scoreTeamB = Math.max(0, Math.round(sanitizeNumber(elements.samsarScoreTeamBInput.value, roundState.scoreTeamB)));
+
+  const maxBetA = getMaxBetAmount(state.teams.teamA.money, "cel-mai-bun-samsar");
+  const maxBetB = getMaxBetAmount(state.teams.teamB.money, "cel-mai-bun-samsar");
+  const inputBetA = elements.samsarBetTeamAInput?.value ?? roundState.betTeamA;
+  const inputBetB = elements.samsarBetTeamBInput?.value ?? roundState.betTeamB;
+  const nextBetA = maxBetA <= 0 ? 0 : Math.min(normalizeBetAmount(inputBetA), maxBetA);
+  const nextBetB = maxBetB <= 0 ? 0 : Math.min(normalizeBetAmount(inputBetB), maxBetB);
+  if (nextBetA !== roundState.betTeamA || nextBetB !== roundState.betTeamB) {
+    roundState.betTeamA = nextBetA;
+    roundState.betTeamB = nextBetB;
+    roundState.payoutApplied = false;
+    roundState.lastResult = "";
+  }
+  const stakeA = roundState.betTeamA;
+  const stakeB = roundState.betTeamB;
+
   if (roundState.payoutApplied) {
     setLastResultSummary("Samsar result already applied for this round.");
     renderSamsarControls();
@@ -9109,10 +9072,6 @@ function applySamsarRoundResult() {
     return false;
   }
 
-  const maxBetA = getMaxBetAmount(state.teams.teamA.money, "cel-mai-bun-samsar");
-  const maxBetB = getMaxBetAmount(state.teams.teamB.money, "cel-mai-bun-samsar");
-  const stakeA = maxBetA <= 0 ? 0 : Math.min(SAMSAR_STANDARD_BET, maxBetA);
-  const stakeB = maxBetB <= 0 ? 0 : Math.min(SAMSAR_STANDARD_BET, maxBetB);
   const fixedBonus = getStandardFixedBonus("cel-mai-bun-samsar");
 
   let resultText = "";
@@ -9424,11 +9383,22 @@ function renderManualMatchControls() {
   const roundState = getOrCreateManualMatchRoundState(gameId, roundNumber);
   normalizeManualMatchRoundState(gameId, roundState);
   const settlement = calculateManualMatchSettlement(gameId, roundState);
+  const scoreInputsVisible = !isScorelessManualMatchGame(gameId);
 
   elements.manualGameSelect.value = gameId;
   elements.manualRoundInput.value = String(roundNumber);
   elements.manualScoreTeamAInput.value = String(roundState.scoreTeamA);
   elements.manualScoreTeamBInput.value = String(roundState.scoreTeamB);
+  const scoreGroupA = elements.manualScoreTeamAInput.closest("div");
+  const scoreGroupB = elements.manualScoreTeamBInput.closest("div");
+  if (scoreGroupA) {
+    scoreGroupA.style.display = scoreInputsVisible ? "" : "none";
+  }
+  if (scoreGroupB) {
+    scoreGroupB.style.display = scoreInputsVisible ? "" : "none";
+  }
+  elements.manualScoreTeamAInput.disabled = !scoreInputsVisible;
+  elements.manualScoreTeamBInput.disabled = !scoreInputsVisible;
   elements.manualBetTeamAInput.value = String(settlement.effectiveBetA);
   elements.manualBetTeamBInput.value = String(settlement.effectiveBetB);
   if (gameId === "shot-fake") {
@@ -9441,7 +9411,8 @@ function renderManualMatchControls() {
       `${getGameLabel(gameId)} max bet: Team 1 ${formatMoney(settlement.maxBetA)}, Team 2 ${formatMoney(
         settlement.maxBetB
       )}. ` +
-      `Draw is allowed. Standard payout applies (+${formatMoney(fixedBonus)} winner bonus + bet win).`;
+      `Draw is allowed. Standard payout applies (+${formatMoney(fixedBonus)} winner bonus + bet win).` +
+      `${scoreInputsVisible ? " Score fields can set winner automatically." : " Winner is selected only from Team 1 won / Draw / Team 2 won."}`;
   }
   elements.manualRoundResult.textContent = roundState.lastResult || "Rezultatul rundei va aparea aici.";
 
@@ -9509,6 +9480,9 @@ function setManualMatchRound(rawRoundValue) {
 
 function setManualRoundScore(teamKey, rawScore) {
   const gameId = getCurrentManualMatchGame();
+  if (isScorelessManualMatchGame(gameId)) {
+    return;
+  }
   const roundState = getOrCreateManualMatchRoundState(gameId, state.progress.currentRound);
   const normalized = Math.max(0, Math.round(sanitizeNumber(rawScore, 0)));
   if (teamKey === "teamA") {
@@ -9722,8 +9696,13 @@ function applyManualMatchRoundResult() {
   state.manualMatch.selectedGame = gameId;
 
   const roundState = getOrCreateManualMatchRoundState(gameId, state.progress.currentRound);
-  roundState.scoreTeamA = Math.max(0, Math.round(sanitizeNumber(elements.manualScoreTeamAInput?.value, roundState.scoreTeamA)));
-  roundState.scoreTeamB = Math.max(0, Math.round(sanitizeNumber(elements.manualScoreTeamBInput?.value, roundState.scoreTeamB)));
+  if (isScorelessManualMatchGame(gameId)) {
+    roundState.scoreTeamA = 0;
+    roundState.scoreTeamB = 0;
+  } else {
+    roundState.scoreTeamA = Math.max(0, Math.round(sanitizeNumber(elements.manualScoreTeamAInput?.value, roundState.scoreTeamA)));
+    roundState.scoreTeamB = Math.max(0, Math.round(sanitizeNumber(elements.manualScoreTeamBInput?.value, roundState.scoreTeamB)));
+  }
   roundState.betTeamA = normalizeBetAmount(elements.manualBetTeamAInput?.value);
   roundState.betTeamB = normalizeBetAmount(elements.manualBetTeamBInput?.value);
 
@@ -9790,9 +9769,10 @@ function applyManualMatchRoundResult() {
     }
   });
 
+  const scoreSnippet = isScorelessManualMatchGame(gameId) ? "" : ` (${roundState.scoreTeamA}-${roundState.scoreTeamB})`;
   roundState.lastResult =
-    `${getGameLabel(gameId)} round ${state.progress.currentRound}: ${winnerLabel} ` +
-    `(${roundState.scoreTeamA}-${roundState.scoreTeamB}). Team 1 ${deltaLabelA}, Team 2 ${deltaLabelB}.${standardBonusSuffix}${shotFakeSuffix}`;
+    `${getGameLabel(gameId)} round ${state.progress.currentRound}: ${winnerLabel}${scoreSnippet}. ` +
+    `Team 1 ${deltaLabelA}, Team 2 ${deltaLabelB}.${standardBonusSuffix}${shotFakeSuffix}`;
   roundState.payoutApplied = true;
 
   saveCurrentRoundSnapshot();
@@ -9813,6 +9793,54 @@ function ensureCurseRoundContext() {
   switchRoundContext("curse-de-cai", state.progress.currentRound, { navigateToSection: false });
   renderProgress();
   renderRoundSelection();
+}
+
+function isCurseRaceRunning(roundKey = "") {
+  if (!curseRaceRuntime.isRunning) {
+    return false;
+  }
+  if (!roundKey) {
+    return true;
+  }
+  return curseRaceRuntime.roundKey === roundKey;
+}
+
+function stopCurseRaceSimulation(options = {}) {
+  const render = options.render !== false;
+  const persist = options.persist === true;
+  const summary = typeof options.summary === "string" ? options.summary.trim() : "";
+  const reason = typeof options.reason === "string" ? options.reason.trim() : "Curse auto race stopped.";
+  const wasRunning = curseRaceRuntime.isRunning;
+  if (Number.isFinite(curseRaceRuntime.intervalId)) {
+    window.clearInterval(curseRaceRuntime.intervalId);
+  }
+  curseRaceRuntime.intervalId = null;
+  curseRaceRuntime.isRunning = false;
+  curseRaceRuntime.roundKey = "";
+
+  if (summary) {
+    setLastResultSummary(summary);
+  }
+  if (render) {
+    renderCurseControls();
+  }
+  if (persist && wasRunning) {
+    saveState(reason);
+  }
+}
+
+function pushCurseCardHistoryEntry(roundState, text) {
+  const line = String(text || "").trim();
+  if (!line) {
+    return;
+  }
+  if (!Array.isArray(roundState.cardHistory)) {
+    roundState.cardHistory = [];
+  }
+  roundState.cardHistory.push(line);
+  if (roundState.cardHistory.length > 12) {
+    roundState.cardHistory = roundState.cardHistory.slice(-12);
+  }
 }
 
 function getCurseTeamBetTotal(roundState, teamKey) {
@@ -9931,8 +9959,10 @@ function renderCurseTrackBoard(roundState) {
             <p class="muted">Position ${position}/${trackLength}</p>
           </div>
           <div class="curse-track">
+            <span class="curse-track-start">🚩</span>
             <div class="curse-track-fill" style="width:${percent}%"></div>
             <span class="curse-track-token" style="left:${percent}%">${escapeHtml(horse.symbol)}</span>
+            <span class="curse-track-finish">🏁</span>
           </div>
           <p class="muted">${escapeHtml(horse.story)}</p>
         </article>
@@ -9941,14 +9971,22 @@ function renderCurseTrackBoard(roundState) {
     .join("");
 }
 
-function renderCurseBetBoard(roundState) {
+function renderCurseBetBoard(roundState, options = {}) {
   if (!elements.curseBetBoard) {
     return;
   }
+  const disableInputs = options.disableInputs === true;
+  const maxBetA = getMaxBetAmount(state.teams.teamA.money, "curse-de-cai");
+  const maxBetB = getMaxBetAmount(state.teams.teamB.money, "curse-de-cai");
+  const totalBetA = getCurseTeamBetTotal(roundState, "teamA");
+  const totalBetB = getCurseTeamBetTotal(roundState, "teamB");
   elements.curseBetBoard.innerHTML = state.curseRace.horses
     .map((horse) => {
       const betA = normalizeOptionalBetAmount(roundState.bets?.teamA?.horseBets?.[horse.id]);
       const betB = normalizeOptionalBetAmount(roundState.bets?.teamB?.horseBets?.[horse.id]);
+      const maxForHorseA = Math.max(0, maxBetA - Math.max(0, totalBetA - betA));
+      const maxForHorseB = Math.max(0, maxBetB - Math.max(0, totalBetB - betB));
+      const disabledAttr = disableInputs ? "disabled" : "";
       return `
         <div class="curse-bet-row">
           <div class="curse-bet-horse">
@@ -9959,18 +9997,22 @@ function renderCurseBetBoard(roundState) {
             type="number"
             min="0"
             step="10"
+            max="${maxForHorseA}"
             value="${betA}"
             data-curse-bet-team="teamA"
             data-horse-id="${horse.id}"
+            ${disabledAttr}
           >
           <input
             class="text-input compact-input"
             type="number"
             min="0"
             step="10"
+            max="${maxForHorseB}"
             value="${betB}"
             data-curse-bet-team="teamB"
             data-horse-id="${horse.id}"
+            ${disabledAttr}
           >
         </div>
       `;
@@ -9983,8 +10025,6 @@ function renderCurseControls() {
     !elements.curseRoundInput ||
     !elements.curseRuleInfo ||
     !elements.curseWinnerInfo ||
-    !elements.curseMoveHorseSelect ||
-    !elements.curseMoveStepsInput ||
     !elements.curseMoveBtn ||
     !elements.curseApplyPayoutBtn ||
     !elements.curseResetRaceBtn ||
@@ -10003,17 +10043,11 @@ function renderCurseControls() {
   const totalBetA = getCurseTeamBetTotal(roundState, "teamA");
   const totalBetB = getCurseTeamBetTotal(roundState, "teamB");
   const winnerHorse = state.curseRace.horses.find((horse) => horse.id === roundState.winnerHorseId);
+  const roundKey = getCurseRoundKey(roundNumber);
+  const raceRunning = isCurseRaceRunning(roundKey);
 
   elements.curseRoundInput.value = String(roundNumber);
-  elements.curseMoveHorseSelect.innerHTML = state.curseRace.horses
-    .map((horse) => `<option value="${horse.id}">${escapeHtml(horse.symbol)} ${escapeHtml(horse.name)}</option>`)
-    .join("");
-  elements.curseMoveHorseSelect.value =
-    state.curseRace.horses.some((horse) => horse.id === roundState.moveHorseId)
-      ? roundState.moveHorseId
-      : state.curseRace.horses[0]?.id || "";
-  roundState.moveHorseId = elements.curseMoveHorseSelect.value;
-  elements.curseMoveStepsInput.value = String(roundState.moveSteps);
+  elements.curseRoundInput.disabled = raceRunning;
 
   const betALabel = totalBetA > maxBetA ? `OVER CAP by ${formatMoney(totalBetA - maxBetA)}` : `${formatMoney(totalBetA)}`;
   const betBLabel = totalBetB > maxBetB ? `OVER CAP by ${formatMoney(totalBetB - maxBetB)}` : `${formatMoney(totalBetB)}`;
@@ -10025,23 +10059,55 @@ function renderCurseControls() {
   }
 
   elements.curseRuleInfo.textContent =
-    `No fixed bonus. Multi-bet allowed. Only the winning horse bet pays x${state.curseRace.payoutMultiplier}. ` +
+    `Auto race via card draw. No fixed bonus. Only the winning horse bet pays x${state.curseRace.payoutMultiplier}. ` +
     `All other horse bets are lost. Max bet cap stays 30% per team, rounded to ${BET_ROUNDING_STEP}.`;
+  const latestCard = Array.isArray(roundState.cardHistory) && roundState.cardHistory.length > 0
+    ? roundState.cardHistory[roundState.cardHistory.length - 1]
+    : "";
   elements.curseWinnerInfo.textContent = winnerHorse
     ? `Winner detected: ${winnerHorse.symbol} ${winnerHorse.name}.`
-    : "No winner yet. Move horses using extracted symbol.";
+    : raceRunning
+      ? latestCard
+        ? `Race running... ${latestCard}`
+        : "Race running... drawing cards."
+      : latestCard
+        ? `Latest draw: ${latestCard}`
+        : "No race run yet. Set bets and run auto race.";
   elements.curseRoundResult.textContent = roundState.lastResult || "Rezultatul cursei va aparea aici.";
 
   renderCurseTrackBoard(roundState);
-  renderCurseBetBoard(roundState);
-  renderCurseActiveList("teamA", elements.curseActiveTeamAList);
-  renderCurseActiveList("teamB", elements.curseActiveTeamBList);
-  renderCurseBettorSelect("teamA", elements.curseBettorTeamASelect, roundState);
-  renderCurseBettorSelect("teamB", elements.curseBettorTeamBSelect, roundState);
+  renderCurseBetBoard(roundState, {
+    disableInputs: raceRunning || Boolean(roundState.winnerHorseId) || roundState.payoutApplied
+  });
+  if (elements.curseActiveTeamAList) {
+    elements.curseActiveTeamAList.style.display = "none";
+  }
+  if (elements.curseActiveTeamBList) {
+    elements.curseActiveTeamBList.style.display = "none";
+  }
+  if (elements.curseBettorTeamASelect) {
+    elements.curseBettorTeamASelect.style.display = "none";
+  }
+  if (elements.curseBettorTeamBSelect) {
+    elements.curseBettorTeamBSelect.style.display = "none";
+  }
+  if (elements.curseMoveHorseSelect) {
+    const moveHorseGroup = elements.curseMoveHorseSelect.closest("div");
+    if (moveHorseGroup) {
+      moveHorseGroup.style.display = "none";
+    }
+  }
+  if (elements.curseMoveStepsInput) {
+    const moveStepsGroup = elements.curseMoveStepsInput.closest("div");
+    if (moveStepsGroup) {
+      moveStepsGroup.style.display = "none";
+    }
+  }
 
-  const overCap = totalBetA > maxBetA || totalBetB > maxBetB;
-  elements.curseMoveBtn.disabled = Boolean(roundState.winnerHorseId);
-  elements.curseApplyPayoutBtn.disabled = !roundState.winnerHorseId || roundState.payoutApplied || overCap;
+  elements.curseMoveBtn.textContent = raceRunning ? "Race running..." : "Run Auto Race";
+  elements.curseMoveBtn.disabled = raceRunning || Boolean(roundState.winnerHorseId) || roundState.payoutApplied;
+  elements.curseApplyPayoutBtn.disabled = raceRunning || !roundState.winnerHorseId || roundState.payoutApplied;
+  elements.curseResetRaceBtn.disabled = false;
   renderShowUi();
 }
 
@@ -10086,7 +10152,28 @@ function setCurseBetAmount(teamKey, horseId, rawAmount) {
     return;
   }
   const roundState = getOrCreateCurseRoundState();
-  roundState.bets[teamKey].horseBets[horseId] = normalizeOptionalBetAmount(rawAmount);
+  if (isCurseRaceRunning(getCurseRoundKey(state.progress.currentRound))) {
+    setLastResultSummary("Race is running. Stop/reset race before changing bets.");
+    renderCurseControls();
+    saveState("Curse bet blocked: race running.");
+    return;
+  }
+  if (roundState.winnerHorseId || roundState.payoutApplied) {
+    setLastResultSummary("Race already locked. Reset race to edit bets.");
+    renderCurseControls();
+    saveState("Curse bet blocked: race already locked.");
+    return;
+  }
+  const nextAmount = normalizeOptionalBetAmount(rawAmount);
+  const maxBet = getMaxBetAmount(state.teams[teamKey].money, "curse-de-cai");
+  const currentHorseBet = normalizeOptionalBetAmount(roundState.bets[teamKey].horseBets[horseId]);
+  const otherHorseTotal = Math.max(0, getCurseTeamBetTotal(roundState, teamKey) - currentHorseBet);
+  const allowedForHorse = Math.max(0, maxBet - otherHorseTotal);
+  const clampedAmount = Math.min(nextAmount, allowedForHorse);
+  roundState.bets[teamKey].horseBets[horseId] = clampedAmount;
+  if (nextAmount > clampedAmount) {
+    setLastResultSummary(`Bet capped at ${formatMoney(clampedAmount)} for this horse (team max ${formatMoney(maxBet)}).`);
+  }
   renderCurseControls();
   saveState("Curse bet updated.");
 }
@@ -10182,24 +10269,27 @@ function detectCurseWinner(roundState, priorityHorseId = "") {
   return winner.id;
 }
 
-function moveCurseHorseBySymbol() {
-  ensureCurseRoundContext();
-  const roundState = getOrCreateCurseRoundState();
-  if (roundState.winnerHorseId) {
-    setLastResultSummary("Race already has a winner. Use Reset Race for a new run.");
-    renderCurseControls();
-    saveState("Curse move blocked: race already finished.");
-    return;
+function drawCurseRaceCard() {
+  const horses = state.curseRace.horses;
+  if (!Array.isArray(horses) || horses.length === 0) {
+    return null;
   }
-
-  const horseId = state.curseRace.horses.some((horse) => horse.id === roundState.moveHorseId)
-    ? roundState.moveHorseId
-    : state.curseRace.horses[0]?.id || "";
-  if (!horseId) {
-    return;
+  const deckCard = CURSE_RACE_CARD_DECK[Math.floor(Math.random() * CURSE_RACE_CARD_DECK.length)];
+  const horse = horses[Math.floor(Math.random() * horses.length)];
+  if (!deckCard || !horse) {
+    return null;
   }
+  return {
+    horseId: horse.id,
+    horse,
+    steps: Math.max(1, Math.round(sanitizeNumber(deckCard.steps, 1))),
+    label: deckCard.label,
+    emoji: deckCard.emoji
+  };
+}
 
-  const steps = Math.max(1, Math.round(sanitizeNumber(roundState.moveSteps, 1)));
+function applyCurseHorseMove(roundState, horseId, rawSteps) {
+  const steps = Math.max(1, Math.round(sanitizeNumber(rawSteps, 1)));
   roundState.positions[horseId] = Math.max(0, Math.round(sanitizeNumber(roundState.positions[horseId], 0))) + steps;
   const movedPosition = roundState.positions[horseId];
   const pushedBack = [];
@@ -10218,17 +10308,141 @@ function moveCurseHorseBySymbol() {
   const winnerId = detectCurseWinner(roundState, horseId);
   const movedHorse = state.curseRace.horses.find((horse) => horse.id === horseId);
   const winnerHorse = state.curseRace.horses.find((horse) => horse.id === winnerId);
-  const pushedLabel =
-    pushedBack.length > 0
-      ? ` Push-back: ${pushedBack.map((horse) => `${horse.symbol} ${horse.name}`).join(", ")} moved back by 1.`
-      : "";
-  const winnerLabel = winnerHorse ? ` Winner detected: ${winnerHorse.symbol} ${winnerHorse.name}.` : "";
+  return {
+    movedHorse,
+    winnerHorse,
+    pushedBack,
+    movedPosition,
+    steps
+  };
+}
 
-  setLastResultSummary(
-    `Moved ${movedHorse?.symbol || ""} ${movedHorse?.name || "horse"} by ${steps}.${pushedLabel}${winnerLabel}`.trim()
-  );
+function runCurseRaceAuto() {
+  ensureCurseRoundContext();
+  const roundNumber = Math.max(1, Math.round(sanitizeNumber(state.progress.currentRound, 1)));
+  const roundKey = getCurseRoundKey(roundNumber);
+  const roundState = getOrCreateCurseRoundState(roundNumber);
+  if (roundState.winnerHorseId) {
+    setLastResultSummary("Race already has a winner. Start next race or reset this one.");
+    renderCurseControls();
+    saveState("Curse auto-run blocked: race already finished.");
+    return false;
+  }
+  if (roundState.payoutApplied) {
+    setLastResultSummary("Payout already applied. Move to next race or reset this one.");
+    renderCurseControls();
+    saveState("Curse auto-run blocked: payout already applied.");
+    return false;
+  }
+  if (isCurseRaceRunning(roundKey)) {
+    setLastResultSummary("Race already running...");
+    renderCurseControls();
+    saveState("Curse auto-run blocked: already running.");
+    return false;
+  }
+  if (isCurseRaceRunning()) {
+    stopCurseRaceSimulation({ render: false, persist: false });
+  }
+
+  const maxTurns = Math.max(20, state.curseRace.trackLength * 8);
+  let turn = 0;
+
+  const finishRace = (activeRoundState, saveReason) => {
+    const winnerHorse = state.curseRace.horses.find((horse) => horse.id === activeRoundState.winnerHorseId);
+    const headline = winnerHorse
+      ? `Race finished: ${winnerHorse.symbol} ${winnerHorse.name} won after ${turn} card draws.`
+      : `Race finished after ${turn} draws.`;
+    stopCurseRaceSimulation({ render: false, persist: false });
+    setLastResultSummary(headline);
+    if (state.progress.currentGame === "curse-de-cai") {
+      setLiveRoundStep("winner-screen", { persist: false });
+      setShowScreen("live-round", { persist: false });
+    }
+    renderCurseControls();
+    saveState(saveReason);
+  };
+
+  curseRaceRuntime.intervalId = null;
+  curseRaceRuntime.isRunning = true;
+  curseRaceRuntime.roundKey = roundKey;
+  setLastResultSummary("Race started. Cards are now drawing live...");
   renderCurseControls();
-  saveState("Curse horse moved.");
+
+  curseRaceRuntime.intervalId = window.setInterval(() => {
+    if (!isCurseRaceRunning(roundKey)) {
+      stopCurseRaceSimulation({ render: false, persist: false });
+      return;
+    }
+
+    const activeRoundKey = getCurseRoundKey(state.progress.currentRound);
+    if (state.progress.currentGame !== "curse-de-cai" || activeRoundKey !== roundKey) {
+      stopCurseRaceSimulation({ render: false, persist: false });
+      return;
+    }
+
+    const activeRoundState = getOrCreateCurseRoundState(state.progress.currentRound);
+    if (activeRoundState.payoutApplied) {
+      stopCurseRaceSimulation({ render: true, persist: false });
+      return;
+    }
+
+    if (activeRoundState.winnerHorseId) {
+      finishRace(activeRoundState, "Curse auto race finished.");
+      return;
+    }
+
+    turn += 1;
+    const drawn = drawCurseRaceCard();
+    if (!drawn) {
+      stopCurseRaceSimulation({
+        render: true,
+        persist: true,
+        summary: "Race stopped: no draw available.",
+        reason: "Curse auto race stopped: no card draw."
+      });
+      return;
+    }
+
+    const move = applyCurseHorseMove(activeRoundState, drawn.horseId, drawn.steps);
+    const pushedLabel =
+      move.pushedBack.length > 0
+        ? ` | push-back: ${move.pushedBack.map((horse) => `${horse.symbol} ${horse.name}`).join(", ")}`
+        : "";
+    const winnerLabel = move.winnerHorse ? ` | winner: ${move.winnerHorse.symbol} ${move.winnerHorse.name}` : "";
+    pushCurseCardHistoryEntry(
+      activeRoundState,
+      `${drawn.emoji} ${drawn.label}: ${drawn.horse.symbol} ${drawn.horse.name} +${drawn.steps}${pushedLabel}${winnerLabel}`
+    );
+
+    if (!activeRoundState.winnerHorseId && turn >= maxTurns) {
+      const leader = state.curseRace.horses
+        .map((horse) => ({
+          horse,
+          position: Math.max(0, Math.round(sanitizeNumber(activeRoundState.positions?.[horse.id], 0)))
+        }))
+        .sort((left, right) => right.position - left.position)[0];
+      activeRoundState.winnerHorseId = leader?.horse?.id || "";
+      if (activeRoundState.winnerHorseId) {
+        const leaderHorse = leader.horse;
+        pushCurseCardHistoryEntry(
+          activeRoundState,
+          `🏁 Max draws reached. Leader wins: ${leaderHorse.symbol} ${leaderHorse.name}.`
+        );
+      }
+    }
+
+    renderCurseControls();
+    if (activeRoundState.winnerHorseId) {
+      finishRace(activeRoundState, "Curse auto race finished.");
+    }
+  }, CURSE_RACE_TICK_MS);
+
+  saveState("Curse auto race started.");
+  return true;
+}
+
+function moveCurseHorseBySymbol() {
+  return runCurseRaceAuto();
 }
 
 function calculateCursePayout(roundState) {
@@ -10260,8 +10474,14 @@ function calculateCursePayout(roundState) {
 function applyCurseRacePayout() {
   ensureCurseRoundContext();
   const roundState = getOrCreateCurseRoundState();
+  if (isCurseRaceRunning(getCurseRoundKey(state.progress.currentRound))) {
+    setLastResultSummary("Race is still running. Wait for winner, then apply payout.");
+    renderCurseControls();
+    saveState("Curse payout blocked: race running.");
+    return false;
+  }
   if (!roundState.winnerHorseId) {
-    setLastResultSummary("No winner detected yet. Move horses first.");
+    setLastResultSummary("No winner detected yet. Run auto race first.");
     renderCurseControls();
     saveState("Curse payout blocked: no winner.");
     return false;
@@ -10270,17 +10490,6 @@ function applyCurseRacePayout() {
     setLastResultSummary("Payout already applied for this race.");
     renderCurseControls();
     saveState("Curse payout blocked: already applied.");
-    return false;
-  }
-
-  const maxBetA = getMaxBetAmount(state.teams.teamA.money, "curse-de-cai");
-  const maxBetB = getMaxBetAmount(state.teams.teamB.money, "curse-de-cai");
-  const totalA = getCurseTeamBetTotal(roundState, "teamA");
-  const totalB = getCurseTeamBetTotal(roundState, "teamB");
-  if (totalA > maxBetA || totalB > maxBetB) {
-    setLastResultSummary("Adjust bets first. One or both teams are above max bet cap.");
-    renderCurseControls();
-    saveState("Curse payout blocked: over cap.");
     return false;
   }
 
@@ -10303,19 +10512,29 @@ function applyCurseRacePayout() {
         ? "win"
         : "loss"
       : "draw";
-  const selectedParticipantsA = getSelectedParticipantsForTeam("teamA", roundState.participantsTeamA);
-  const selectedParticipantsB = getSelectedParticipantsForTeam("teamB", roundState.participantsTeamB);
+  const selectedParticipantsA = getActiveParticipantsForTeam("teamA");
+  const selectedParticipantsB = getActiveParticipantsForTeam("teamB");
+  const fallbackParticipantsA = getAvailablePlayersForTeam("teamA").map((player) => ({
+    id: player.id,
+    displayName: player.name,
+    teamKey: "teamA"
+  }));
+  const fallbackParticipantsB = getAvailablePlayersForTeam("teamB").map((player) => ({
+    id: player.id,
+    displayName: player.name,
+    teamKey: "teamB"
+  }));
   applyRoundPlayerStats({
     gameId: "curse-de-cai",
     teamA: {
-      participants: selectedParticipantsA,
+      participants: selectedParticipantsA.length > 0 ? selectedParticipantsA : fallbackParticipantsA,
       roundOutcome: teamAOutcome,
       teamNetDelta: settlement.netA,
       teamBetAmount: settlement.teamATotalBet,
       betOutcome: teamABetOutcome
     },
     teamB: {
-      participants: selectedParticipantsB,
+      participants: selectedParticipantsB.length > 0 ? selectedParticipantsB : fallbackParticipantsB,
       roundOutcome: teamBOutcome,
       teamNetDelta: settlement.netB,
       teamBetAmount: settlement.teamBTotalBet,
@@ -10344,6 +10563,7 @@ function applyCurseRacePayout() {
 
 function resetCurseRace() {
   ensureCurseRoundContext();
+  stopCurseRaceSimulation({ render: false, persist: false });
   const roundState = getOrCreateCurseRoundState();
   for (const horse of state.curseRace.horses) {
     roundState.positions[horse.id] = 0;
@@ -10353,6 +10573,7 @@ function resetCurseRace() {
   roundState.moveHorseId = state.curseRace.horses[0]?.id || "";
   roundState.moveSteps = 1;
   roundState.winnerHorseId = "";
+  roundState.cardHistory = [];
   roundState.payoutApplied = false;
   roundState.bets.teamA.bettorId = "";
   roundState.bets.teamB.bettorId = "";
@@ -10546,11 +10767,9 @@ function confirmTriviaBetAndContinue() {
     saveState("Trivia bet confirm blocked: no valid bet.");
     return;
   }
-  resetTimer();
-  startTimer();
   setOverlayAnswerLocked(false, { persist: false });
   setLiveRoundStep("question-screen", { persist: false });
-  setLastResultSummary(`${playingTeam.name} confirmed bet ${formatMoney(triviaRoundState.betAmount)}. Timer started.`);
+  setLastResultSummary(`${playingTeam.name} confirmed bet ${formatMoney(triviaRoundState.betAmount)}.`);
   renderShowUi();
   saveState("Trivia bet confirmed.");
 }
@@ -10558,16 +10777,14 @@ function confirmTriviaBetAndContinue() {
 function startTriviaQuestionRound() {
   const triviaRoundState = getOrCreateTriviaRoundState();
   if (!triviaRoundState.selectedCategoryId) {
-    setLastResultSummary("Selecteaza topicul inainte sa pornesti timerul.");
+    setLastResultSummary("Selecteaza topicul inainte sa continui.");
     renderShowUi();
     saveState("Trivia start blocked: no topic.");
     return;
   }
-  resetTimer();
   setOverlayAnswerLocked(false, { persist: false });
-  startTimer();
   setLiveRoundStep("question-screen", { persist: false });
-  setLastResultSummary("Trivia timer started.");
+  setLastResultSummary("Trivia round started.");
   renderShowUi();
   saveState("Trivia round started.");
 }
@@ -10605,7 +10822,6 @@ function confirmTriviaAnswerFromOverlay() {
 
   triviaRoundState.lockedOptionIndex = selectedIndex;
   setOverlayAnswerLocked(true, { persist: false });
-  pauseTimer();
 
   const correctIndex = getTriviaCorrectOptionIndex(category);
   const isCorrect = selectedIndex === correctIndex;
@@ -10644,7 +10860,6 @@ function advanceTriviaToNextTopic() {
   nextRoundState.lastResult = "";
 
   setOverlayAnswerLocked(false, { persist: false });
-  resetTimer();
   if (elements.triviaBetAmountInput) {
     elements.triviaBetAmountInput.value = "100";
   }
@@ -10930,7 +11145,6 @@ function renderAll() {
   renderHeaderIdentity();
   renderTeams();
   renderBoundFields();
-  renderTimer();
   renderProgress();
   renderBettingInfo();
   renderRoundSelection();
@@ -11021,14 +11235,18 @@ function switchRoundContext(nextGameId, nextRound, options = {}) {
   const navigateToSection = options.navigateToSection === true;
   const previousGameId = state.progress.currentGame;
   const gameChanged = previousGameId !== nextGameId;
-  saveCurrentRoundSnapshot();
-
-  state.progress.currentGame = nextGameId;
-  state.progress.currentRound = clampNumber(
+  const targetRound = clampNumber(
     Math.max(1, Math.round(sanitizeNumber(nextRound, 1))),
     1,
     getGameRoundLimit(nextGameId)
   );
+  if (isCurseRaceRunning() && (nextGameId !== "curse-de-cai" || curseRaceRuntime.roundKey !== getCurseRoundKey(targetRound))) {
+    stopCurseRaceSimulation({ render: false, persist: false });
+  }
+  saveCurrentRoundSnapshot();
+
+  state.progress.currentGame = nextGameId;
+  state.progress.currentRound = targetRound;
   if (gameChanged) {
     state.roundSelection.locked = false;
   }
@@ -11379,123 +11597,12 @@ function clearActiveSelection() {
   saveState("Active selection cleared.");
 }
 
-function applyElapsedTime() {
-  if (!state.timer.isRunning || !state.timer.lastTickMs) {
-    return;
-  }
-
-  const now = Date.now();
-  const elapsedSeconds = Math.floor((now - state.timer.lastTickMs) / 1000);
-  if (elapsedSeconds <= 0) {
-    return;
-  }
-
-  state.timer.remaining = Math.max(0, state.timer.remaining - elapsedSeconds);
-  state.timer.lastTickMs += elapsedSeconds * 1000;
-
-  if (state.timer.remaining === 0) {
-    state.timer.isRunning = false;
-    state.timer.lastTickMs = null;
-  }
-}
-
-function stopTimerLoop() {
-  if (timerIntervalId) {
-    clearInterval(timerIntervalId);
-    timerIntervalId = null;
-  }
-}
-
-function startTimerLoop() {
-  stopTimerLoop();
-  lastSavedTimerSecond = state.timer.remaining;
-
-  timerIntervalId = setInterval(() => {
-    applyElapsedTime();
-    renderTimer();
-
-    if (!state.timer.isRunning) {
-      stopTimerLoop();
-      saveState("Timer ended.");
-      return;
-    }
-
-    if (state.timer.remaining !== lastSavedTimerSecond) {
-      lastSavedTimerSecond = state.timer.remaining;
-      saveState();
-    }
-  }, 250);
-}
-
-function startTimer() {
-  if (state.timer.remaining <= 0) {
-    state.timer.remaining = state.timer.duration;
-  }
-  state.timer.isRunning = true;
-  state.timer.lastTickMs = Date.now();
-  startTimerLoop();
-  renderTimer();
-  saveState("Timer started.");
-}
-
-function pauseTimer() {
-  applyElapsedTime();
-  state.timer.isRunning = false;
-  state.timer.lastTickMs = null;
-  stopTimerLoop();
-  renderTimer();
-  saveState("Timer paused.");
-}
-
-function resetTimer() {
-  state.timer.isRunning = false;
-  state.timer.lastTickMs = null;
-  state.timer.remaining = state.timer.duration;
-  stopTimerLoop();
-  renderTimer();
-  saveState("Timer reset.");
-}
-
-function setTimerRemaining(nextSeconds) {
-  const normalized = clampNumber(Math.round(sanitizeNumber(nextSeconds, state.timer.remaining)), 0, 600);
-  const wasRunning = state.timer.isRunning;
-  state.timer.remaining = normalized;
-  if (state.timer.remaining === 0) {
-    state.timer.isRunning = false;
-    state.timer.lastTickMs = null;
-    stopTimerLoop();
-  } else if (wasRunning) {
-    state.timer.lastTickMs = Date.now();
-  }
-  renderTimer();
-  saveState(`Timer set to ${state.timer.remaining}s.`);
-}
-
-function adjustTimerRemaining(deltaSeconds) {
-  const delta = Math.round(sanitizeNumber(deltaSeconds, 0));
-  if (delta === 0) {
-    return;
-  }
-  setTimerRemaining(state.timer.remaining + delta);
-}
-
-function updateRoundDuration() {
-  const nextDuration = clampNumber(Math.round(sanitizeNumber(elements.roundDuration.value, 60)), 10, 600);
-  state.timer.duration = nextDuration;
-  state.timer.remaining = nextDuration;
-  state.timer.isRunning = false;
-  state.timer.lastTickMs = null;
-  stopTimerLoop();
-  renderTimer();
-  saveState("Round duration updated.");
-}
-
 function resetSession() {
   const accepted = window.confirm("Reset all dashboard data and restore demo sample content?");
   if (!accepted) {
     return;
   }
-  stopTimerLoop();
+  stopCurseRaceSimulation({ render: false, persist: false });
   state = cloneDefaultState();
   resultUndoStack = [];
   loadCurrentRoundSnapshot();
@@ -11767,25 +11874,6 @@ function bindEvents() {
   if (elements.adminFullResetBtn) {
     elements.adminFullResetBtn.addEventListener("click", () => {
       resetSession();
-    });
-  }
-  if (elements.adminApplyTimerBtn) {
-    elements.adminApplyTimerBtn.addEventListener("click", () => {
-      applyAdminTimerOverride();
-    });
-  }
-  if (elements.adminPauseTimerBtn) {
-    elements.adminPauseTimerBtn.addEventListener("click", () => {
-      pauseTimer();
-      setLastResultSummary("Timer paused from host panel.");
-      saveState("Admin timer paused.");
-    });
-  }
-  if (elements.adminResetTimerBtn) {
-    elements.adminResetTimerBtn.addEventListener("click", () => {
-      resetTimer();
-      setLastResultSummary("Timer reset from host panel.");
-      saveState("Admin timer reset.");
     });
   }
   if (elements.adminFixTeamSelect) {
@@ -12274,6 +12362,16 @@ function bindEvents() {
       setSamsarScore("teamB", elements.samsarScoreTeamBInput.value);
     });
   }
+  if (elements.samsarBetTeamAInput) {
+    elements.samsarBetTeamAInput.addEventListener("change", () => {
+      setSamsarBet("teamA", elements.samsarBetTeamAInput.value);
+    });
+  }
+  if (elements.samsarBetTeamBInput) {
+    elements.samsarBetTeamBInput.addEventListener("change", () => {
+      setSamsarBet("teamB", elements.samsarBetTeamBInput.value);
+    });
+  }
   if (elements.samsarApplyResultBtn) {
     elements.samsarApplyResultBtn.addEventListener("click", applySamsarRoundResult);
   }
@@ -12333,10 +12431,6 @@ function bindEvents() {
     elements.teamBPlayersList.addEventListener("click", (event) => onPlayersListInteraction(event, "teamB"));
   }
 
-  elements.roundDuration.addEventListener("change", updateRoundDuration);
-  elements.startTimerBtn.addEventListener("click", startTimer);
-  elements.pauseTimerBtn.addEventListener("click", pauseTimer);
-  elements.resetTimerBtn.addEventListener("click", resetTimer);
   if (elements.refreshAwardsBtn) {
     elements.refreshAwardsBtn.addEventListener("click", () => {
       renderAwardsTitles();
@@ -12378,16 +12472,8 @@ function init() {
     switchRoundContext("curse-de-cai", state.progress.currentRound, { navigateToSection: false });
   }
   loadCurrentRoundSnapshot();
-  applyElapsedTime();
-  if (state.timer.remaining === 0) {
-    state.timer.isRunning = false;
-    state.timer.lastTickMs = null;
-  }
   renderAll();
   bindEvents();
-  if (state.timer.isRunning) {
-    startTimerLoop();
-  }
   saveState("Autosave active.");
 }
 

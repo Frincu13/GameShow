@@ -138,25 +138,6 @@
       </article>
 
       <article class="host-admin-card">
-        <h3>Timer Override</h3>
-        <div class="players-control-grid">
-          <div>
-            <label class="field-label" for="adminTimerDurationInput">Duration (sec)</label>
-            <input id="adminTimerDurationInput" class="text-input compact-input" type="number" min="10" max="600" step="5">
-          </div>
-          <div>
-            <label class="field-label" for="adminTimerRemainingInput">Remaining (sec)</label>
-            <input id="adminTimerRemainingInput" class="text-input compact-input" type="number" min="0" max="600" step="1">
-          </div>
-        </div>
-        <div class="metric-actions spaced">
-          <button id="adminApplyTimerBtn" class="secondary-btn" type="button">Apply timer override</button>
-          <button id="adminPauseTimerBtn" class="secondary-btn" type="button">Pause timer</button>
-          <button id="adminResetTimerBtn" class="secondary-btn" type="button">Reset timer</button>
-        </div>
-      </article>
-
-      <article class="host-admin-card">
         <h3>Active Players Fix</h3>
         <div class="players-control-grid">
           <div>
@@ -326,17 +307,6 @@
         </article>
 
         <div class="round-grid">
-          <article class="timer-box">
-            <label class="field-label" for="roundDuration">Round duration (seconds)</label>
-            <input id="roundDuration" class="text-input" type="number" min="10" max="600" step="5" value="60">
-            <p id="timerDisplay" class="timer-value">01:00</p>
-            <div class="timer-actions">
-              <button id="startTimerBtn" class="primary-btn" type="button">Start</button>
-              <button id="pauseTimerBtn" class="secondary-btn" type="button">Pause</button>
-              <button id="resetTimerBtn" class="secondary-btn" type="button">Reset</button>
-            </div>
-          </article>
-
           <article class="notes-box">
             <label class="field-label" for="homeRunOfShow">Run of show</label>
             <textarea id="homeRunOfShow" class="text-area" rows="5" data-bind="sections.homeRunOfShow"></textarea>
@@ -761,6 +731,14 @@
               <label class="field-label" for="samsarScoreTeamBInput">Score Team 2</label>
               <input id="samsarScoreTeamBInput" class="text-input compact-input" type="number" min="0" step="1" value="0">
             </div>
+            <div>
+              <label class="field-label" for="samsarBetTeamAInput">Bet Team 1</label>
+              <input id="samsarBetTeamAInput" class="text-input compact-input" type="number" min="0" step="10" value="100">
+            </div>
+            <div>
+              <label class="field-label" for="samsarBetTeamBInput">Bet Team 2</label>
+              <input id="samsarBetTeamBInput" class="text-input compact-input" type="number" min="0" step="10" value="100">
+            </div>
           </div>
 
           <p id="samsarRuleInfo" class="muted spaced">Scor mai mare castiga runda; egal = draw; payout standard Samsar.</p>
@@ -895,7 +873,7 @@
       <section class="panel page-section" data-section="curse-de-cai">
         <div class="section-title-row">
           <h2>Curse de cai</h2>
-          <p class="muted">Host race dashboard: manual moves, multi-bet payout x4, and auto winner detection.</p>
+          <p class="muted">Auto race simulation, multi-bet payout x4, and team-vs-team flow.</p>
         </div>
 
         <article class="placeholder-card">
@@ -905,41 +883,15 @@
               <label class="field-label" for="curseRoundInput">Round number</label>
               <input id="curseRoundInput" class="text-input compact-input" type="number" min="1" step="1" value="1">
             </div>
-            <div>
-              <label class="field-label" for="curseMoveHorseSelect">Extracted symbol / horse</label>
-              <select id="curseMoveHorseSelect" class="text-input"></select>
-            </div>
-            <div>
-              <label class="field-label" for="curseMoveStepsInput">Steps</label>
-              <input id="curseMoveStepsInput" class="text-input compact-input" type="number" min="1" step="1" value="1">
-            </div>
           </div>
           <div class="metric-actions spaced">
-            <button id="curseMoveBtn" class="secondary-btn" type="button">Move Horse</button>
+            <button id="curseMoveBtn" class="secondary-btn" type="button">Run Auto Race</button>
             <button id="curseApplyPayoutBtn" class="primary-btn" type="button">Apply Race Payout</button>
             <button id="curseResetRaceBtn" class="secondary-btn" type="button">Reset Race</button>
           </div>
-          <p id="curseRuleInfo" class="muted spaced">Bet-only mode, multi-bet permis, doar pariul pe calul castigator plateste x4.</p>
+          <p id="curseRuleInfo" class="muted spaced">Bet-only mode, multi-bet permis, cursa ruleaza automat prin card draw, doar pariul pe calul castigator plateste x4.</p>
           <p id="curseWinnerInfo" class="muted spaced">Castigatorul cursei apare aici.</p>
           <p id="curseRoundResult" class="muted spaced">Rezultatul rundei apare aici dupa Apply.</p>
-        </article>
-
-        <article class="placeholder-card">
-          <h3>Players / Bettor Principal</h3>
-          <div class="two-col">
-            <div>
-              <h4 class="field-label">Team 1</h4>
-              <label class="field-label" for="curseBettorTeamASelect">Bettor principal</label>
-              <select id="curseBettorTeamASelect" class="text-input compact-input"></select>
-              <div id="curseActiveTeamAList" class="curse-active-list"></div>
-            </div>
-            <div>
-              <h4 class="field-label">Team 2</h4>
-              <label class="field-label" for="curseBettorTeamBSelect">Bettor principal</label>
-              <select id="curseBettorTeamBSelect" class="text-input compact-input"></select>
-              <div id="curseActiveTeamBList" class="curse-active-list"></div>
-            </div>
-          </div>
         </article>
 
         <article class="placeholder-card">
@@ -1127,7 +1079,7 @@
           <article class="placeholder-card">
             <h3>Storage details</h3>
             <p class="muted">Storage key: <code>gameshow-host-dashboard-v3</code></p>
-            <p class="muted">All sections, teams, scores, money, timer, round selection, and player stats are saved automatically.</p>
+            <p class="muted">All sections, teams, scores, money, round selection, and player stats are saved automatically.</p>
             <p class="muted">Use <strong>Reset session</strong> from the left panel to return to the demo sample setup.</p>
             <p id="settingsBetCapsLine" class="muted spaced"><strong>Bet caps:</strong> Trivia 10%, Guess Order 10%, Pretul corect 15%, Film/Joc 15%, Samsar 20%, Beer Pong 20%, Shot Fake 25%, Curse de cai 30%</p>
             <p id="settingsBonusesLine" class="muted">Bonus fix: Trivia activ, Restul jocurilor conform regulilor curente; Shot Fake + Curse de cai sunt bet-only.</p>
