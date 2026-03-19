@@ -149,17 +149,10 @@ const GAME_FLOW_DEFINITIONS = {
         actions: ["set team", "set bet"]
       },
       {
-        id: "image-reveal",
-        label: "Image Reveal",
-        description: "Main round image becomes the visual focus.",
-        visible: ["large round image"],
-        actions: ["continue to cards"]
-      },
-      {
         id: "card-reveal",
         label: "Card Reveal",
-        description: "Reveal Character/Title, Franchise, and Fun Fact cards.",
-        visible: ["3 reveal cards", "mark correct/wrong"],
+        description: "Image + reveal cards on one screen for round evaluation.",
+        visible: ["large image", "3 reveal cards", "mark correct/wrong"],
         actions: ["reveal cards", "set outcomes", "calculate result"]
       },
       {
@@ -178,45 +171,24 @@ const GAME_FLOW_DEFINITIONS = {
   "cel-mai-bun-samsar": {
     states: [
       {
-        id: "player-select",
-        label: "Player Select",
-        description: "Pick one active duelist from each team.",
-        visible: ["team duelist selectors"],
-        actions: ["select duelists"]
-      },
-      {
         id: "bet-screen",
         label: "Bet Screen",
-        description: "Standard Samsar stakes are prepared for both teams.",
-        visible: ["stake preview", "bet cap info"],
-        actions: ["continue"]
-      },
-      {
-        id: "persona-intro",
-        label: "Persona Intro",
-        description: "Show persona and requirements before duel.",
-        visible: ["persona card"],
-        actions: ["start duel"]
+        description: "Prepare duel stakes for both teams.",
+        visible: ["stake preview", "round number"],
+        actions: ["continue to live duel"]
       },
       {
         id: "live-duel",
         label: "Live Duel",
-        description: "Real-world duel phase with timer support.",
-        visible: ["duel matchup", "timer"],
-        actions: ["timer control", "go to scoring"]
-      },
-      {
-        id: "score-entry",
-        label: "Score Entry",
-        description: "Host enters final duel scores.",
-        visible: ["score inputs"],
-        actions: ["apply result"]
+        description: "Show persona, pick duelists, and run the live 1v1.",
+        visible: ["persona card", "duelist selectors", "timer"],
+        actions: ["select duelists", "timer control", "continue to result"]
       },
       {
         id: "result-screen",
-        label: "Result Screen",
+        label: "Result + Payout",
         description: "Winner, payout, and round outcome summary.",
-        visible: ["winner/draw", "money delta"],
+        visible: ["score entry", "winner/draw", "money delta"],
         actions: ["next round / finish game"],
         payout: true
       }
@@ -3405,6 +3377,19 @@ function ensureShowUiState() {
   if (typeof state.showUi.answerLocked !== "boolean") {
     state.showUi.answerLocked = false;
   }
+  if (
+    currentGameId === "film-joc-franciza-fun-fact" &&
+    state.showUi.liveRoundStep === "image-reveal"
+  ) {
+    state.showUi.liveRoundStep = "card-reveal";
+  }
+  if (currentGameId === "cel-mai-bun-samsar") {
+    if (state.showUi.liveRoundStep === "player-select" || state.showUi.liveRoundStep === "persona-intro") {
+      state.showUi.liveRoundStep = "live-duel";
+    } else if (state.showUi.liveRoundStep === "score-entry") {
+      state.showUi.liveRoundStep = "result-screen";
+    }
+  }
   if (state.showUi.activeScreen === "live-round" && !Boolean(state.showUi.lineupReadyByGame[currentGameId])) {
     state.showUi.activeScreen = "game-intro";
   }
@@ -3617,15 +3602,16 @@ function getGameIntroRules(gameId) {
   if (gameId === "film-joc-franciza-fun-fact") {
     return [
       "One image round with Character/Title, Franchise, and Fun Fact components.",
+      "Image and reveal cards are played together on the same live stage step.",
       "Partial payout is based on component scores (1/1/3).",
       "Bet activates only with minimum 2 of 3 components correct."
     ];
   }
   if (gameId === "cel-mai-bun-samsar") {
     return [
-      "Each team uses its game lineup; host can still override in debug.",
-      "Higher manual score wins the round; tie is draw.",
-      "Standard Samsar payout is applied with cap rules."
+      "Fast flow: Bet setup -> Live duel -> Result + payout.",
+      "Round persona + duelist selection are inside Live Duel screen.",
+      "Higher manual score wins the round; tie is draw with standard Samsar payout."
     ];
   }
   if (gameId === "guess-right-order") {
@@ -4933,22 +4919,14 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
       `;
     }
 
-    if (liveStep === "image-reveal") {
+    if (liveStep === "card-reveal") {
       return `
         <section class="show-stage-stack">
-          <p class="show-info-label">Image Reveal</p>
+          <p class="show-info-label">Image + Cards</p>
           <figure class="show-film-stage-figure">
             <img src="${escapeHtml(item?.imageUrl || FILM_FALLBACK_IMAGE)}" alt="${escapeHtml(item?.imageAlt || "Round image")}">
             <figcaption>${escapeHtml(item?.title || "No round item selected")}</figcaption>
           </figure>
-        </section>
-      `;
-    }
-
-    if (liveStep === "card-reveal") {
-      return `
-        <section class="show-stage-stack">
-          <p class="show-info-label">Card Reveal</p>
           <div class="show-film-card-grid">
             ${cardConfig
               .map((card) => {
@@ -5016,36 +4994,11 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
     const duelistA = state.teams.teamA.players.find((player) => player.id === roundState.activePlayerTeamAId);
     const duelistB = state.teams.teamB.players.find((player) => player.id === roundState.activePlayerTeamBId);
 
-    if (liveStep === "player-select") {
-      return `
-        <section class="show-stage-stack">
-          <p class="show-info-label">Player Select</p>
-          <p class="show-round-title">Pick one duelist per team</p>
-          <div class="show-vs-input-grid">
-            <article class="show-stage-mini-card">
-              <p class="show-info-label">${escapeHtml(state.teams.teamA.name)}</p>
-              <select class="text-input" data-show-samsar-player-teama>
-                <option value="">Select player</option>
-                ${teamAOptions}
-              </select>
-            </article>
-            <article class="show-stage-mini-card">
-              <p class="show-info-label">${escapeHtml(state.teams.teamB.name)}</p>
-              <select class="text-input" data-show-samsar-player-teamb>
-                <option value="">Select player</option>
-                ${teamBOptions}
-              </select>
-            </article>
-          </div>
-        </section>
-      `;
-    }
-
     if (liveStep === "bet-screen") {
       return `
         <section class="show-stage-stack">
           <p class="show-info-label">Bet Screen</p>
-          <p class="show-round-title">Standard Samsar Stakes</p>
+          <p class="show-round-title">Round ${roundNumber} stakes</p>
           <div class="show-vs-input-grid">
             <article class="show-stage-mini-card">
               <p class="show-info-label">${escapeHtml(state.teams.teamA.name)} stake</p>
@@ -5060,20 +5013,30 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
       `;
     }
 
-    if (liveStep === "persona-intro") {
-      return `
-        <section class="show-stage-stack show-stage-focus-card">
-          <p class="show-info-label">Persona Intro / Round ${roundNumber}</p>
-          <p class="show-round-title">${escapeHtml(template?.personaTitle || "Persona runda")}</p>
-          <p class="show-round-copy">${escapeHtml(template?.personaRequirements || "Completeaza cerintele pentru persona.")}</p>
-        </section>
-      `;
-    }
-
     if (liveStep === "live-duel") {
       return `
         <section class="show-stage-stack">
-          <p class="show-info-label">Live Duel</p>
+          <p class="show-info-label">Live Duel / Round ${roundNumber}</p>
+          <article class="show-stage-focus-card">
+            <p class="show-round-title">${escapeHtml(template?.personaTitle || "Persona runda")}</p>
+            <p class="show-round-copy">${escapeHtml(template?.personaRequirements || "Completeaza cerintele pentru persona.")}</p>
+          </article>
+          <div class="show-vs-input-grid">
+            <article class="show-stage-mini-card">
+              <p class="show-info-label">${escapeHtml(state.teams.teamA.name)} duelist</p>
+              <select class="text-input" data-show-samsar-player-teama>
+                <option value="">Select player</option>
+                ${teamAOptions}
+              </select>
+            </article>
+            <article class="show-stage-mini-card">
+              <p class="show-info-label">${escapeHtml(state.teams.teamB.name)} duelist</p>
+              <select class="text-input" data-show-samsar-player-teamb>
+                <option value="">Select player</option>
+                ${teamBOptions}
+              </select>
+            </article>
+          </div>
           <div class="show-vs-focus-board">
             <article class="show-stage-mini-card">
               <p class="show-info-label">${escapeHtml(state.teams.teamA.name)}</p>
@@ -5084,25 +5047,7 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
               <p class="show-info-value">${escapeHtml(duelistB?.name || "Select player")}</p>
             </article>
           </div>
-          <p class="show-round-copy">Run the duel live, then go to score entry.</p>
-        </section>
-      `;
-    }
-
-    if (liveStep === "score-entry") {
-      return `
-        <section class="show-stage-stack">
-          <p class="show-info-label">Score Entry</p>
-          <div class="show-vs-input-grid">
-            <article class="show-stage-mini-card">
-              <p class="show-info-label">${escapeHtml(state.teams.teamA.name)} Score</p>
-              <input class="text-input show-stage-score-input" type="number" min="0" step="1" value="${roundState.scoreTeamA}" data-show-samsar-score-teama>
-            </article>
-            <article class="show-stage-mini-card">
-              <p class="show-info-label">${escapeHtml(state.teams.teamB.name)} Score</p>
-              <input class="text-input show-stage-score-input" type="number" min="0" step="1" value="${roundState.scoreTeamB}" data-show-samsar-score-teamb>
-            </article>
-          </div>
+          <p class="show-round-copy">Run the live duel, then continue to result and payout.</p>
         </section>
       `;
     }
@@ -5115,7 +5060,17 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
           : "Draw";
     return `
       <section class="show-stage-stack show-stage-result-card">
-        <p class="show-info-label">Result Screen</p>
+        <p class="show-info-label">Result + Payout</p>
+        <div class="show-vs-input-grid">
+          <article class="show-stage-mini-card">
+            <p class="show-info-label">${escapeHtml(state.teams.teamA.name)} Score</p>
+            <input class="text-input show-stage-score-input" type="number" min="0" step="1" value="${roundState.scoreTeamA}" data-show-samsar-score-teama>
+          </article>
+          <article class="show-stage-mini-card">
+            <p class="show-info-label">${escapeHtml(state.teams.teamB.name)} Score</p>
+            <input class="text-input show-stage-score-input" type="number" min="0" step="1" value="${roundState.scoreTeamB}" data-show-samsar-score-teamb>
+          </article>
+        </div>
         <p class="show-stage-result-headline">${escapeHtml(winnerLabel)}</p>
         <p class="show-round-copy">${escapeHtml(state.teams.teamA.name)} ${roundState.scoreTeamA} - ${roundState.scoreTeamB} ${escapeHtml(
           state.teams.teamB.name
@@ -5509,9 +5464,7 @@ function buildLiveRoundQuickActions(gameId, liveStep) {
   if (gameId === "film-joc-franciza-fun-fact") {
     const flowComplete = isGameFlowComplete(gameId);
     if (liveStep === "bet-screen") {
-      actions.push({ tone: "primary-btn", action: "live-step-image-reveal", label: "Reveal Image" });
-    } else if (liveStep === "image-reveal") {
-      actions.push({ tone: "primary-btn", action: "live-step-card-reveal", label: "Open Cards" });
+      actions.push({ tone: "primary-btn", action: "live-step-card-reveal", label: "Open Round" });
     } else if (liveStep === "card-reveal") {
       actions.push({ tone: "primary-btn", action: "film-apply", label: "Calculate Result" });
     } else if (liveStep === "breakdown-result") {
@@ -5529,24 +5482,19 @@ function buildLiveRoundQuickActions(gameId, liveStep) {
 
   if (gameId === "cel-mai-bun-samsar") {
     const flowComplete = isGameFlowComplete(gameId);
-    if (liveStep === "player-select") {
-      actions.push({ tone: "primary-btn", action: "live-step-bet-screen", label: "Confirm Players" });
-    } else if (liveStep === "bet-screen") {
-      actions.push({ tone: "primary-btn", action: "live-step-persona-intro", label: "Show Persona" });
-    } else if (liveStep === "persona-intro") {
-      actions.push({ tone: "primary-btn", action: "live-step-live-duel", label: "Start Duel" });
+    if (liveStep === "bet-screen") {
+      actions.push({ tone: "primary-btn", action: "live-step-live-duel", label: "Start Live Duel" });
     } else if (liveStep === "live-duel") {
-      actions.push({ tone: "primary-btn", action: "live-step-score-entry", label: "Go to Score Entry" });
-    } else if (liveStep === "score-entry") {
-      actions.push({ tone: "primary-btn", action: "samsar-apply", label: "Apply Result" });
+      actions.push({ tone: "primary-btn", action: "live-step-result-screen", label: "Go to Result" });
     } else if (liveStep === "result-screen") {
+      actions.push({ tone: "primary-btn", action: "samsar-apply", label: "Apply Result" });
       actions.push({
-        tone: "primary-btn",
+        tone: "secondary-btn",
         action: flowComplete ? "finish-game-return" : "next-round",
         label: flowComplete ? "Finish Samsar" : "Next Round"
       });
     }
-    if (!["live-duel", "score-entry", "result-screen"].includes(liveStep)) {
+    if (!["live-duel", "result-screen"].includes(liveStep)) {
       actions.push({ tone: "secondary-btn", action: "go-game-intro", label: "Lineup substitution" });
     }
     return renderFlowActionButtons(actions);
@@ -6384,15 +6332,7 @@ function handleShowOverlayAction(action, trigger) {
   if (!action) {
     return;
   }
-  const answerResultActions = new Set([
-    "trivia-correct",
-    "trivia-wrong",
-    "pretul-evaluate",
-    "film-apply",
-    "samsar-apply",
-    "manual-apply",
-    "curse-apply"
-  ]);
+  const answerLockRequiredActions = new Set(["trivia-correct", "trivia-wrong"]);
 
   if (action === "go-show-home") {
     setShowScreen("show-home");
@@ -6565,7 +6505,7 @@ function handleShowOverlayAction(action, trigger) {
     nextGame();
     return;
   }
-  if (answerResultActions.has(action) && !isOverlayAnswerLocked()) {
+  if (answerLockRequiredActions.has(action) && !isOverlayAnswerLocked()) {
     setLastResultSummary("Lock answer first, then confirm result.");
     renderShowUi();
     saveState("Overlay confirm blocked: answer not locked.");
@@ -6598,7 +6538,10 @@ function handleShowOverlayAction(action, trigger) {
   }
   if (action === "pretul-evaluate") {
     syncPretulOverlayIntoState();
-    applyPretulRoundResult();
+    const applied = applyPretulRoundResult();
+    if (!applied) {
+      return;
+    }
     setOverlayAnswerLocked(false, { persist: false });
     setLiveRoundStep("auto-winner", { persist: false });
     setShowScreen("live-round", { persist: false });
@@ -6609,7 +6552,10 @@ function handleShowOverlayAction(action, trigger) {
     return;
   }
   if (action === "film-apply") {
-    applyFilmRoundResult();
+    const applied = applyFilmRoundResult();
+    if (!applied) {
+      return;
+    }
     setOverlayAnswerLocked(false, { persist: false });
     setLiveRoundStep("breakdown-result", { persist: false });
     setShowScreen("live-round", { persist: false });
@@ -7535,7 +7481,7 @@ function applyPretulRoundResult() {
     renderPretulControls();
     setLastResultSummary(roundState.lastResult);
     saveState("Pretul evaluate blocked: no item.");
-    return;
+    return false;
   }
 
   const answerA = roundState.answerTeamA;
@@ -7620,6 +7566,7 @@ function applyPretulRoundResult() {
   renderRoundSelection();
   renderPretulControls();
   saveState("Pretul round evaluated.");
+  return true;
 }
 
 function getFilmRoundBreakdown(roundState, betAmount) {
@@ -7955,7 +7902,7 @@ function applyFilmRoundResult() {
     renderFilmControls();
     setLastResultSummary(roundState.lastResult);
     saveState("Film round blocked: no item.");
-    return;
+    return false;
   }
 
   const missingComponents = FILM_COMPONENT_KEYS.filter((key) => roundState.outcomes[key] === null);
@@ -7965,7 +7912,7 @@ function applyFilmRoundResult() {
     renderFilmControls();
     setLastResultSummary(roundState.lastResult);
     saveState("Film round blocked: incomplete outcomes.");
-    return;
+    return false;
   }
 
   const playingTeam = state.teams[roundState.teamKey];
@@ -7975,7 +7922,7 @@ function applyFilmRoundResult() {
     renderFilmControls();
     setLastResultSummary(roundState.lastResult);
     saveState("Film round blocked: bet cap zero.");
-    return;
+    return false;
   }
 
   const effectiveBet = Math.min(roundState.betAmount, maxBet);
@@ -8033,6 +7980,7 @@ function applyFilmRoundResult() {
   renderRoundSelection();
   renderFilmControls();
   saveState("Film round payout applied.");
+  return true;
 }
 
 function renderSamsarControls() {
