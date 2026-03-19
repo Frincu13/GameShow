@@ -4303,28 +4303,41 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
       liveStep === "result-screen" ? roundState.lockedOptionIndex : roundState.selectedOptionIndex;
     const selectedOptionText =
       selectedOptionIndex >= 0 && selectedOptionIndex < options.length ? options[selectedOptionIndex] : "";
+    const betPresets = Array.from(
+      new Set(
+        [
+          BET_ROUNDING_STEP,
+          Math.round(maxBet * 0.25),
+          Math.round(maxBet * 0.5),
+          Math.round(maxBet * 0.75),
+          maxBet
+        ]
+          .map((amount) => normalizeBetAmount(amount))
+          .filter((amount) => amount > 0 && amount <= maxBet)
+      )
+    ).sort((left, right) => left - right);
 
     if (liveStep === "topic-select") {
       const topicTiles = state.trivia.categories
         .map((entry) => {
           const isUsed = roundState.usedCategoryIds.includes(entry.id);
           const isSelected = entry.id === roundState.selectedCategoryId;
+          const statusLabel = isUsed ? "USED" : "TOPIC";
           return `
             <button class="show-trivia-topic-tile ${isSelected ? "is-selected" : ""}" type="button" data-show-trivia-topic="${
               entry.id
             }" ${isUsed ? "disabled" : ""}>
-              <p class="show-info-label">${isUsed ? "USED" : "TOPIC"}</p>
-              <p class="show-round-title">${escapeHtml(entry.title)}</p>
-              <p class="show-round-copy">${isUsed ? "Played already" : "Select topic"}</p>
+              <span class="show-trivia-topic-status ${isUsed ? "is-used" : ""}">${statusLabel}</span>
+              <span class="show-trivia-topic-title">${escapeHtml(entry.title)}</span>
             </button>
           `;
         })
         .join("");
       return `
-        <div class="show-round-card">
-          <p class="show-info-label">Topic Select</p>
-          <p class="show-round-title">Turn: ${escapeHtml(playingTeam.name)}</p>
-          <p class="show-round-copy">Choose one topic card to start the round.</p>
+        <div class="show-round-card show-trivia-turn-card">
+          <p class="show-info-label">Active Team</p>
+          <p class="show-round-title show-trivia-turn-team">${escapeHtml(playingTeam.name)}</p>
+          <p class="show-round-copy">Pick one topic card.</p>
         </div>
         <div class="show-trivia-topic-grid">${topicTiles}</div>
       `;
@@ -4332,22 +4345,39 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
 
     if (liveStep === "bet-screen") {
       return `
-        <article class="show-control-card">
-          <h3>Bet Screen</h3>
-          <p class="show-round-copy">Topic: ${escapeHtml(category?.title || "Select topic first")}</p>
-          <p class="show-round-copy">Max bet: ${formatMoney(maxBet)}</p>
-          <label class="show-info-label" for="showTriviaBetFlow">Bet amount</label>
-          <input id="showTriviaBetFlow" class="text-input compact-input" type="number" min="0" step="10" value="${triviaBet}" data-show-trivia-bet>
+        <article class="show-control-card show-trivia-bet-stage">
+          <p class="show-info-label">Bet Screen</p>
+          <p class="show-round-title show-trivia-topic-focus">${escapeHtml(category?.title || "Select topic first")}</p>
+          <p class="show-round-copy show-trivia-bet-team">Team in play: ${escapeHtml(playingTeam.name)}</p>
+          <div class="show-trivia-bet-core">
+            <label class="show-info-label show-trivia-bet-label" for="showTriviaBetFlow">Bet amount</label>
+            <input id="showTriviaBetFlow" class="text-input show-trivia-bet-input" type="number" min="0" step="10" value="${triviaBet}" data-show-trivia-bet>
+            <p class="show-control-note show-trivia-bet-max">Max bet: ${formatMoney(maxBet)}</p>
+          </div>
+          <div class="show-trivia-bet-presets">
+            ${betPresets
+              .map(
+                (preset) =>
+                  `<button class="pill-btn show-trivia-bet-chip" type="button" data-show-trivia-bet-preset="${preset}">${formatMoney(
+                    preset
+                  )}</button>`
+              )
+              .join("")}
+          </div>
         </article>
       `;
     }
 
     if (liveStep === "question-screen") {
       return `
-        <div class="show-round-card">
-          <p class="show-info-label">Question + Answers</p>
+        <div class="show-round-card show-trivia-qa-stage">
+          <p class="show-info-label">Question Round</p>
           <p class="show-round-title">${escapeHtml(category?.title || "No topic selected")}</p>
-          <p class="show-round-copy">${escapeHtml(category?.question || "Select a topic to continue.")}</p>
+          <div class="show-trivia-timer-hero ${state.timer.remaining <= 10 ? "is-danger" : ""}" data-show-trivia-timer-hero>
+            <span>Time left</span>
+            <strong data-show-trivia-timer-value>${formatTimer(state.timer.remaining)}</strong>
+          </div>
+          <p class="show-round-copy show-trivia-question">${escapeHtml(category?.question || "Select a topic to continue.")}</p>
           <div class="show-trivia-options-grid">
             ${options
               .map((option, index) => {
@@ -4361,10 +4391,6 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
               })
               .join("")}
           </div>
-          <p class="show-round-copy">Timer is live. Select one answer, then confirm.</p>
-          <div class="show-action-footer">
-            <button class="pill-btn" type="button" data-show-action="trivia-start-round">Restart Timer</button>
-          </div>
         </div>
       `;
     }
@@ -4375,19 +4401,25 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
         : `-${formatMoney(Math.abs(roundState.lastDelta))}`;
     const verdictLabel =
       roundState.isCorrect === true
-        ? "Correct answer"
+        ? "CORECT"
         : roundState.isCorrect === false
-          ? "Wrong answer"
-          : "Result pending";
+          ? "GRESIT"
+          : "RESULT PENDING";
+    const verdictTone = roundState.isCorrect === true ? "is-correct" : roundState.isCorrect === false ? "is-wrong" : "";
+    const deltaTone = roundState.lastDelta >= 0 ? "is-positive" : "is-negative";
     return `
-      <div class="show-round-card">
-        <p class="show-info-label">Result Screen</p>
-        <p class="show-round-title">${verdictLabel}</p>
-        <p class="show-round-copy">Selected: ${escapeHtml(selectedOptionText || "No answer selected")}</p>
-        <p class="show-round-copy">Correct: ${escapeHtml(options[correctIndex] || category?.answer || "N/A")}</p>
-        <p class="show-round-copy">Money delta: ${deltaLabel}. ${escapeHtml(playingTeam.name)} now has ${formatMoney(
-          playingTeam.money
-        )}.</p>
+      <div class="show-round-card show-trivia-result-stage ${verdictTone}">
+        <p class="show-trivia-verdict">${verdictLabel}</p>
+        <div class="show-trivia-answer-compare">
+          <p class="show-info-label">Selected</p>
+          <p class="show-round-copy">${escapeHtml(selectedOptionText || "No answer selected")}</p>
+        </div>
+        <div class="show-trivia-answer-compare">
+          <p class="show-info-label">Correct</p>
+          <p class="show-round-copy">${escapeHtml(options[correctIndex] || category?.answer || "N/A")}</p>
+        </div>
+        <p class="show-trivia-delta ${deltaTone}">${deltaLabel}</p>
+        <p class="show-round-copy">${escapeHtml(playingTeam.name)} now has ${formatMoney(playingTeam.money)}.</p>
       </div>
     `;
   }
@@ -4611,9 +4643,11 @@ function buildLiveRoundQuickActions(gameId, liveStep) {
         actions.push({ tone: "primary-btn", action: "live-step-bet-screen", label: "Go to Bet Screen" });
       }
       actions.push({ tone: "secondary-btn", action: "trivia-reset-used", label: "Reset topics" });
+      actions.push({ tone: "secondary-btn", action: "next-game", label: "Next game" });
     } else if (liveStep === "bet-screen") {
       actions.push({ tone: "primary-btn", action: "trivia-confirm-bet", label: "Confirm Bet" });
       actions.push({ tone: "secondary-btn", action: "live-step-topic-select", label: "Back to Topics" });
+      actions.push({ tone: "secondary-btn", action: "next-game", label: "Next game" });
     } else if (liveStep === "question-screen") {
       actions.push({ tone: "secondary-btn", action: "toggle-answer-lock", label: lockLabel });
       actions.push({ tone: "primary-btn", action: "trivia-confirm-answer", label: "Confirm Answer" });
@@ -4623,10 +4657,7 @@ function buildLiveRoundQuickActions(gameId, liveStep) {
         action: flowComplete ? "finish-game-return" : "trivia-next-topic",
         label: flowComplete ? "Finish Trivia" : "Next Topic"
       });
-      actions.push({ tone: "secondary-btn", action: "go-leaderboard", label: "Open Leaderboard" });
     }
-
-    actions.push({ tone: "secondary-btn", action: "next-game", label: "Next game" });
     return renderFlowActionButtons(actions);
   }
 
@@ -4696,10 +4727,12 @@ function buildLiveRoundHostDrawer(gameId) {
 function buildLiveRoundContent(gameId) {
   const liveStep = getLiveRoundStep(gameId);
   return `
-    ${renderShowStageControls(gameId, liveStep)}
-    ${buildLiveRoundExperienceContent(gameId, liveStep)}
-    ${buildLiveRoundHostDrawer(gameId)}
-    ${buildLiveRoundQuickActions(gameId, liveStep)}
+    <section class="show-live-screen">
+      ${renderShowStageControls(gameId, liveStep)}
+      ${buildLiveRoundExperienceContent(gameId, liveStep)}
+      ${buildLiveRoundHostDrawer(gameId)}
+      ${buildLiveRoundQuickActions(gameId, liveStep)}
+    </section>
   `;
 }
 
@@ -5803,6 +5836,13 @@ function handleShowOverlayClick(event) {
     return;
   }
 
+  const triviaPresetButton = event.target.closest("[data-show-trivia-bet-preset]");
+  if (triviaPresetButton) {
+    const presetValue = triviaPresetButton.getAttribute("data-show-trivia-bet-preset");
+    setTriviaBetAmount(presetValue, { persist: true, render: true });
+    return;
+  }
+
   const revealButton = event.target.closest("[data-show-film-reveal]");
   if (revealButton) {
     const componentKey = revealButton.getAttribute("data-show-film-reveal");
@@ -5929,6 +5969,14 @@ function renderTimer() {
     elements.showStageTimer.textContent = formatTimer(state.timer.remaining);
   }
   if (elements.showScreenContent) {
+    const triviaTimerValue = elements.showScreenContent.querySelector("[data-show-trivia-timer-value]");
+    if (triviaTimerValue) {
+      triviaTimerValue.textContent = formatTimer(state.timer.remaining);
+    }
+    const triviaTimerHero = elements.showScreenContent.querySelector("[data-show-trivia-timer-hero]");
+    if (triviaTimerHero) {
+      triviaTimerHero.classList.toggle("is-danger", state.timer.remaining <= 10);
+    }
     const quickRemainingInput = elements.showScreenContent.querySelector("[data-show-timer-remaining]");
     if (quickRemainingInput) {
       quickRemainingInput.value = String(Math.max(0, Math.round(sanitizeNumber(state.timer.remaining, 0))));

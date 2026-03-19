@@ -1776,6 +1776,401 @@ button.show-leader-row {
   color: #b02a37;
 }
 
+/* Game feel polish pass: live screens */
+.show-live-screen {
+  display: grid;
+  gap: 14px;
+}
+
+.show-live-screen .show-game-experience {
+  display: grid;
+  gap: 14px;
+}
+
+.show-live-screen .show-control-strip {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(190px, 230px) 1fr;
+  align-items: end;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid #d2dcff;
+  background: linear-gradient(162deg, #ffffff, #f4f7ff);
+}
+
+.show-live-screen .show-control-note {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #4f6290;
+  font-size: 0.84rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.show-live-screen .show-control-buttons {
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.show-live-screen .show-control-buttons .pill-btn {
+  padding: 11px 15px;
+  border-radius: 999px;
+}
+
+.show-live-screen .show-round-card,
+.show-live-screen .show-control-card {
+  border-radius: 18px;
+  border: 1px solid #d2dcff;
+  background: linear-gradient(165deg, #ffffff, #f5f8ff);
+  box-shadow: 0 10px 24px rgba(22, 44, 94, 0.08);
+  padding: 18px;
+}
+
+.show-live-screen .show-round-title {
+  font-size: clamp(1.5rem, 3.8vw, 2.5rem);
+  line-height: 1.04;
+}
+
+.show-live-screen .show-round-copy {
+  margin-top: 7px;
+  font-size: 1.02rem;
+  line-height: 1.32;
+}
+
+.show-live-screen .show-action-footer {
+  align-items: center;
+  gap: 10px;
+}
+
+.show-live-screen .show-action-footer button {
+  min-height: 48px;
+  font-size: 1rem;
+}
+
+.show-live-screen .show-action-footer .primary-btn {
+  min-width: 190px;
+}
+
+.show-live-screen .text-input {
+  min-height: 48px;
+  font-size: 1.04rem;
+}
+
+.show-live-screen .compact-input {
+  min-height: 44px;
+}
+
+.show-live-screen .show-host-drawer {
+  border-style: dashed;
+}
+
+.show-trivia-turn-card {
+  text-align: center;
+  justify-items: center;
+  gap: 7px;
+}
+
+.show-trivia-turn-team {
+  margin-top: 0;
+  font-family: "Bebas Neue", sans-serif;
+  font-size: clamp(2.4rem, 7vw, 4.4rem);
+  line-height: 0.88;
+  letter-spacing: 0.04em;
+}
+
+.show-trivia-topic-grid {
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+.show-trivia-topic-tile {
+  position: relative;
+  min-height: 170px;
+  border-radius: 18px;
+  border: 1px solid #ccd8ff;
+  background: linear-gradient(156deg, #ffffff, #f0f5ff);
+  padding: 14px;
+  display: grid;
+  gap: 12px;
+  align-content: space-between;
+  box-shadow: 0 9px 20px rgba(20, 39, 83, 0.09);
+}
+
+.show-trivia-topic-tile:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.show-trivia-topic-status {
+  justify-self: start;
+  border-radius: 999px;
+  border: 1px solid #d7e0ff;
+  background: #edf2ff;
+  color: #5a6e9e;
+  padding: 5px 10px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.show-trivia-topic-status.is-used {
+  background: #eef0f8;
+  border-color: #dde2f2;
+  color: #8c96b5;
+}
+
+.show-trivia-topic-title {
+  font-family: "Bebas Neue", sans-serif;
+  font-size: clamp(2.1rem, 4.4vw, 3.3rem);
+  line-height: 0.9;
+  letter-spacing: 0.03em;
+  color: #162044;
+}
+
+.show-stage .show-trivia-topic-tile.is-selected {
+  border-color: #dfb947;
+  box-shadow: 0 0 0 2px rgba(232, 187, 58, 0.28) inset;
+}
+
+.show-trivia-topic-tile:disabled {
+  opacity: 0.52;
+}
+
+.show-trivia-bet-stage {
+  text-align: center;
+  gap: 14px;
+  align-items: center;
+}
+
+.show-trivia-topic-focus {
+  margin-top: 0;
+  font-family: "Bebas Neue", sans-serif;
+  font-size: clamp(2.1rem, 5vw, 3.6rem);
+  letter-spacing: 0.03em;
+}
+
+.show-trivia-bet-team {
+  margin-top: -1px;
+  color: #4e628f;
+  font-weight: 700;
+}
+
+.show-trivia-bet-core {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+}
+
+.show-trivia-bet-label {
+  letter-spacing: 0.11em;
+}
+
+.show-trivia-bet-input {
+  max-width: 290px;
+  min-height: 78px;
+  text-align: center;
+  border-radius: 16px;
+  border-width: 2px;
+  border-color: #cdd9ff;
+  font-size: clamp(2.2rem, 7vw, 4rem);
+  font-weight: 700;
+  line-height: 1;
+  color: #111a38;
+}
+
+.show-trivia-bet-max {
+  margin-top: 2px;
+  font-size: 0.9rem;
+}
+
+.show-trivia-bet-presets {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.show-trivia-bet-chip {
+  flex: 0 0 auto;
+  min-width: 108px;
+  border-radius: 999px;
+  font-size: 1rem;
+}
+
+.show-trivia-qa-stage {
+  gap: 16px;
+}
+
+.show-trivia-timer-hero {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  border: 2px solid #c7d6ff;
+  border-radius: 16px;
+  background: linear-gradient(165deg, #ffffff, #e9f0ff);
+  padding: 12px 14px;
+}
+
+.show-trivia-timer-hero span {
+  color: #506392;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.show-trivia-timer-hero strong {
+  font-family: "Bebas Neue", sans-serif;
+  font-size: clamp(3.2rem, 10vw, 7.2rem);
+  line-height: 0.86;
+  letter-spacing: 0.05em;
+  color: #101b3c;
+}
+
+.show-trivia-timer-hero.is-danger {
+  border-color: #ff9e73;
+  background: linear-gradient(165deg, #fff3ed, #ffe6da);
+  box-shadow: 0 0 0 2px rgba(255, 139, 74, 0.15) inset;
+  animation: trivia-timer-pulse 900ms ease-in-out infinite alternate;
+}
+
+@keyframes trivia-timer-pulse {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.01);
+  }
+}
+
+.show-trivia-question {
+  margin-top: 0;
+  font-size: clamp(1.45rem, 3.4vw, 2.55rem);
+  line-height: 1.22;
+  color: #141f40;
+  font-weight: 700;
+}
+
+.show-trivia-options-grid {
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+.show-trivia-answer-btn {
+  min-height: 108px;
+  border-radius: 16px;
+  border: 2px solid #ccd8ff;
+  background: #ffffff;
+  grid-template-columns: 40px 1fr;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+}
+
+.show-trivia-answer-btn span:first-child {
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  background: #e9efff;
+  color: #253464;
+  display: inline-grid;
+  place-items: center;
+}
+
+.show-trivia-answer-btn span:last-child {
+  font-size: clamp(1.1rem, 2.2vw, 1.45rem);
+}
+
+.show-stage .show-trivia-answer-btn.is-selected {
+  border-color: #dfb947;
+  box-shadow: 0 0 0 2px rgba(232, 187, 58, 0.24) inset;
+  background: linear-gradient(160deg, #fff8e1, #fff2c8);
+}
+
+.show-trivia-result-stage {
+  gap: 12px;
+  text-align: center;
+}
+
+.show-trivia-verdict {
+  margin: 0;
+  font-family: "Bebas Neue", sans-serif;
+  font-size: clamp(3.2rem, 10vw, 7.1rem);
+  line-height: 0.84;
+  letter-spacing: 0.05em;
+}
+
+.show-trivia-result-stage.is-correct {
+  border-color: #a0dcb6;
+  background: linear-gradient(160deg, #f2fff6, #f7fff9);
+}
+
+.show-trivia-result-stage.is-correct .show-trivia-verdict {
+  color: #156f3f;
+}
+
+.show-trivia-result-stage.is-wrong {
+  border-color: #ffb8b8;
+  background: linear-gradient(160deg, #fff1f1, #fff8f4);
+}
+
+.show-trivia-result-stage.is-wrong .show-trivia-verdict {
+  color: #a32332;
+}
+
+.show-trivia-answer-compare {
+  text-align: left;
+  border: 1px solid #d6dfff;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 10px 12px;
+  display: grid;
+  gap: 5px;
+}
+
+.show-trivia-answer-compare .show-round-copy {
+  margin: 0;
+  color: #162346;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.show-trivia-delta {
+  margin: 2px 0 0;
+  font-family: "Bebas Neue", sans-serif;
+  font-size: clamp(3.1rem, 9vw, 6rem);
+  line-height: 0.88;
+  letter-spacing: 0.04em;
+}
+
+.show-trivia-delta.is-positive {
+  color: #157347;
+}
+
+.show-trivia-delta.is-negative {
+  color: #b02a37;
+}
+
+@media (max-width: 980px) {
+  .show-live-screen .show-control-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .show-live-screen .show-control-buttons {
+    justify-content: flex-start;
+  }
+
+  .show-trivia-topic-grid,
+  .show-trivia-options-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .show-trivia-bet-input {
+    max-width: 100%;
+  }
+}
+
 @media (min-width: 980px) {
   .round-grid {
     grid-template-columns: 330px 1fr;
