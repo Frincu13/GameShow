@@ -978,7 +978,7 @@
       <section class="panel page-section" data-section="players-teams">
         <div class="section-title-row">
           <h2>Players / Teams</h2>
-          <p class="muted">Dynamic players, round selection, Joker assignment, and lock control.</p>
+          <p class="muted">Roster management + game lineup lock control.</p>
         </div>
         <article class="placeholder-card">
           <h3>Round Selection Control</h3>
@@ -989,14 +989,6 @@
             <p class="muted">Active team B: <strong id="activeCountTeamB">0/6</strong></p>
           </div>
           <div class="players-control-grid">
-            <div>
-              <label class="field-label" for="jokerAssignmentSelect">Joker Player assignment</label>
-              <select id="jokerAssignmentSelect" class="text-input compact-input">
-                <option value="out">Out this round</option>
-                <option value="teamA">Team 1</option>
-                <option value="teamB">Team 2</option>
-              </select>
-            </div>
             <div class="metric-actions">
               <button id="lockRoundSelectionBtn" class="secondary-btn" type="button">Lock round selection</button>
               <button id="clearActiveSelectionBtn" class="secondary-btn" type="button">Clear active players</button>
@@ -1032,8 +1024,8 @@
         </div>
 
         <article class="placeholder-card">
-          <h3>Joker Player</h3>
-          <p class="muted">Joker Player fixed final title: <strong>F1 Gipsy King</strong></p>
+          <h3>Fixed Final Title</h3>
+          <p class="muted">Frincu always receives fixed title: <strong>F1 Gypsy King</strong></p>
           <div class="players-control-grid">
             <p class="muted">Rounds active: <strong id="jokerRoundsActive">0</strong></p>
             <p class="muted">Rounds for Team 1: <strong id="jokerRoundsTeamA">0</strong></p>
@@ -1046,7 +1038,7 @@
       <section class="panel page-section" data-section="awards-final-titles">
         <div class="section-title-row">
           <h2>Awards / Final Titles</h2>
-          <p class="muted">Automatic titles calculated from player stats + fixed Joker title.</p>
+          <p class="muted">Automatic titles calculated from player stats + fixed Frincu title.</p>
         </div>
         <article class="placeholder-card">
           <div class="section-title-row">
@@ -1073,9 +1065,9 @@
         </div>
         <article class="placeholder-card">
           <h3>Fixed Final Title</h3>
-          <p class="muted">Joker Player final title: <strong>F1 Gipsy King</strong></p>
-          <p id="jokerFixedAwardLine" class="muted">Joker Player - F1 Gipsy King (fixed and guaranteed).</p>
-          <p id="jokerAwardSummary" class="muted">Statistici Joker Player: runde active, W/L, money net.</p>
+          <p class="muted">Frincu final title: <strong>F1 Gypsy King</strong></p>
+          <p id="jokerFixedAwardLine" class="muted">Frincu - F1 Gypsy King (fixed and guaranteed).</p>
+          <p id="jokerAwardSummary" class="muted">Frincu stats: rounds active, W/L, money net.</p>
         </article>
       </section>
 
@@ -1110,7 +1102,7 @@
           <div id="endAwardsGeneralBoard" class="awards-grid"></div>
           <h4 class="field-label spaced">Game Titles</h4>
           <div id="endAwardsGameBoard" class="awards-grid"></div>
-          <p id="endJokerTitleLine" class="muted spaced">Joker Player - F1 Gipsy King.</p>
+          <p id="endJokerTitleLine" class="muted spaced">Frincu - F1 Gypsy King.</p>
         </article>
 
         <article class="placeholder-card">

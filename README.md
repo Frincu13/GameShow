@@ -9,11 +9,11 @@ Static host dashboard architecture for a game show with 2 teams.
 - starting money: `1000` for each team
 - betting with max caps per game and rounding to `10`
 - dynamic players per team (not fixed)
-- Joker Player round assignment (`Team 1` / `Team 2` / `Out`)
-- Joker fixed final title: `F1 Gipsy King`
+- lineup assignment board (`Team 1` / `Bench` / `Team 2`) per game
+- fixed final title for player `Frincu`: `F1 Gypsy King`
 - bench / unavailable statuses for players
-- round selection lock to prevent accidental changes
-- up to `6` active players per team per round
+- game lineup lock to prevent accidental changes
+- up to `6` active players per team per game lineup
 - persistent round timer (start, pause, reset, duration)
 - undo last result (restores money, round history snapshot, and player stats)
 - export/import full save in JSON format
