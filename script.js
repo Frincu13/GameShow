@@ -508,6 +508,32 @@ const DEFAULT_TRIVIA_CATEGORIES = [
 ];
 const PRETUL_PRODUCT_PLACEHOLDER =
   "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 960 540'><defs><linearGradient id='g' x1='0' x2='1' y1='0' y2='1'><stop offset='0' stop-color='%23131f43'/><stop offset='1' stop-color='%232b3c7c'/></linearGradient></defs><rect width='960' height='540' fill='url(%23g)'/><text x='50%25' y='46%25' fill='%23f5f7ff' font-size='40' font-family='Arial' text-anchor='middle'>PRETUL CORECT</text><text x='50%25' y='57%25' fill='%23d4dcff' font-size='24' font-family='Arial' text-anchor='middle'>Product reveal placeholder</text></svg>";
+const PRETUL_PRODUCT_IMAGE_BY_URL = {
+  "https://www.emag.ro/televizor-samsung-qled-50q7f2-125-cm-smart-4k-ultra-hd-clasa-g-model-2025-qe50q7f2auxxh/pd/DN3GRT3BM/":
+    "https://s13emagst.akamaized.net/products/93125/93124846/images/res_6f60c0330dea93a9f6ba8c519d2d75ae.jpg?width=450&height=450&hash=0111B5BA1055588FBE2D814F5CD5A9E8",
+  "https://www.emag.ro/espressor-automat-philips-seria-2300-lattego-4-tipuri-de-bauturi-ecran-tactil-intuitiv-tehnologie-noua-silentbrew-aplicatie-homeid-rasnita-ceramica-negru-mat-ep2330-10/pd/D3PXSMYBM/":
+    "https://s13emagst.akamaized.net/products/58702/58701138/images/res_9ac4ef3d77054707198c7db0c602879a.jpg?width=450&height=450&hash=1BDC6F7D23B9D4B4E829A54FC7F15A25",
+  "https://www.emag.ro/legor-icons-flori-de-prun-10369-327-piese-5702017719696/pd/DVQRNFYBM/":
+    "https://s13emagst.akamaized.net/products/71405/71404023/images/res_ea213341bba17269064c3bab7b9cb547.jpg?width=450&height=450&hash=234469978DD876EDA56036F3B648B55E",
+  "https://www.emag.ro/laptop-gaming-lenovo-loq-15arp10e-cu-procesor-amd-ryzentm-7-7735hs-pana-la-4-75ghz-15-6-full-hd-ips-144hz-16gb-ddr5-ram-512gb-ssd-nvidiar-geforce-rtxtm-4050-6gb-gddr6-no-os-luna-grey-83s0002rrm/pd/DZY2BG3BM/":
+    "https://s13emagst.akamaized.net/products/112674/112673490/images/res_cb4a8b0c25566bf25a3168c7a72ce6e6.png?width=450&height=450&hash=4B46DCA4F30FF19FC5F9D60423485228",
+  "https://www.emag.ro/robot-de-aspirare-xiaomi-s40-wi-fi-10000pa-5200mah-aspirare-spalare-simultana-sistem-de-navigatie-lds-520ml-rezervor-pentru-praf-si-270ml-rezervor-de-apa-alb-bhr084aeu/pd/DH9NNS3BM/":
+    "https://s13emagst.akamaized.net/products/101865/101864523/images/res_8f6c89564b88ec0f66b0dc66920a52bc.jpg?width=450&height=450&hash=1F99399C4F58918368CD0D92C2915581",
+  "https://www.emag.ro/friteuza-cu-aer-cald-ninja-flex-drawer-2470-w-10-4-l-capacitate-mancare-2-kg-interval-temperatura-40-240-c-doua-zone-de-gatit-7-programe-negru-af500eu/pd/DD4DV0YBM/":
+    "https://s13emagst.akamaized.net/products/67037/67036111/images/res_73e45582c1fe55bae38b36f8f9a2f123.jpg?width=450&height=450&hash=7621761D2CE2B6B98FAA2AF78B66DFE9",
+  "https://www.emag.ro/apa-de-parfum-lattafa-opulent-musk-unisex-100-ml-6291107450445/pd/D0530WBBM/":
+    "https://s13emagst.akamaized.net/products/28008/28007239/images/res_499aa4b6ceb9cd7c4a59946380005e5e.jpg?width=450&height=450&hash=1D56A81C829E621D81FD890DCF43D0F1",
+  "https://www.emag.ro/telefon-mobil-samsung-galaxy-s24-fe-dual-sim-8gb-ram-128gb-5g-graphite-sm-s721bzkdeue/pd/D0J1YZYBM/":
+    "https://s13emagst.akamaized.net/products/77658/77657955/images/res_ff11f356f99b3af89e0e67b5537d3fa6.jpg?width=450&height=450&hash=A6592347AE5ED88F8E74F3B853F67744",
+  "https://www.emag.ro/consola-playstation-5-digital-edition-ps5-slim-825gb-ssd-e-chassis-1000049751/pd/D4LQQL3BM/":
+    "https://s13emagst.akamaized.net/products/64933/64932189/images/res_b51e79599e34411e9f4ff16d3266e32f.jpg?width=450&height=450&hash=1A8234F59CED8C9A3094B94FA160C471",
+  "https://www.emag.ro/casti-apple-airpods-pro-3-carcasa-magsafe-usb-c-mfhp4zm-a/pd/DZ68XV3BM/":
+    "https://s13emagst.akamaized.net/products/102926/102925881/images/res_9ece9931dcc5bbfd309ee2bb6bcadb79.jpg?width=450&height=450&hash=B11AE26DED82E9D6514A1060B98E336C",
+  "https://www.emag.ro/smartwatch-xiaomi-watch-5-green-bhr07wpgl/pd/D8VWHB2BM/":
+    "https://s13emagst.akamaized.net/products/114874/114873721/images/res_7b57979b60386f2f0ceed0dbe5390072.jpg?width=450&height=450&hash=4E7B03DBE88A1F428F11D47C80C52E32",
+  "https://www.emag.ro/mixer-planetar-cu-bol-din-inox-goldmann-2800-w-10-l-inox-5-accesorii-6-viteze-cu-pulse-angrenaje-metalice-carcasa-din-inox-argintiu-gm-1115ed/pd/D89KY13BM/":
+    "https://s13emagst.akamaized.net/products/107197/107196168/images/res_f9522c9f8802a2c9376bc70594f0b72e.jpg?width=450&height=450&hash=2854E270543A02B01A882015C557BC66"
+};
 const DEFAULT_PRETUL_ITEMS = [
   {
     id: "0",
@@ -515,6 +541,8 @@ const DEFAULT_PRETUL_ITEMS = [
     productTitle: "Televizor Samsung QLED 50Q7F2, 125 cm, Smart 4K",
     productUrl:
       "https://www.emag.ro/televizor-samsung-qled-50q7f2-125-cm-smart-4k-ultra-hd-clasa-g-model-2025-qe50q7f2auxxh/pd/DN3GRT3BM/",
+    imageUrl:
+      "https://s13emagst.akamaized.net/products/93125/93124846/images/res_6f60c0330dea93a9f6ba8c519d2d75ae.jpg?width=450&height=450&hash=0111B5BA1055588FBE2D814F5CD5A9E8",
     actualPriceLei: 1799.99,
     imageHint: "TV Samsung QLED pe fundal luminos",
     quickSpecs: ["125 cm", "QLED", "Smart TV", "4K UHD"]
@@ -525,6 +553,8 @@ const DEFAULT_PRETUL_ITEMS = [
     productTitle: "Espressor automat Philips Seria 2300 LatteGo EP2330/10",
     productUrl:
       "https://www.emag.ro/espressor-automat-philips-seria-2300-lattego-4-tipuri-de-bauturi-ecran-tactil-intuitiv-tehnologie-noua-silentbrew-aplicatie-homeid-rasnita-ceramica-negru-mat-ep2330-10/pd/D3PXSMYBM/",
+    imageUrl:
+      "https://s13emagst.akamaized.net/products/58702/58701138/images/res_9ac4ef3d77054707198c7db0c602879a.jpg?width=450&height=450&hash=1BDC6F7D23B9D4B4E829A54FC7F15A25",
     actualPriceLei: 1599.3,
     imageHint: "Espressor automat negru Philips",
     quickSpecs: ["LatteGo", "4 bauturi", "ecran tactil", "rasnita ceramica"]
@@ -535,6 +565,8 @@ const DEFAULT_PRETUL_ITEMS = [
     productTitle: "LEGO Icons Flori de prun 10369, 327 piese",
     productUrl:
       "https://www.emag.ro/legor-icons-flori-de-prun-10369-327-piese-5702017719696/pd/DVQRNFYBM/",
+    imageUrl:
+      "https://s13emagst.akamaized.net/products/71405/71404023/images/res_ea213341bba17269064c3bab7b9cb547.jpg?width=450&height=450&hash=234469978DD876EDA56036F3B648B55E",
     actualPriceLei: 127.99,
     imageHint: "Set LEGO floral decorativ",
     quickSpecs: ["327 piese", "LEGO Icons", "decor floral", "set adult"]
@@ -545,6 +577,8 @@ const DEFAULT_PRETUL_ITEMS = [
     productTitle: "Laptop gaming Lenovo LOQ 15ARP10E, Ryzen 7 7735HS, RTX 4050",
     productUrl:
       "https://www.emag.ro/laptop-gaming-lenovo-loq-15arp10e-cu-procesor-amd-ryzentm-7-7735hs-pana-la-4-75ghz-15-6-full-hd-ips-144hz-16gb-ddr5-ram-512gb-ssd-nvidiar-geforce-rtxtm-4050-6gb-gddr6-no-os-luna-grey-83s0002rrm/pd/DZY2BG3BM/",
+    imageUrl:
+      "https://s13emagst.akamaized.net/products/112674/112673490/images/res_cb4a8b0c25566bf25a3168c7a72ce6e6.png?width=450&height=450&hash=4B46DCA4F30FF19FC5F9D60423485228",
     actualPriceLei: 3799.99,
     imageHint: "Laptop gaming Lenovo LOQ deschis",
     quickSpecs: ["15.6 inch", "144Hz", "RTX 4050", "16GB RAM"]
@@ -555,6 +589,8 @@ const DEFAULT_PRETUL_ITEMS = [
     productTitle: "Robot de aspirare Xiaomi S40, aspirare + spalare",
     productUrl:
       "https://www.emag.ro/robot-de-aspirare-xiaomi-s40-wi-fi-10000pa-5200mah-aspirare-spalare-simultana-sistem-de-navigatie-lds-520ml-rezervor-pentru-praf-si-270ml-rezervor-de-apa-alb-bhr084aeu/pd/DH9NNS3BM/",
+    imageUrl:
+      "https://s13emagst.akamaized.net/products/101865/101864523/images/res_8f6c89564b88ec0f66b0dc66920a52bc.jpg?width=450&height=450&hash=1F99399C4F58918368CD0D92C2915581",
     actualPriceLei: 905.2,
     imageHint: "Robot aspirator alb Xiaomi",
     quickSpecs: ["10000Pa", "5200mAh", "LDS", "aspirare + spalare"]
@@ -565,6 +601,8 @@ const DEFAULT_PRETUL_ITEMS = [
     productTitle: "Friteuza cu aer cald Ninja FlexDrawer AF500EU, 10.4 L",
     productUrl:
       "https://www.emag.ro/friteuza-cu-aer-cald-ninja-flex-drawer-2470-w-10-4-l-capacitate-mancare-2-kg-interval-temperatura-40-240-c-doua-zone-de-gatit-7-programe-negru-af500eu/pd/DD4DV0YBM/",
+    imageUrl:
+      "https://s13emagst.akamaized.net/products/67037/67036111/images/res_73e45582c1fe55bae38b36f8f9a2f123.jpg?width=450&height=450&hash=7621761D2CE2B6B98FAA2AF78B66DFE9",
     actualPriceLei: 951.4,
     imageHint: "Air fryer Ninja negru, capacitate mare",
     quickSpecs: ["10.4 L", "2470W", "2 zone", "7 programe"]
@@ -575,6 +613,8 @@ const DEFAULT_PRETUL_ITEMS = [
     productTitle: "Apa de parfum Lattafa Opulent Musk, Unisex, 100 ml",
     productUrl:
       "https://www.emag.ro/apa-de-parfum-lattafa-opulent-musk-unisex-100-ml-6291107450445/pd/D0530WBBM/",
+    imageUrl:
+      "https://s13emagst.akamaized.net/products/28008/28007239/images/res_499aa4b6ceb9cd7c4a59946380005e5e.jpg?width=450&height=450&hash=1D56A81C829E621D81FD890DCF43D0F1",
     actualPriceLei: 70.13,
     imageHint: "Sticla de parfum eleganta",
     quickSpecs: ["100 ml", "unisex", "eau de parfum", "Lattafa"]
@@ -585,6 +625,8 @@ const DEFAULT_PRETUL_ITEMS = [
     productTitle: "Samsung Galaxy S24 FE, 8GB RAM, 128GB, 5G",
     productUrl:
       "https://www.emag.ro/telefon-mobil-samsung-galaxy-s24-fe-dual-sim-8gb-ram-128gb-5g-graphite-sm-s721bzkdeue/pd/D0J1YZYBM/",
+    imageUrl:
+      "https://s13emagst.akamaized.net/products/77658/77657955/images/res_ff11f356f99b3af89e0e67b5537d3fa6.jpg?width=450&height=450&hash=A6592347AE5ED88F8E74F3B853F67744",
     actualPriceLei: 2319.0,
     imageHint: "Telefon Samsung Galaxy S24 FE",
     quickSpecs: ["128GB", "8GB RAM", "5G", "Dual SIM"]
@@ -595,6 +637,8 @@ const DEFAULT_PRETUL_ITEMS = [
     productTitle: "Consola PlayStation 5 Digital Edition Slim, 825GB SSD",
     productUrl:
       "https://www.emag.ro/consola-playstation-5-digital-edition-ps5-slim-825gb-ssd-e-chassis-1000049751/pd/D4LQQL3BM/",
+    imageUrl:
+      "https://s13emagst.akamaized.net/products/64933/64932189/images/res_b51e79599e34411e9f4ff16d3266e32f.jpg?width=450&height=450&hash=1A8234F59CED8C9A3094B94FA160C471",
     actualPriceLei: 2299.0,
     imageHint: "PS5 Slim Digital Edition",
     quickSpecs: ["Digital Edition", "825GB SSD", "PS5 Slim", "Sony"]
@@ -605,6 +649,8 @@ const DEFAULT_PRETUL_ITEMS = [
     productTitle: "Casti Apple AirPods Pro 3, carcasa MagSafe USB-C",
     productUrl:
       "https://www.emag.ro/casti-apple-airpods-pro-3-carcasa-magsafe-usb-c-mfhp4zm-a/pd/DZ68XV3BM/",
+    imageUrl:
+      "https://s13emagst.akamaized.net/products/102926/102925881/images/res_9ece9931dcc5bbfd309ee2bb6bcadb79.jpg?width=450&height=450&hash=B11AE26DED82E9D6514A1060B98E336C",
     actualPriceLei: 1249.99,
     imageHint: "AirPods Pro cu carcasa alba",
     quickSpecs: ["MagSafe", "USB-C", "true wireless", "Apple"]
@@ -614,6 +660,8 @@ const DEFAULT_PRETUL_ITEMS = [
     category: "Wearables",
     productTitle: "Smartwatch Xiaomi Watch 5, Green",
     productUrl: "https://www.emag.ro/smartwatch-xiaomi-watch-5-green-bhr07wpgl/pd/D8VWHB2BM/",
+    imageUrl:
+      "https://s13emagst.akamaized.net/products/114874/114873721/images/res_7b57979b60386f2f0ceed0dbe5390072.jpg?width=450&height=450&hash=4E7B03DBE88A1F428F11D47C80C52E32",
     actualPriceLei: 1299.0,
     imageHint: "Smartwatch Xiaomi verde",
     quickSpecs: ["smartwatch", "Xiaomi", "green", "wearable"]
@@ -624,6 +672,8 @@ const DEFAULT_PRETUL_ITEMS = [
     productTitle: "Mixer planetar Goldmann, 2800 W, bol inox 10 L",
     productUrl:
       "https://www.emag.ro/mixer-planetar-cu-bol-din-inox-goldmann-2800-w-10-l-inox-5-accesorii-6-viteze-cu-pulse-angrenaje-metalice-carcasa-din-inox-argintiu-gm-1115ed/pd/D89KY13BM/",
+    imageUrl:
+      "https://s13emagst.akamaized.net/products/107197/107196168/images/res_f9522c9f8802a2c9376bc70594f0b72e.jpg?width=450&height=450&hash=2854E270543A02B01A882015C557BC66",
     actualPriceLei: 599.99,
     imageHint: "Mixer planetar mare cu bol inox",
     quickSpecs: ["2800W", "10 L", "inox", "6 viteze"]
@@ -2008,10 +2058,16 @@ function sanitizePretulItems(rawItems) {
     const actualPriceValue = sanitizeNumber(rawItem?.actualPriceLei, sanitizeNumber(rawItem?.referencePrice, 0));
     const actualPriceLei = Math.max(0, Math.round(actualPriceValue * 100) / 100);
     const productUrl = sanitizeString(rawItem?.productUrl, "").trim();
+    const mappedImageUrl = PRETUL_PRODUCT_IMAGE_BY_URL[productUrl] || "";
     const imageHint =
       sanitizeString(rawItem?.imageHint, "").trim() || `Product visual placeholder for ${productTitle}`;
     const imageUrlCandidate = sanitizeString(rawItem?.imageUrl, "").trim();
-    const imageUrl = imageUrlCandidate || buildPretulProductPlaceholder(productTitle, imageHint);
+    const imageUrlCandidateIsPlaceholder =
+      imageUrlCandidate.startsWith("data:image/svg+xml") || imageUrlCandidate.includes("Product%20reveal%20placeholder");
+    const imageUrl =
+      imageUrlCandidate && !imageUrlCandidateIsPlaceholder
+        ? imageUrlCandidate
+        : mappedImageUrl || buildPretulProductPlaceholder(productTitle, imageHint);
     const quickSpecs = Array.isArray(rawItem?.quickSpecs)
       ? rawItem.quickSpecs
           .map((spec) => (typeof spec === "string" ? spec.trim() : ""))
