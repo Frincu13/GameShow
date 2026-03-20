@@ -1374,6 +1374,23 @@ function shouldUseDemoTriviaData(categories) {
     return true;
   }
 
+  const minimumTriviaCategories = Math.max(1, Math.round(sanitizeNumber(GAME_ROUND_LIMITS.trivia, 18)));
+  const missingQuestionCount = categories.reduce((count, category) => {
+    const question = normalizeTextToken(category?.question);
+    return count + (question ? 0 : 1);
+  }, 0);
+  const missingOptionsCount = categories.reduce((count, category) => {
+    const options = Array.isArray(category?.options) ? category.options : [];
+    return count + (options.length >= 2 ? 0 : 1);
+  }, 0);
+  const appearsIncomplete =
+    categories.length < minimumTriviaCategories ||
+    missingQuestionCount >= Math.ceil(categories.length * 0.4) ||
+    missingOptionsCount >= Math.ceil(categories.length * 0.4);
+  if (appearsIncomplete) {
+    return true;
+  }
+
   const legacyTriviaTitleTokens = new Set([
     "geografie",
     "istorie",
@@ -1847,6 +1864,7 @@ function rosterTextToPlayers(rosterText, teamKey) {
 
 function sanitizeTriviaCategories(rawCategories) {
   const fallback = cloneDefaultState().trivia.categories;
+  const minimumTriviaCategories = Math.max(1, Math.round(sanitizeNumber(GAME_ROUND_LIMITS.trivia, 18)));
   if (!Array.isArray(rawCategories) || rawCategories.length === 0) {
     return fallback;
   }
@@ -1901,7 +1919,35 @@ function sanitizeTriviaCategories(rawCategories) {
     });
   }
 
-  return sanitized.length > 0 ? sanitized : fallback;
+  if (sanitized.length === 0) {
+    return fallback;
+  }
+
+  if (sanitized.length < minimumTriviaCategories) {
+    const existingIdSet = new Set(sanitized.map((entry) => entry.id));
+    const existingTitleSet = new Set(sanitized.map((entry) => normalizeTextToken(entry.title)));
+    for (const fallbackCategory of fallback) {
+      if (sanitized.length >= minimumTriviaCategories) {
+        break;
+      }
+      const fallbackTitleToken = normalizeTextToken(fallbackCategory.title);
+      if (existingTitleSet.has(fallbackTitleToken)) {
+        continue;
+      }
+      let nextId = sanitizeString(fallbackCategory.id, "").trim();
+      if (!nextId || existingIdSet.has(nextId)) {
+        nextId = `trivia-cat-${sanitized.length}`;
+      }
+      existingIdSet.add(nextId);
+      existingTitleSet.add(fallbackTitleToken);
+      sanitized.push({
+        ...fallbackCategory,
+        id: nextId
+      });
+    }
+  }
+
+  return sanitized;
 }
 
 function sanitizeTriviaRoundState(rawRoundState) {
@@ -1984,6 +2030,12 @@ function getOrCreateTriviaRoundState(roundNumber = state.progress.currentRound) 
     });
   }
   const roundState = sanitizeTriviaRoundState(state.trivia.rounds[roundKey]);
+  const validCategoryIds = new Set(state.trivia.categories.map((category) => category.id));
+  roundState.usedCategoryIds = roundState.usedCategoryIds.filter((id) => validCategoryIds.has(id));
+  if (!validCategoryIds.has(roundState.selectedCategoryId) || roundState.usedCategoryIds.includes(roundState.selectedCategoryId)) {
+    const nextAvailable = state.trivia.categories.find((category) => !roundState.usedCategoryIds.includes(category.id));
+    roundState.selectedCategoryId = nextAvailable?.id || state.trivia.categories[0]?.id || "";
+  }
   state.trivia.rounds[roundKey] = roundState;
   return roundState;
 }
@@ -4783,7 +4835,7 @@ function buildLegacyLiveRoundContent(gameId, options = {}) {
       <div class="show-round-card">
         <p class="show-info-label">Category</p>
         <p class="show-round-title">${escapeHtml(category?.title || "No category selected")}</p>
-        <p class="show-round-copy">${escapeHtml(category?.question || "Intrebarea curenta va fi afisata aici.")}</p>
+        <p class="show-round-copy">${escapeHtml(category ? getTriviaCategoryQuestion(category) : "Intrebarea curenta va fi afisata aici.")}</p>
       </div>
       <div class="show-overlay-grid two-col">
         <article class="show-control-card">
@@ -5533,7 +5585,7 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
         <section class="show-trivia-qa-stage">
           <p class="show-info-label">Topic</p>
           <p class="show-trivia-category-title">${escapeHtml(category?.title || "No topic selected")}</p>
-          <h2 class="show-trivia-question">${escapeHtml(category?.question || "Select a topic to continue.")}</h2>
+          <h2 class="show-trivia-question">${escapeHtml(category ? getTriviaCategoryQuestion(category) : "Select a topic to continue.")}</h2>
           <div class="show-trivia-options-grid">
             ${options
               .map((option, index) => {
@@ -8413,7 +8465,7 @@ function renderTriviaControls() {
       return `
         <article class="${cardClass}">
           <h4>${category.title}</h4>
-          <p><strong>Q:</strong> ${category.question}</p>
+          <p><strong>Q:</strong> ${escapeHtml(getTriviaCategoryQuestion(category))}</p>
           <p><strong>Options:</strong> ${options
             .map((option, index) => `${String.fromCharCode(65 + index)}. ${escapeHtml(option)}`)
             .join(" | ")}</p>
@@ -11458,6 +11510,15 @@ function getTriviaCorrectOptionIndex(category) {
     index = 0;
   }
   return index;
+}
+
+function getTriviaCategoryQuestion(category) {
+  const question = sanitizeString(category?.question, "").trim();
+  if (question.length > 0) {
+    return question;
+  }
+  const title = sanitizeString(category?.title, "").trim() || "Trivia";
+  return `Intrebare lipsa pentru ${title}. Reset topics daca banca este corupta.`;
 }
 
 function setTriviaBetAmount(rawBetAmount, options = {}) {
