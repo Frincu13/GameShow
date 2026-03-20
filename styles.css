@@ -2304,31 +2304,37 @@ button.show-leader-row {
 
 .show-trivia-qa-stage {
   display: grid;
-  gap: 14px;
+  gap: 16px;
   align-content: start;
   min-height: 100%;
+  justify-items: center;
+  text-align: center;
 }
 
 .show-trivia-category-title {
   margin: 0;
   font-family: "Bebas Neue", sans-serif;
-  font-size: clamp(1.3rem, 2.8vw, 2rem);
-  line-height: 0.95;
+  font-size: clamp(1.05rem, 2vw, 1.45rem);
+  line-height: 1;
   letter-spacing: 0.03em;
-  color: #334979;
+  color: #4f6291;
+  opacity: 0.92;
 }
 
 .show-trivia-question {
-  margin-top: 2px;
-  font-size: clamp(2.15rem, 5.4vw, 4rem);
-  line-height: 1.08;
+  margin: 2px auto 0;
+  max-width: 20ch;
+  font-size: clamp(2.3rem, 5.5vw, 4.2rem);
+  line-height: 1.04;
   color: #0f1a39;
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .show-trivia-options-grid {
+  width: 100%;
+  display: grid;
   gap: 14px;
-  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .show-trivia-answer-btn {
@@ -2987,9 +2993,12 @@ button.show-leader-row {
     min-height: 420px;
   }
 
-  .show-trivia-topic-grid,
-  .show-trivia-options-grid {
+  .show-trivia-topic-grid {
     grid-template-columns: 1fr;
+  }
+
+  .show-trivia-options-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .show-trivia-bet-input {
