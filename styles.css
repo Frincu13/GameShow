@@ -2504,6 +2504,12 @@ button.show-leader-row {
   cursor: not-allowed;
 }
 
+.show-stage-topic-card.is-used .show-stage-topic-status {
+  border-color: #d8c5c5;
+  background: #f7e9e9;
+  color: #8d4e4e;
+}
+
 .show-stage-topic-status {
   justify-self: start;
   border-radius: 999px;
@@ -2602,6 +2608,31 @@ button.show-leader-row {
   padding: 9px 12px;
   color: #4f6290;
   font-weight: 700;
+}
+
+.show-pretul-product-stage .show-film-stage-figure {
+  max-width: 980px;
+  margin-inline: auto;
+}
+
+.show-pretul-spec-strip {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.show-pretul-spec-strip li {
+  border: 1px solid #d2dcff;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #1f3563;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 6px 11px;
+  letter-spacing: 0.01em;
 }
 
 .show-film-card-grid {

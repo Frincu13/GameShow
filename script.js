@@ -64,7 +64,7 @@ const STANDARD_FIXED_BONUS_BY_GAME = {
   "curse-de-cai": 0
 };
 const GAME_ROUND_LIMITS = {
-  trivia: 12,
+  trivia: 18,
   "guess-right-order": 3,
   "pretul-corect": 12,
   "film-joc-franciza-fun-fact": 12,
@@ -130,7 +130,7 @@ const GAME_FLOW_DEFINITIONS = {
         id: "product-reveal",
         label: "Product + Guesses",
         description: "Show product image and enter both guesses on the same stage.",
-        visible: ["product image", "both guesses", "real price input"],
+        visible: ["product image", "both guesses", "hidden real price source"],
         actions: ["auto winner + payout"]
       },
       {
@@ -345,193 +345,288 @@ const GAME_FLOW_DEFINITIONS = {
 const DEFAULT_RESULT_SUMMARY = "Niciun rezultat aplicat inca.";
 const DEFAULT_TRIVIA_CATEGORIES = [
   {
-    id: "trivia-cat-1",
-    title: "Geografie",
-    question: "Care este capitala Australiei?",
-    options: ["Sydney", "Melbourne", "Canberra", "Perth"],
-    correctOptionIndex: 2,
-    answer: "Canberra"
+    id: "0",
+    title: "Chimie & skincare",
+    question: "Ce ingredient activ este cunoscut pentru exfoliere chimica si este des folosit in produse anti-acnee?",
+    options: ["Ceramide", "Acid salicilic", "Squalane", "Niacinamida"],
+    correctAnswerIndex: 1,
+    answer: "Acid salicilic"
   },
   {
-    id: "trivia-cat-2",
-    title: "Istorie",
-    question: "In ce an a cazut Zidul Berlinului?",
-    options: ["1987", "1989", "1991", "1993"],
-    correctOptionIndex: 1,
-    answer: "1989"
-  },
-  {
-    id: "trivia-cat-3",
-    title: "Filme si seriale",
-    question: "Cum se numeste continentul fictiv din Black Panther?",
-    options: ["Genovia", "Wakanda", "Latveria", "Narnia"],
-    correctOptionIndex: 1,
-    answer: "Wakanda"
-  },
-  {
-    id: "trivia-cat-4",
-    title: "Sport si jocuri",
-    question: "Cate piese are un jucator la inceputul unei partide de sah?",
-    options: ["12", "14", "16", "18"],
-    correctOptionIndex: 2,
-    answer: "16"
-  },
-  {
-    id: "trivia-cat-5",
-    title: "Stiinta",
-    question: "Ce planeta este cunoscuta drept Planeta Rosie?",
-    options: ["Venus", "Marte", "Jupiter", "Mercur"],
-    correctOptionIndex: 1,
-    answer: "Marte"
-  },
-  {
-    id: "trivia-cat-6",
-    title: "Tehnologie",
-    question: "Ce inseamna abrevierea USB?",
-    options: ["Universal Serial Bus", "Unified System Base", "Ultra Speed Bridge", "User Sync Board"],
-    correctOptionIndex: 0,
-    answer: "Universal Serial Bus"
-  },
-  {
-    id: "trivia-cat-7",
-    title: "Muzica",
-    question: "Care instrument are de obicei 88 de clape?",
-    options: ["Chitara", "Pian", "Vioara", "Saxofon"],
-    correctOptionIndex: 1,
-    answer: "Pian"
-  },
-  {
-    id: "trivia-cat-8",
-    title: "Cultura generala",
-    question: "Cate continente are Pamantul?",
-    options: ["5", "6", "7", "8"],
-    correctOptionIndex: 2,
-    answer: "7"
-  },
-  {
-    id: "trivia-cat-9",
-    title: "Romania",
-    question: "Ce rau traverseaza orasul Bucuresti?",
-    options: ["Somes", "Bega", "Dambovita", "Mures"],
-    correctOptionIndex: 2,
-    answer: "Dambovita"
-  },
-  {
-    id: "trivia-cat-10",
-    title: "Gaming",
-    question: "In ce joc apare personajul Geralt of Rivia?",
-    options: ["Skyrim", "The Witcher", "Elden Ring", "Assassin's Creed"],
-    correctOptionIndex: 1,
-    answer: "The Witcher"
-  },
-  {
-    id: "trivia-cat-11",
-    title: "Sport",
-    question: "Cate minute are o repriza standard la fotbal?",
-    options: ["30", "40", "45", "50"],
-    correctOptionIndex: 2,
-    answer: "45"
-  },
-  {
-    id: "trivia-cat-12",
-    title: "Business",
-    question: "Ce reprezinta TVA in Romania?",
+    id: "1",
+    title: "Arta & curente",
+    question: "Care dintre urmatoarele caracterizeaza cel mai bine stilul baroc?",
     options: [
-      "Taxa pe valoare adaugata",
-      "Taxa variabila anuala",
-      "Transfer valutar automat",
-      "Tarif vanzare autorizat"
+      "Dramatism, ornament bogat si contrast puternic",
+      "Linii simple si decor minim",
+      "Forme industriale si beton aparent",
+      "Simetrie rigida fara decoratiuni"
     ],
-    correctOptionIndex: 0,
-    answer: "Taxa pe valoare adaugata"
+    correctAnswerIndex: 0,
+    answer: "Dramatism, ornament bogat si contrast puternic"
+  },
+  {
+    id: "2",
+    title: "Sah",
+    question: "Cum se numeste situatia in care este randul tau sa muti, dar orice mutare legala iti inrautateste pozitia?",
+    options: ["Pat", "Remiza prin repetare", "Mat", "Zugzwang"],
+    correctAnswerIndex: 3,
+    answer: "Zugzwang"
+  },
+  {
+    id: "3",
+    title: "Medicina & dinti",
+    question: "Care este stratul cel mai dur din corpul uman?",
+    options: ["Dentina", "Osul cortical", "Cementul dentar", "Smaltul dentar"],
+    correctAnswerIndex: 3,
+    answer: "Smaltul dentar"
+  },
+  {
+    id: "4",
+    title: "Catan",
+    question: "In varianta clasica de Catan, cate orase are la dispozitie fiecare jucator in culoarea sa?",
+    options: ["4", "3", "5", "6"],
+    correctAnswerIndex: 0,
+    answer: "4"
+  },
+  {
+    id: "5",
+    title: "Animatie",
+    question: "In Frozen, cum se numeste renul lui Kristoff?",
+    options: ["Olaf", "Hans", "Pabbie", "Sven"],
+    correctAnswerIndex: 3,
+    answer: "Sven"
+  },
+  {
+    id: "6",
+    title: "Al Doilea Razboi Mondial",
+    question: "Cum se numea planul german pentru invadarea Uniunii Sovietice in 1941?",
+    options: ["Operatiunea Torch", "Operatiunea Overlord", "Operatiunea Barbarossa", "Operatiunea Market Garden"],
+    correctAnswerIndex: 2,
+    answer: "Operatiunea Barbarossa"
+  },
+  {
+    id: "7",
+    title: "Europa & giganti",
+    question: "Ce echipa i-a invins in UEFA Champions League de 10 ori pe Barcelona si de 11 ori pe Real Madrid?",
+    options: ["Liverpool", "AC Milan", "Bayern Munchen", "Juventus"],
+    correctAnswerIndex: 2,
+    answer: "Bayern Munchen"
+  },
+  {
+    id: "8",
+    title: "Franta 2016",
+    question: "Cine a invins Franta in finala EURO 2016?",
+    options: ["Italia", "Portugalia", "Germania", "Spania"],
+    correctAnswerIndex: 1,
+    answer: "Portugalia"
+  },
+  {
+    id: "9",
+    title: "Motoare & BMW",
+    question: "BMW B58 este cunoscut in principal ca fiind ce tip de motor?",
+    options: [
+      "L4 turbo de 2.0 litri",
+      "V6 biturbo de 3.0 litri",
+      "L6 turbo de 3.0 litri",
+      "V8 aspirat de 4.0 litri"
+    ],
+    correctAnswerIndex: 2,
+    answer: "L6 turbo de 3.0 litri"
+  },
+  {
+    id: "10",
+    title: "F1 & citate",
+    question: "Cine a spus despre Max Verstappen ca este \"clar unul dintre cei mai mari din toate timpurile\"?",
+    options: ["Fernando Alonso", "Sebastian Vettel", "Adrian Newey", "Helmut Marko"],
+    correctAnswerIndex: 2,
+    answer: "Adrian Newey"
+  },
+  {
+    id: "11",
+    title: "Romania & cultura",
+    question: "In ce an a fost publicat pentru prima data romanul \"Maitreyi\" de Mircea Eliade?",
+    options: ["1933", "1928", "1940", "1956"],
+    correctAnswerIndex: 0,
+    answer: "1933"
+  },
+  {
+    id: "12",
+    title: "Vedete & replici",
+    question: "La ce persoana face referire citatul: \"Cand spui <<...>>, spui o personalitate\"?",
+    options: ["Sanziana Buruiana", "Andreea Tonciu", "Daniela Crudu", "Ana Maria Prodan"],
+    correctAnswerIndex: 1,
+    answer: "Andreea Tonciu"
+  },
+  {
+    id: "13",
+    title: "Pictura & muzee",
+    question: "In ce muzeu se afla astazi celebra lucrare \"Noaptea instelata\" de Vincent van Gogh?",
+    options: ["Louvre, Paris", "Van Gogh Museum, Amsterdam", "MoMA, New York", "Tate Modern, Londra"],
+    correctAnswerIndex: 2,
+    answer: "MoMA, New York"
+  },
+  {
+    id: "14",
+    title: "Business",
+    question:
+      "Cum se numeste strategia prin care un produs este lansat la pret mare, apoi pretul este redus treptat pentru a atrage si alte segmente de clienti?",
+    options: ["Cross-selling", "Bundling", "Penetrare de piata", "Skimming"],
+    correctAnswerIndex: 3,
+    answer: "Skimming"
+  },
+  {
+    id: "15",
+    title: "F1 piloti",
+    question: "La ce echipa a debutat Max Verstappen in Formula 1?",
+    options: ["Toro Rosso", "Red Bull", "Ferrari", "Renault"],
+    correctAnswerIndex: 0,
+    answer: "Toro Rosso"
+  },
+  {
+    id: "16",
+    title: "Sasii din Transilvania",
+    question:
+      "Cum se numea decretul din 1224 prin care sasii din Transilvania au primit privilegii importante din partea coroanei maghiare?",
+    options: ["Unio Trium Nationum", "Andreanum", "Diploma Leopoldinum", "Bula de Aur"],
+    correctAnswerIndex: 1,
+    answer: "Andreanum"
+  },
+  {
+    id: "17",
+    title: "Lumina & atmosfera",
+    question: "Ce schimbare face de obicei o camera sa para mai plata si fara atmosfera?",
+    options: [
+      "Mai multe surse de lumina, pe zone diferite",
+      "Lumina de accent pe texturi si colturi",
+      "Layered lighting cu intensitati diferite",
+      "O singura lumina centrala foarte puternica"
+    ],
+    correctAnswerIndex: 3,
+    answer: "O singura lumina centrala foarte puternica"
   }
 ];
 const PRETUL_PRODUCT_PLACEHOLDER =
   "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 960 540'><defs><linearGradient id='g' x1='0' x2='1' y1='0' y2='1'><stop offset='0' stop-color='%23131f43'/><stop offset='1' stop-color='%232b3c7c'/></linearGradient></defs><rect width='960' height='540' fill='url(%23g)'/><text x='50%25' y='46%25' fill='%23f5f7ff' font-size='40' font-family='Arial' text-anchor='middle'>PRETUL CORECT</text><text x='50%25' y='57%25' fill='%23d4dcff' font-size='24' font-family='Arial' text-anchor='middle'>Product reveal placeholder</text></svg>";
 const DEFAULT_PRETUL_ITEMS = [
   {
-    id: "pretul-item-1",
-    categoryTitle: "Audio Essentials",
-    name: "HyperX Cloud III (gaming headset)",
-    imageUrl: PRETUL_PRODUCT_PLACEHOLDER,
-    referencePrice: 120
+    id: "0",
+    category: "TV & entertainment",
+    productTitle: "Televizor Samsung QLED 50Q7F2, 125 cm, Smart 4K",
+    productUrl:
+      "https://www.emag.ro/televizor-samsung-qled-50q7f2-125-cm-smart-4k-ultra-hd-clasa-g-model-2025-qe50q7f2auxxh/pd/DN3GRT3BM/",
+    actualPriceLei: 1799.99,
+    imageHint: "TV Samsung QLED pe fundal luminos",
+    quickSpecs: ["125 cm", "QLED", "Smart TV", "4K UHD"]
   },
   {
-    id: "pretul-item-2",
-    categoryTitle: "Coffee Corner",
-    name: "Philips 2200 (automatic espresso machine)",
-    imageUrl: PRETUL_PRODUCT_PLACEHOLDER,
-    referencePrice: 420
+    id: "1",
+    category: "Cafea & electrocasnice",
+    productTitle: "Espressor automat Philips Seria 2300 LatteGo EP2330/10",
+    productUrl:
+      "https://www.emag.ro/espressor-automat-philips-seria-2300-lattego-4-tipuri-de-bauturi-ecran-tactil-intuitiv-tehnologie-noua-silentbrew-aplicatie-homeid-rasnita-ceramica-negru-mat-ep2330-10/pd/D3PXSMYBM/",
+    actualPriceLei: 1599.3,
+    imageHint: "Espressor automat negru Philips",
+    quickSpecs: ["LatteGo", "4 bauturi", "ecran tactil", "rasnita ceramica"]
   },
   {
-    id: "pretul-item-3",
-    categoryTitle: "Home Cinema",
-    name: "Anker Nebula Capsule (mini projector)",
-    imageUrl: PRETUL_PRODUCT_PLACEHOLDER,
-    referencePrice: 520
+    id: "2",
+    category: "LEGO & hobby",
+    productTitle: "LEGO Icons Flori de prun 10369, 327 piese",
+    productUrl:
+      "https://www.emag.ro/legor-icons-flori-de-prun-10369-327-piese-5702017719696/pd/DVQRNFYBM/",
+    actualPriceLei: 127.99,
+    imageHint: "Set LEGO floral decorativ",
+    quickSpecs: ["327 piese", "LEGO Icons", "decor floral", "set adult"]
   },
   {
-    id: "pretul-item-4",
-    categoryTitle: "Smart Fitness",
-    name: "Garmin Venu Sq 2 (smartwatch)",
-    imageUrl: PRETUL_PRODUCT_PLACEHOLDER,
-    referencePrice: 260
+    id: "3",
+    category: "Gaming laptop",
+    productTitle: "Laptop gaming Lenovo LOQ 15ARP10E, Ryzen 7 7735HS, RTX 4050",
+    productUrl:
+      "https://www.emag.ro/laptop-gaming-lenovo-loq-15arp10e-cu-procesor-amd-ryzentm-7-7735hs-pana-la-4-75ghz-15-6-full-hd-ips-144hz-16gb-ddr5-ram-512gb-ssd-nvidiar-geforce-rtxtm-4050-6gb-gddr6-no-os-luna-grey-83s0002rrm/pd/DZY2BG3BM/",
+    actualPriceLei: 3799.99,
+    imageHint: "Laptop gaming Lenovo LOQ deschis",
+    quickSpecs: ["15.6 inch", "144Hz", "RTX 4050", "16GB RAM"]
   },
   {
-    id: "pretul-item-5",
-    categoryTitle: "Collector Build",
-    name: "LEGO Icons Corvette",
-    imageUrl: PRETUL_PRODUCT_PLACEHOLDER,
-    referencePrice: 150
+    id: "4",
+    category: "Casa smart",
+    productTitle: "Robot de aspirare Xiaomi S40, aspirare + spalare",
+    productUrl:
+      "https://www.emag.ro/robot-de-aspirare-xiaomi-s40-wi-fi-10000pa-5200mah-aspirare-spalare-simultana-sistem-de-navigatie-lds-520ml-rezervor-pentru-praf-si-270ml-rezervor-de-apa-alb-bhr084aeu/pd/DH9NNS3BM/",
+    actualPriceLei: 905.2,
+    imageHint: "Robot aspirator alb Xiaomi",
+    quickSpecs: ["10000Pa", "5200mAh", "LDS", "aspirare + spalare"]
   },
   {
-    id: "pretul-item-6",
-    categoryTitle: "Office Comfort",
-    name: "IKEA Markus (office chair)",
-    imageUrl: PRETUL_PRODUCT_PLACEHOLDER,
-    referencePrice: 230
+    id: "5",
+    category: "Bucatarie",
+    productTitle: "Friteuza cu aer cald Ninja FlexDrawer AF500EU, 10.4 L",
+    productUrl:
+      "https://www.emag.ro/friteuza-cu-aer-cald-ninja-flex-drawer-2470-w-10-4-l-capacitate-mancare-2-kg-interval-temperatura-40-240-c-doua-zone-de-gatit-7-programe-negru-af500eu/pd/DD4DV0YBM/",
+    actualPriceLei: 951.4,
+    imageHint: "Air fryer Ninja negru, capacitate mare",
+    quickSpecs: ["10.4 L", "2470W", "2 zone", "7 programe"]
   },
   {
-    id: "pretul-item-7",
-    categoryTitle: "Travel Speaker",
-    name: "Bose SoundLink Flex",
-    imageUrl: PRETUL_PRODUCT_PLACEHOLDER,
-    referencePrice: 170
+    id: "6",
+    category: "Parfumuri",
+    productTitle: "Apa de parfum Lattafa Opulent Musk, Unisex, 100 ml",
+    productUrl:
+      "https://www.emag.ro/apa-de-parfum-lattafa-opulent-musk-unisex-100-ml-6291107450445/pd/D0530WBBM/",
+    actualPriceLei: 70.13,
+    imageHint: "Sticla de parfum eleganta",
+    quickSpecs: ["100 ml", "unisex", "eau de parfum", "Lattafa"]
   },
   {
-    id: "pretul-item-8",
-    categoryTitle: "Reading Tech",
-    name: "Kindle Paperwhite 11th Gen",
-    imageUrl: PRETUL_PRODUCT_PLACEHOLDER,
-    referencePrice: 160
+    id: "7",
+    category: "Telefoane",
+    productTitle: "Samsung Galaxy S24 FE, 8GB RAM, 128GB, 5G",
+    productUrl:
+      "https://www.emag.ro/telefon-mobil-samsung-galaxy-s24-fe-dual-sim-8gb-ram-128gb-5g-graphite-sm-s721bzkdeue/pd/D0J1YZYBM/",
+    actualPriceLei: 2319.0,
+    imageHint: "Telefon Samsung Galaxy S24 FE",
+    quickSpecs: ["128GB", "8GB RAM", "5G", "Dual SIM"]
   },
   {
-    id: "pretul-item-9",
-    categoryTitle: "Pro Controller",
-    name: "PlayStation DualSense Edge",
-    imageUrl: PRETUL_PRODUCT_PLACEHOLDER,
-    referencePrice: 250
+    id: "8",
+    category: "Console",
+    productTitle: "Consola PlayStation 5 Digital Edition Slim, 825GB SSD",
+    productUrl:
+      "https://www.emag.ro/consola-playstation-5-digital-edition-ps5-slim-825gb-ssd-e-chassis-1000049751/pd/D4LQQL3BM/",
+    actualPriceLei: 2299.0,
+    imageHint: "PS5 Slim Digital Edition",
+    quickSpecs: ["Digital Edition", "825GB SSD", "PS5 Slim", "Sony"]
   },
   {
-    id: "pretul-item-10",
-    categoryTitle: "Kitchen Upgrade",
-    name: "Ninja Foodi Air Fryer",
-    imageUrl: PRETUL_PRODUCT_PLACEHOLDER,
-    referencePrice: 190
+    id: "9",
+    category: "Audio premium",
+    productTitle: "Casti Apple AirPods Pro 3, carcasa MagSafe USB-C",
+    productUrl:
+      "https://www.emag.ro/casti-apple-airpods-pro-3-carcasa-magsafe-usb-c-mfhp4zm-a/pd/DZ68XV3BM/",
+    actualPriceLei: 1249.99,
+    imageHint: "AirPods Pro cu carcasa alba",
+    quickSpecs: ["MagSafe", "USB-C", "true wireless", "Apple"]
   },
   {
-    id: "pretul-item-11",
-    categoryTitle: "Storage Speed",
-    name: "Samsung 980 Pro 1TB SSD",
-    imageUrl: PRETUL_PRODUCT_PLACEHOLDER,
-    referencePrice: 140
+    id: "10",
+    category: "Wearables",
+    productTitle: "Smartwatch Xiaomi Watch 5, Green",
+    productUrl: "https://www.emag.ro/smartwatch-xiaomi-watch-5-green-bhr07wpgl/pd/D8VWHB2BM/",
+    actualPriceLei: 1299.0,
+    imageHint: "Smartwatch Xiaomi verde",
+    quickSpecs: ["smartwatch", "Xiaomi", "green", "wearable"]
   },
   {
-    id: "pretul-item-12",
-    categoryTitle: "Action Camera",
-    name: "GoPro Hero 12 Black",
-    imageUrl: PRETUL_PRODUCT_PLACEHOLDER,
-    referencePrice: 380
+    id: "11",
+    category: "Mixer & baking",
+    productTitle: "Mixer planetar Goldmann, 2800 W, bol inox 10 L",
+    productUrl:
+      "https://www.emag.ro/mixer-planetar-cu-bol-din-inox-goldmann-2800-w-10-l-inox-5-accesorii-6-viteze-cu-pulse-angrenaje-metalice-carcasa-din-inox-argintiu-gm-1115ed/pd/D89KY13BM/",
+    actualPriceLei: 599.99,
+    imageHint: "Mixer planetar mare cu bol inox",
+    quickSpecs: ["2800W", "10 L", "inox", "6 viteze"]
   }
 ];
 const FILM_FALLBACK_IMAGE =
@@ -655,39 +750,57 @@ const DEFAULT_FILM_ITEMS = [
 const DEFAULT_SAMSAR_ROUNDS = [
   {
     id: "samsar-round-1",
-    personaTitle: "Familie cu doi copii",
+    personaTitle: "Persoana 1 - Andrei Pavel",
     personaRequirements:
-      "Buget maxim 16.000, minim 2018, portbagaj mare si consum redus pentru drumuri de weekend."
+      "Profil: masculin, 29 ani, sales consultant, oras mare, ~24.000 km/an (oras + interurban), condus des seara, uzual 1-2 pasageri, bagaje frecvente: laptop/rucsac/acte/troler mic. " +
+      "Buget tinta 16.000-23.000 EUR, maxim absolut 25.000 EUR; Price Fit se noteaza separat 0-10 in media finala. " +
+      "Top 6 criterii: costuri de rulare, risc sh, business look, practic, confort drum lung, usurinta in oras. " +
+      "Surprize codate: fdusodb, fdphud."
   },
   {
     id: "samsar-round-2",
-    personaTitle: "Student in oras",
+    personaTitle: "Persoana 2 - Bianca Ionescu",
     personaRequirements:
-      "Buget maxim 7.000, intretinere ieftina, masina compacta si usor de parcat."
+      "Profil: feminin, 34 ani, marketing manager, oras mare, ~18.000 km/an, birou + evenimente + escapade de weekend, condus des seara, de regula singura sau cu 1 pasager, bagaje: laptop + cumparaturi + bagaj weekend. " +
+      "Buget tinta 38.000-52.000 EUR, maxim absolut 58.000 EUR; Price Fit separat 0-10 in media finala. " +
+      "Top 6 criterii: business look, rafinament interior, confort drum lung, usurinta in oras, risc sh, tehnologie utila. " +
+      "Surprize codate: fdphud, fdusodb."
   },
   {
     id: "samsar-round-3",
-    personaTitle: "Commuter zilnic",
+    personaTitle: "Persoana 3 - Radu Muresan",
     personaRequirements:
-      "Face 70 km pe zi, vrea confort la drum lung, cutie automata si minim 130 CP."
+      "Profil: masculin, 36 ani, arhitect senior, oras mare, ~22.000 km/an, mult oras + drumuri lungi pe autostrada, condus frecvent seara/noaptea, uneori transporta clienti, bagaje: laptop/planuri/geanta/troler mic. " +
+      "Buget tinta 42.000-58.000 EUR, maxim absolut 64.000 EUR; Price Fit separat 0-10 in media finala. " +
+      "Top 6 criterii: business look, confort drum lung, rafinament interior, lumini/vizibilitate noaptea, risc sh, costuri de rulare. " +
+      "Surprize codate: fdusodb, kxg."
   },
   {
     id: "samsar-round-4",
-    personaTitle: "Fan performanta",
+    personaTitle: "Persoana 4 - Mihai Dragomir",
     personaRequirements:
-      "Cauta masina sportiva sub 20.000, 0-100 sub 7 secunde si istoric service clar."
+      "Profil: masculin, 41 ani, antreprenor, ~26.000 km/an, mix oras/autostrada, iarna merge la munte, condus si noaptea, de obicei 2-3 persoane (uneori familie completa), bagaje de familie + echipament sport + obiecte voluminoase. " +
+      "Buget tinta 50.000-68.000 EUR, maxim absolut 72.000 EUR; Price Fit separat 0-10 in media finala. " +
+      "Top 6 criterii: confort drum lung, practic, iarna/aderenta, risc sh, costuri de rulare, business look. " +
+      "Surprize codate: dzg, wudsd sdqrudplfd."
   },
   {
     id: "samsar-round-5",
-    personaTitle: "Primul SUV",
+    personaTitle: "Persoana 5 - Alexandra Toma",
     personaRequirements:
-      "Vrea SUV pentru familie, minim 2017, dotari de siguranta bune si costuri previzibile."
+      "Profil: feminin, 38 ani, fondatoare agentie de design, ~20.000 km/an, mix oras/autostrada, condus des seara, de regula singura sau cu 1 pasager, bagaje: laptop/materiale prezentare/bagaj cabina. " +
+      "Buget tinta 76.000-92.000 EUR, maxim absolut 100.000 EUR; Price Fit separat 0-10 in media finala. " +
+      "Top 6 criterii: business look, rafinament interior, confort drum lung, tehnologie utila, lumini/vizibilitate noaptea, risc sh. " +
+      "Surprize codate: pdvdm, kdupdq ndugrq."
   },
   {
     id: "samsar-round-6",
-    personaTitle: "Executive premium",
+    personaTitle: "Persoana 6 - Victor Ene",
     personaRequirements:
-      "Buget 28.000, confort premium, interior de calitate si reputatie buna pe fiabilitate."
+      "Profil: masculin, 43 ani, tech investor, ~14.000 km/an, mix oras/autostrada, iesiri de placere, condus si noaptea, de regula singur sau cu 1 pasager, bagaje putine (weekend + laptop). " +
+      "Buget tinta 120.000-165.000 EUR, maxim absolut 190.000 EUR; Price Fit separat 0-10 in media finala. " +
+      "Top 6 criterii: fun, business look, ostentativ, rafinament interior, confort drum lung, tehnologie utila. " +
+      "Surprize codate: kxg, vfdxqh yhqwlodwh."
   }
 ];
 const DEFAULT_CURSE_HORSES = [
@@ -744,7 +857,7 @@ const SECTION_NOTES_DEFAULTS = {
   triviaRules:
     "- O singura echipa joaca runda.\n- Doar echipa activa pariaza (max 10%, rotunjit la 10).\n- Corect: bonus fix + castig din bet.\n- Gresit: pierdere bet.\n- Categoriile folosite se marcheaza automat.",
   pretulRules:
-    "- Ambele echipe dau raspuns si pariu (max 15%, rotunjit la 10).\n- Introdu pretul real la finalul rundei.\n- Castigatorul este detectat automat dupa distanta fata de pretul real.\n- Distanta egala = tie, pariurile se returneaza.",
+    "- Ambele echipe dau raspuns si pariu (max 15%, rotunjit la 10).\n- Pretul real vine din itemul selectat si ramane ascuns pana la reveal.\n- Castigatorul este detectat automat dupa distanta fata de pretul real.\n- Distanta egala = tie, pariurile se returneaza.",
   filmJocRules:
     "- O singura echipa joaca pe runda (alternare automata Team 1 / Team 2).\n- Echipa activa alege o categorie/card nefolosit(a).\n- Componente: Character/Title x1, Franchise x1, Fun Fact x3.\n- Payout partial pe componente, nu all-or-nothing.\n- Bet-ul echipei active se activeaza la minim 2/3 corecte.",
   samsarRules:
@@ -1210,6 +1323,31 @@ function shouldUseDemoTriviaData(categories) {
   if (!Array.isArray(categories) || categories.length === 0) {
     return true;
   }
+
+  const legacyTriviaTitleTokens = new Set([
+    "geografie",
+    "istorie",
+    "filme si seriale",
+    "sport si jocuri",
+    "stiinta",
+    "tehnologie",
+    "muzica",
+    "cultura generala",
+    "romania",
+    "gaming",
+    "sport",
+    "business"
+  ]);
+  const legacyTitleMatches = categories.reduce((count, category) => {
+    const token = normalizeTextToken(category?.title);
+    return count + (legacyTriviaTitleTokens.has(token) ? 1 : 0);
+  }, 0);
+  const isLegacyBuiltInSet = categories.length === 12 && legacyTitleMatches >= 10;
+
+  if (isLegacyBuiltInSet) {
+    return true;
+  }
+
   return categories.every((category) => {
     const title = normalizeTextToken(category?.title);
     const question = normalizeTextToken(category?.question);
@@ -1236,10 +1374,39 @@ function shouldUseDemoPretulItems(items) {
   if (!Array.isArray(items) || items.length === 0) {
     return true;
   }
+
+  const legacyPretulCategories = new Set([
+    "audio essentials",
+    "coffee corner",
+    "home cinema",
+    "smart fitness",
+    "collector build",
+    "office comfort",
+    "travel speaker",
+    "reading tech",
+    "pro controller",
+    "kitchen upgrade",
+    "storage speed",
+    "action camera"
+  ]);
+  const legacyMatches = items.reduce((count, item) => {
+    const token = normalizeTextToken(item?.categoryTitle || item?.category);
+    return count + (legacyPretulCategories.has(token) ? 1 : 0);
+  }, 0);
+  const hasModernPriceFields = items.some((item) => sanitizeNumber(item?.actualPriceLei, 0) > 0);
+  if (items.length === 12 && legacyMatches >= 8 && !hasModernPriceFields) {
+    return true;
+  }
+
   return items.every((item) => {
     const name = normalizeTextToken(item?.name);
+    const productTitle = normalizeTextToken(item?.productTitle);
+    const candidateName = productTitle || name;
     const genericName =
-      /^item \d+$/.test(name) || /^produs \d+$/.test(name) || /^product \d+$/.test(name) || name.includes("placeholder");
+      /^item \d+$/.test(candidateName) ||
+      /^produs \d+$/.test(candidateName) ||
+      /^product \d+$/.test(candidateName) ||
+      candidateName.includes("placeholder");
     return genericName;
   });
 }
@@ -1651,7 +1818,7 @@ function sanitizeTriviaCategories(rawCategories) {
 
     let id = sanitizeString(rawCategory?.id, "").trim();
     if (!id || seenIds.has(id)) {
-      id = `trivia-cat-${sanitized.length + 1}`;
+      id = `trivia-cat-${sanitized.length}`;
     }
     seenIds.add(id);
 
@@ -1663,12 +1830,14 @@ function sanitizeTriviaCategories(rawCategories) {
       options = [answer].concat(options.filter((option) => option !== answer)).slice(0, 6);
     }
 
-    let correctOptionIndex = Math.round(sanitizeNumber(rawCategory?.correctOptionIndex, 0));
-    if (correctOptionIndex < 0 || correctOptionIndex >= options.length) {
-      correctOptionIndex = options.findIndex((option) => normalizeTextToken(option) === normalizeTextToken(answer));
+    let correctAnswerIndex = Math.round(
+      sanitizeNumber(rawCategory?.correctAnswerIndex, sanitizeNumber(rawCategory?.correctOptionIndex, 0))
+    );
+    if (correctAnswerIndex < 0 || correctAnswerIndex >= options.length) {
+      correctAnswerIndex = options.findIndex((option) => normalizeTextToken(option) === normalizeTextToken(answer));
     }
-    if (correctOptionIndex < 0 || correctOptionIndex >= options.length) {
-      correctOptionIndex = 0;
+    if (correctAnswerIndex < 0 || correctAnswerIndex >= options.length) {
+      correctAnswerIndex = 0;
     }
 
     sanitized.push({
@@ -1676,8 +1845,9 @@ function sanitizeTriviaCategories(rawCategories) {
       title: title || `Categoria ${sanitized.length + 1}`,
       question: question || "Intrebare demo pentru aceasta categorie.",
       options,
-      correctOptionIndex,
-      answer: options[correctOptionIndex] || answer || "Raspuns demo pentru aceasta categorie."
+      correctAnswerIndex,
+      correctOptionIndex: correctAnswerIndex,
+      answer: options[correctAnswerIndex] || answer || "Raspuns demo pentru aceasta categorie."
     });
   }
 
@@ -1772,6 +1942,44 @@ function getCurrentTriviaTeam() {
   return getOrCreateTriviaRoundState().teamKey;
 }
 
+function buildPretulProductPlaceholder(productTitle, imageHint) {
+  const safeTitle = String(productTitle || "Pretul corect product").slice(0, 96);
+  const safeHint = String(imageHint || "Placeholder image").slice(0, 112);
+  const svg = `
+    <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 700'>
+      <defs>
+        <linearGradient id='g' x1='0' x2='1' y1='0' y2='1'>
+          <stop offset='0' stop-color='#131f43'/>
+          <stop offset='1' stop-color='#2b3c7c'/>
+        </linearGradient>
+      </defs>
+      <rect width='1200' height='700' fill='url(#g)'/>
+      <rect x='80' y='90' width='1040' height='520' rx='34' fill='rgba(10,18,40,0.38)' stroke='rgba(214,224,255,0.45)'/>
+      <text x='600' y='250' fill='#f5f7ff' font-size='46' font-family='Arial' text-anchor='middle'>${escapeHtml(
+        safeTitle
+      )}</text>
+      <text x='600' y='332' fill='#d4dcff' font-size='28' font-family='Arial' text-anchor='middle'>${escapeHtml(
+        safeHint
+      )}</text>
+      <text x='600' y='396' fill='#f5d373' font-size='25' font-family='Arial' text-anchor='middle'>Pretul Corect - Product Stage</text>
+    </svg>
+  `;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
+function getPretulItemCategory(item) {
+  return sanitizeString(item?.categoryTitle, sanitizeString(item?.category, "Product category")).trim() || "Product category";
+}
+
+function getPretulItemTitle(item) {
+  return sanitizeString(item?.productTitle, sanitizeString(item?.name, "Unknown product")).trim() || "Unknown product";
+}
+
+function getPretulItemActualPrice(item) {
+  const rawPrice = sanitizeNumber(item?.actualPriceLei, sanitizeNumber(item?.referencePrice, 0));
+  return Math.max(0, Math.round(rawPrice * 100) / 100);
+}
+
 function sanitizePretulItems(rawItems) {
   const fallback = cloneDefaultState().pretul.items;
   if (!Array.isArray(rawItems) || rawItems.length === 0) {
@@ -1782,25 +1990,50 @@ function sanitizePretulItems(rawItems) {
   const sanitized = [];
 
   for (const rawItem of rawItems) {
-    const categoryTitle = sanitizeString(rawItem?.categoryTitle, "").trim();
-    const name = sanitizeString(rawItem?.name, "").trim();
-    if (!categoryTitle || !name) {
+    const categoryTitle = sanitizeString(rawItem?.category, sanitizeString(rawItem?.categoryTitle, "")).trim();
+    const productTitle = sanitizeString(rawItem?.productTitle, sanitizeString(rawItem?.name, "")).trim();
+    if (!categoryTitle || !productTitle) {
       continue;
     }
 
-    let id = sanitizeString(rawItem?.id, "").trim();
+    let id = typeof rawItem?.id === "number" && Number.isFinite(rawItem.id) ? String(Math.trunc(rawItem.id)) : "";
+    if (!id) {
+      id = sanitizeString(rawItem?.id, "").trim();
+    }
     if (!id || seenIds.has(id)) {
-      id = `pretul-item-${sanitized.length + 1}`;
+      id = String(sanitized.length);
     }
     seenIds.add(id);
 
-    const referencePrice = Math.max(0, Math.round(sanitizeNumber(rawItem?.referencePrice, 0)));
+    const actualPriceValue = sanitizeNumber(rawItem?.actualPriceLei, sanitizeNumber(rawItem?.referencePrice, 0));
+    const actualPriceLei = Math.max(0, Math.round(actualPriceValue * 100) / 100);
+    const productUrl = sanitizeString(rawItem?.productUrl, "").trim();
+    const imageHint =
+      sanitizeString(rawItem?.imageHint, "").trim() || `Product visual placeholder for ${productTitle}`;
+    const imageUrlCandidate = sanitizeString(rawItem?.imageUrl, "").trim();
+    const imageUrl = imageUrlCandidate || buildPretulProductPlaceholder(productTitle, imageHint);
+    const quickSpecs = Array.isArray(rawItem?.quickSpecs)
+      ? rawItem.quickSpecs
+          .map((spec) => (typeof spec === "string" ? spec.trim() : ""))
+          .filter((spec) => spec.length > 0)
+          .slice(0, 4)
+      : [];
+
+    const normalizedSpecs =
+      quickSpecs.length > 0 ? quickSpecs : [categoryTitle, imageHint].filter((spec) => spec && spec.trim()).slice(0, 4);
+
     sanitized.push({
       id,
+      category: categoryTitle,
       categoryTitle,
-      name,
-      imageUrl: sanitizeString(rawItem?.imageUrl, PRETUL_PRODUCT_PLACEHOLDER).trim() || PRETUL_PRODUCT_PLACEHOLDER,
-      referencePrice
+      productTitle,
+      name: productTitle,
+      productUrl,
+      actualPriceLei,
+      referencePrice: actualPriceLei,
+      imageHint,
+      imageUrl,
+      quickSpecs: normalizedSpecs
     });
   }
 
@@ -1838,7 +2071,7 @@ function sanitizePretulRoundState(rawRoundState) {
   safeState.participantsTeamB = sanitizeRoundParticipantIds(rawRoundState.participantsTeamB, "teamB");
   safeState.answerTeamA = Math.max(0, Math.round(sanitizeNumber(rawRoundState.answerTeamA, 0)));
   safeState.answerTeamB = Math.max(0, Math.round(sanitizeNumber(rawRoundState.answerTeamB, 0)));
-  safeState.realPrice = Math.max(0, Math.round(sanitizeNumber(rawRoundState.realPrice, 0)));
+  safeState.realPrice = Math.max(0, Math.round(sanitizeNumber(rawRoundState.realPrice, 0) * 100) / 100);
   safeState.betTeamA = normalizeBetAmount(rawRoundState.betTeamA);
   safeState.betTeamB = normalizeBetAmount(rawRoundState.betTeamB);
   safeState.payoutApplied = Boolean(rawRoundState.payoutApplied);
@@ -1881,7 +2114,7 @@ function getOrCreatePretulRoundState(roundNumber = state.progress.currentRound) 
       participantsTeamB: previousRound.participantsTeamB.length > 0 ? previousRound.participantsTeamB : defaultParticipantsB,
       answerTeamA: 0,
       answerTeamB: 0,
-      realPrice: nextAvailable?.referencePrice || state.pretul.items[0]?.referencePrice || 0,
+      realPrice: getPretulItemActualPrice(nextAvailable || state.pretul.items[0] || null),
       betTeamA: previousRound.betTeamA || 100,
       betTeamB: previousRound.betTeamB || 100,
       payoutApplied: false,
@@ -4593,8 +4826,7 @@ function buildLegacyLiveRoundContent(gameId, options = {}) {
               <input id="showPretulBetB" class="text-input compact-input" type="number" min="0" step="10" value="${roundState.betTeamB}" data-show-pretul-bet-teamb>
             </div>
           </div>
-          <label class="show-info-label spaced" for="showPretulRealPrice">Real price</label>
-          <input id="showPretulRealPrice" class="text-input compact-input" type="number" min="0" step="1" value="${roundState.realPrice}" data-show-pretul-real-price>
+          <p class="show-round-copy">Real price stays hidden and is sourced from the selected product.</p>
           <div class="show-action-footer">
             <button class="primary-btn" type="button" data-show-action="pretul-evaluate">Detect winner & apply</button>
             ${minimal ? "" : '<button class="secondary-btn" type="button" data-show-action="pretul-reset-used">Reset used items</button>'}
@@ -5299,11 +5531,20 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
   if (gameId === "pretul-corect") {
     const roundState = getOrCreatePretulRoundState();
     const usedItemIds = getPretulUsedItemIdSet();
-    if (!state.pretul.items.some((entry) => entry.id === roundState.selectedItemId) || usedItemIds.has(roundState.selectedItemId)) {
+    if (
+      !state.pretul.items.some((entry) => entry.id === roundState.selectedItemId) ||
+      (usedItemIds.has(roundState.selectedItemId) && liveStep === "topic-select")
+    ) {
       const firstAvailable = state.pretul.items.find((entry) => !usedItemIds.has(entry.id));
       roundState.selectedItemId = firstAvailable?.id || "";
     }
     const item = state.pretul.items.find((entry) => entry.id === roundState.selectedItemId) || null;
+    const productTitle = getPretulItemTitle(item);
+    const categoryTitle = getPretulItemCategory(item);
+    const sourceUrl = sanitizeString(item?.productUrl, "").trim();
+    const quickSpecs = Array.isArray(item?.quickSpecs)
+      ? item.quickSpecs.map((spec) => sanitizeString(spec, "").trim()).filter((spec) => spec.length > 0).slice(0, 4)
+      : [];
     const maxBetA = getMaxBetAmount(state.teams.teamA.money, "pretul-corect");
     const maxBetB = getMaxBetAmount(state.teams.teamB.money, "pretul-corect");
     roundState.betTeamA = maxBetA <= 0 ? 0 : Math.min(normalizeBetAmount(roundState.betTeamA), maxBetA);
@@ -5315,18 +5556,18 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
       roundState.participantsTeamB = getAvailablePlayersForTeam("teamB").map((player) => player.id);
     }
     roundState.chooserTeamKey = ["teamA", "teamB"].includes(roundState.chooserTeamKey) ? roundState.chooserTeamKey : "teamA";
+    roundState.realPrice = getPretulItemActualPrice(item);
     const diffA = Math.abs(roundState.answerTeamA - roundState.realPrice);
     const diffB = Math.abs(roundState.answerTeamB - roundState.realPrice);
     const winnerLabel =
       diffA < diffB ? state.teams.teamA.name : diffB < diffA ? state.teams.teamB.name : "Tie (equal distance)";
     const chooserTeam = state.teams[roundState.chooserTeamKey];
-    const hiddenTeamKey = roundState.chooserTeamKey === "teamA" ? "teamB" : "teamA";
     const scaleMin = Math.max(
       0,
-      Math.min(roundState.answerTeamA, roundState.answerTeamB, roundState.realPrice) - 50
+      Math.min(roundState.answerTeamA, roundState.answerTeamB, roundState.realPrice) - 100
     );
     const scaleMax =
-      Math.max(roundState.answerTeamA, roundState.answerTeamB, roundState.realPrice) + 50;
+      Math.max(roundState.answerTeamA, roundState.answerTeamB, roundState.realPrice) + 100;
     const scaleSpan = Math.max(1, scaleMax - scaleMin);
     const markerPosition = (value) =>
       Math.max(0, Math.min(100, Math.round(((value - scaleMin) / scaleSpan) * 100)));
@@ -5346,16 +5587,18 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
               isUsed ? "disabled" : ""
             }>
               <span class="show-stage-topic-status">${isUsed ? "USED" : "TOPIC"}</span>
-              <span class="show-stage-topic-title">${escapeHtml(entry.categoryTitle || entry.name)}</span>
+              <span class="show-stage-topic-title">${escapeHtml(getPretulItemCategory(entry))}</span>
             </button>
           `;
         })
         .join("");
+      const hasAvailable = state.pretul.items.some((entry) => !usedItemIds.has(entry.id));
       return `
         <section class="show-stage-stack">
           <p class="show-info-label">Pretul Corect / Topic Select</p>
           <p class="show-round-title">Pick the next category</p>
           <div class="show-stage-topic-grid">${cards}</div>
+          ${hasAvailable ? "" : '<p class="show-round-copy">All category cards are used. Finish game to return to Game Select.</p>'}
         </section>
       `;
     }
@@ -5364,7 +5607,7 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
       return `
         <section class="show-stage-stack">
           <p class="show-info-label">Bet Screen</p>
-          <p class="show-round-title">${escapeHtml(item?.categoryTitle || "Select category first")}</p>
+          <p class="show-round-title">${escapeHtml(categoryTitle || "Select category first")}</p>
           <article class="show-stage-mini-card">
             <p class="show-info-label">Category chooser</p>
             <select class="text-input" data-show-pretul-chooser-team>
@@ -5375,7 +5618,7 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
                 state.teams.teamB.name
               )}</option>
             </select>
-            <p class="show-info-sub">${escapeHtml(chooserTeam.name)} chose this category.</p>
+            <p class="show-info-sub">${escapeHtml(chooserTeam.name)} locked this category for the round.</p>
           </article>
           <div class="show-vs-input-grid">
             <article class="show-stage-mini-card">
@@ -5399,31 +5642,38 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
 
     if (["product-reveal", "answer-entry", "price-reveal"].includes(liveStep)) {
       return `
-        <section class="show-stage-stack">
+        <section class="show-stage-stack show-pretul-product-stage">
           <p class="show-info-label">Product + Guesses</p>
-          <p class="show-round-title">${escapeHtml(item?.name || "No product selected")}</p>
-          <p class="show-round-copy">Category: ${escapeHtml(item?.categoryTitle || "N/A")}</p>
+          <p class="show-round-title">${escapeHtml(productTitle || "No product selected")}</p>
+          <p class="show-round-copy">Category: ${escapeHtml(categoryTitle || "N/A")}</p>
           <figure class="show-film-stage-figure">
             <img src="${escapeHtml(item?.imageUrl || PRETUL_PRODUCT_PLACEHOLDER)}" alt="${escapeHtml(
-              item?.name || "Product reveal"
+              productTitle || "Product reveal"
             )}">
-            <figcaption>${escapeHtml(item?.name || "No product selected")}</figcaption>
+            <figcaption>${escapeHtml(item?.imageHint || productTitle || "No product selected")}</figcaption>
           </figure>
-          <p class="show-round-copy">${escapeHtml(chooserTeam.name)} enters openly. ${escapeHtml(
-            state.teams[hiddenTeamKey].name
-          )} input stays masked until result.</p>
+          ${
+            sourceUrl
+              ? `<p class="show-round-copy">Source: <a href="${escapeHtml(sourceUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(
+                  sourceUrl
+                )}</a></p>`
+              : ""
+          }
+          ${
+            quickSpecs.length > 0
+              ? `<ul class="show-pretul-spec-strip">${quickSpecs
+                  .map((spec) => `<li>${escapeHtml(spec)}</li>`)
+                  .join("")}</ul>`
+              : ""
+          }
           <div class="show-vs-input-grid">
             <article class="show-stage-mini-card">
               <p class="show-info-label">${escapeHtml(state.teams.teamA.name)} Guess</p>
-              <input class="text-input show-stage-money-input" type="${
-                roundState.chooserTeamKey === "teamA" ? "number" : "password"
-              }" min="0" step="1" value="${roundState.answerTeamA}" data-show-pretul-answer-teama>
+              <input class="text-input show-stage-money-input" type="number" min="0" step="1" value="${roundState.answerTeamA}" data-show-pretul-answer-teama>
             </article>
             <article class="show-stage-mini-card">
               <p class="show-info-label">${escapeHtml(state.teams.teamB.name)} Guess</p>
-              <input class="text-input show-stage-money-input" type="${
-                roundState.chooserTeamKey === "teamB" ? "number" : "password"
-              }" min="0" step="1" value="${roundState.answerTeamB}" data-show-pretul-answer-teamb>
+              <input class="text-input show-stage-money-input" type="number" min="0" step="1" value="${roundState.answerTeamB}" data-show-pretul-answer-teamb>
             </article>
           </div>
           <p class="show-round-copy">Real price stays hidden until result reveal. Press <strong>Auto Winner + Payout</strong> when ready.</p>
@@ -5435,13 +5685,22 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
     const winnerTeamKey = diffA < diffB ? "teamA" : diffB < diffA ? "teamB" : "draw";
     const winnerPayout = winnerTeamKey === "teamA" ? fixedBonus + roundState.betTeamA : winnerTeamKey === "teamB" ? fixedBonus + roundState.betTeamB : 0;
     const loserPayout = winnerTeamKey === "teamA" ? roundState.betTeamB : winnerTeamKey === "teamB" ? roundState.betTeamA : 0;
+    const deltaA = winnerTeamKey === "teamA" ? winnerPayout : winnerTeamKey === "teamB" ? -roundState.betTeamA : 0;
+    const deltaB = winnerTeamKey === "teamB" ? winnerPayout : winnerTeamKey === "teamA" ? -roundState.betTeamB : 0;
     return `
       <section class="show-stage-stack show-stage-result-card">
         <p class="show-info-label">Auto Winner</p>
         <p class="show-stage-result-headline">${escapeHtml(winnerLabel)}</p>
-        <p class="show-round-copy">${escapeHtml(item?.name || "Selected product")} (${escapeHtml(
-          item?.categoryTitle || "Category"
+        <p class="show-round-copy">${escapeHtml(productTitle || "Selected product")} (${escapeHtml(
+          categoryTitle || "Category"
         )})</p>
+        ${
+          sourceUrl
+            ? `<p class="show-round-copy">Source: <a href="${escapeHtml(sourceUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(
+                sourceUrl
+              )}</a></p>`
+            : ""
+        }
         <div class="show-pretul-scale">
           <div class="show-pretul-scale-track"></div>
           <div class="show-pretul-scale-marker is-real" style="left:${realPos}%;">Real ${formatMoney(roundState.realPrice)}</div>
@@ -5454,15 +5713,18 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
         </div>
         <div class="show-vs-input-grid">
           <article class="show-stage-mini-card">
-            <p class="show-info-label">${escapeHtml(state.teams.teamA.name)} difference</p>
-            <p class="show-info-value">${formatMoney(diffA)}</p>
+            <p class="show-info-label">${escapeHtml(state.teams.teamA.name)} estimate</p>
+            <p class="show-info-value">${formatMoney(roundState.answerTeamA)}</p>
+            <p class="show-info-sub">Absolute distance: ${formatMoney(diffA)}</p>
           </article>
           <article class="show-stage-mini-card">
-            <p class="show-info-label">${escapeHtml(state.teams.teamB.name)} difference</p>
-            <p class="show-info-value">${formatMoney(diffB)}</p>
+            <p class="show-info-label">${escapeHtml(state.teams.teamB.name)} estimate</p>
+            <p class="show-info-value">${formatMoney(roundState.answerTeamB)}</p>
+            <p class="show-info-sub">Absolute distance: ${formatMoney(diffB)}</p>
           </article>
         </div>
         <div class="show-stage-mini-card">
+          <p class="show-info-label">Payout summary</p>
           ${
             winnerTeamKey === "draw"
               ? `<p class="show-round-copy">Round is draw. Distances are equal, no team payout is applied.</p>`
@@ -5472,6 +5734,9 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
                   winnerTeamKey === "teamA" ? escapeHtml(state.teams.teamB.name) : escapeHtml(state.teams.teamA.name)
                 }</strong> loses <strong>-${formatMoney(loserPayout)}</strong>.</p>`
           }
+          <p class="show-info-sub">${escapeHtml(state.teams.teamA.name)}: ${formatSignedMoney(deltaA)} | ${escapeHtml(
+            state.teams.teamB.name
+          )}: ${formatSignedMoney(deltaB)}</p>
         </div>
         <p class="show-round-copy">${escapeHtml(roundState.lastResult || "Apply payout to generate round result.")}</p>
       </section>
@@ -6125,8 +6390,13 @@ function buildLiveRoundQuickActions(gameId, liveStep) {
   if (gameId === "pretul-corect") {
     const roundState = getOrCreatePretulRoundState();
     const flowComplete = isGameFlowComplete(gameId);
+    const hasSelectableTopic = Boolean(roundState.selectedItemId) && !getPretulUsedItemIdSet().has(roundState.selectedItemId);
     if (liveStep === "topic-select") {
-      actions.push({ tone: "primary-btn", action: "live-step-bet-screen", label: "Lock Topic" });
+      if (flowComplete) {
+        actions.push({ tone: "primary-btn", action: "finish-game-return", label: "Finish Pretul Corect" });
+      } else if (hasSelectableTopic) {
+        actions.push({ tone: "primary-btn", action: "pretul-lock-topic", label: "Lock Category" });
+      }
       actions.push({ tone: "secondary-btn", action: "pretul-reset-used", label: "Reset topics" });
     } else if (liveStep === "bet-screen") {
       actions.push({ tone: "primary-btn", action: "live-step-product-reveal", label: "Continue to Product" });
@@ -6988,9 +7258,10 @@ function syncPretulOverlayIntoState() {
   }
   roundState.answerTeamA = Math.max(0, readNumber("[data-show-pretul-answer-teama]", roundState.answerTeamA));
   roundState.answerTeamB = Math.max(0, readNumber("[data-show-pretul-answer-teamb]", roundState.answerTeamB));
-  roundState.realPrice = Math.max(0, readNumber("[data-show-pretul-real-price]", roundState.realPrice));
   roundState.betTeamA = Math.max(0, readBet("[data-show-pretul-bet-teama]", roundState.betTeamA));
   roundState.betTeamB = Math.max(0, readBet("[data-show-pretul-bet-teamb]", roundState.betTeamB));
+  const selectedItem = state.pretul.items.find((item) => item.id === roundState.selectedItemId);
+  roundState.realPrice = getPretulItemActualPrice(selectedItem);
 
   if (elements.pretulItemSelect) {
     elements.pretulItemSelect.value = roundState.selectedItemId;
@@ -7197,6 +7468,10 @@ function handleShowOverlayAction(action, trigger) {
   }
   if (action === "trivia-next-topic") {
     advanceTriviaToNextTopic();
+    return;
+  }
+  if (action === "pretul-lock-topic") {
+    lockPretulSelectedTopic();
     return;
   }
   if (action === "pretul-next-topic") {
@@ -7493,8 +7768,7 @@ function handleShowOverlayChange(target) {
     target.matches("[data-show-pretul-answer-teama]") ||
     target.matches("[data-show-pretul-answer-teamb]") ||
     target.matches("[data-show-pretul-bet-teama]") ||
-    target.matches("[data-show-pretul-bet-teamb]") ||
-    target.matches("[data-show-pretul-real-price]")
+    target.matches("[data-show-pretul-bet-teamb]")
   ) {
     syncPretulOverlayIntoState();
     renderPretulControls();
@@ -8173,11 +8447,13 @@ function renderPretulControls() {
   const maxBetB = getMaxBetAmount(teamB.money, "pretul-corect");
   const itemIdSet = new Set(state.pretul.items.map((item) => item.id));
   const usedItemIds = getPretulUsedItemIdSet();
+  const keepUsedSelection =
+    state.progress.currentGame === "pretul-corect" && getLiveRoundStep("pretul-corect") !== "topic-select";
 
   roundState.usedItemIds = Array.from(usedItemIds).filter((id) => itemIdSet.has(id));
   if (
     !itemIdSet.has(roundState.selectedItemId) ||
-    usedItemIds.has(roundState.selectedItemId)
+    (usedItemIds.has(roundState.selectedItemId) && !keepUsedSelection)
   ) {
     const firstAvailable = state.pretul.items.find((item) => !usedItemIds.has(item.id));
     roundState.selectedItemId = firstAvailable?.id || "";
@@ -8196,12 +8472,8 @@ function renderPretulControls() {
   }
   roundState.answerTeamA = Math.max(0, Math.round(sanitizeNumber(roundState.answerTeamA, 0)));
   roundState.answerTeamB = Math.max(0, Math.round(sanitizeNumber(roundState.answerTeamB, 0)));
-  roundState.realPrice = Math.max(0, Math.round(sanitizeNumber(roundState.realPrice, 0)));
-
   const selectedItem = state.pretul.items.find((item) => item.id === roundState.selectedItemId);
-  if (selectedItem && roundState.realPrice === 0 && selectedItem.referencePrice > 0) {
-    roundState.realPrice = selectedItem.referencePrice;
-  }
+  roundState.realPrice = getPretulItemActualPrice(selectedItem);
 
   elements.pretulItemSelect.innerHTML = state.pretul.items
     .map((item) => {
@@ -8220,11 +8492,12 @@ function renderPretulControls() {
   elements.pretulAnswerTeamBInput.value = String(roundState.answerTeamB);
   elements.pretulBetTeamAInput.value = String(roundState.betTeamA);
   elements.pretulBetTeamBInput.value = String(roundState.betTeamB);
-  elements.pretulRealPriceInput.value = String(roundState.realPrice);
+  elements.pretulRealPriceInput.value = "";
+  elements.pretulRealPriceInput.disabled = true;
   elements.pretulRoundResult.textContent =
     roundState.lastResult || "Rezultatul rundei va aparea aici.";
   elements.pretulRuleInfo.textContent =
-    `Auto winner = closest answer to real price. Tie when distances are equal. ` +
+    `Auto winner = closest answer to hidden item real price. Tie when distances are equal. ` +
     `Winner payout: +${formatMoney(getStandardFixedBonus("pretul-corect"))} bonus + bet win. ` +
     `Bet cap is 15%, rounded to ${BET_ROUNDING_STEP}. ` +
     `${teamA.name} max now: ${formatMoney(maxBetA)} | ${teamB.name} max now: ${formatMoney(maxBetB)}.`;
@@ -8237,9 +8510,8 @@ function renderPretulControls() {
       const isUsed = usedItemIds.has(item.id);
       return `
         <article class="pretul-item-card ${isUsed ? "is-used" : ""}">
-          <h4>${escapeHtml(item.categoryTitle || item.name)}</h4>
-          <p class="muted">Product: <strong>${escapeHtml(item.name)}</strong></p>
-          <p class="muted">Reference real price: <strong>${formatMoney(item.referencePrice)}</strong></p>
+          <h4>${escapeHtml(getPretulItemCategory(item))}</h4>
+          <p class="muted"><strong>${isUsed ? "USED" : "READY"}</strong></p>
           <button
             class="pill-btn"
             type="button"
@@ -8268,12 +8540,43 @@ function setPretulSelectedItem(itemId) {
   roundState.payoutApplied = false;
   roundState.lastResult = "";
   const selectedItem = state.pretul.items.find((item) => item.id === itemId);
-  if (selectedItem && roundState.realPrice === 0) {
-    roundState.realPrice = selectedItem.referencePrice;
+  if (selectedItem) {
+    roundState.realPrice = getPretulItemActualPrice(selectedItem);
   }
 
   renderPretulControls();
   saveState("Pretul item selected.");
+}
+
+function lockPretulSelectedTopic() {
+  if (state.progress.currentGame !== "pretul-corect") {
+    switchRoundContext("pretul-corect", state.progress.currentRound, { navigateToSection: false });
+  }
+  const roundState = getOrCreatePretulRoundState();
+  const selectedItem = state.pretul.items.find((item) => item.id === roundState.selectedItemId);
+  if (!selectedItem) {
+    setLastResultSummary("Select a category card before locking the round.");
+    renderPretulControls();
+    saveState("Pretul lock topic blocked: no selected category.");
+    return false;
+  }
+  const usedItems = getPretulUsedItemIdSet();
+  if (usedItems.has(selectedItem.id)) {
+    setLastResultSummary("Selected category is already used. Pick another card.");
+    renderPretulControls();
+    saveState("Pretul lock topic blocked: category already used.");
+    return false;
+  }
+  roundState.usedItemIds = Array.from(usedItems);
+  roundState.usedItemIds.push(selectedItem.id);
+  roundState.usedItemIds = Array.from(new Set(roundState.usedItemIds));
+  roundState.realPrice = getPretulItemActualPrice(selectedItem);
+  roundState.payoutApplied = false;
+  roundState.lastResult = "";
+  setLiveRoundStep("bet-screen", { persist: false });
+  setShowScreen("live-round", { persist: false });
+  saveState(`Pretul category locked: ${getPretulItemCategory(selectedItem)}.`);
+  return true;
 }
 
 function setPretulChooserTeam(teamKey) {
@@ -8334,9 +8637,10 @@ function updatePretulRoundInputs(roundStateInput = null) {
 
   roundState.answerTeamA = Math.max(0, Math.round(sanitizeNumber(elements.pretulAnswerTeamAInput.value, roundState.answerTeamA)));
   roundState.answerTeamB = Math.max(0, Math.round(sanitizeNumber(elements.pretulAnswerTeamBInput.value, roundState.answerTeamB)));
-  roundState.realPrice = Math.max(0, Math.round(sanitizeNumber(elements.pretulRealPriceInput.value, roundState.realPrice)));
   roundState.betTeamA = maxBetA <= 0 ? 0 : Math.min(normalizeBetAmount(elements.pretulBetTeamAInput.value), maxBetA);
   roundState.betTeamB = maxBetB <= 0 ? 0 : Math.min(normalizeBetAmount(elements.pretulBetTeamBInput.value), maxBetB);
+  const selectedItem = state.pretul.items.find((item) => item.id === roundState.selectedItemId);
+  roundState.realPrice = getPretulItemActualPrice(selectedItem);
   roundState.payoutApplied = false;
   roundState.lastResult = "";
 }
@@ -8419,9 +8723,11 @@ function applyPretulRoundResult() {
     return false;
   }
 
+  const item = state.pretul.items.find((entry) => entry.id === selectedItemId);
   const answerA = roundState.answerTeamA;
   const answerB = roundState.answerTeamB;
-  const realPrice = roundState.realPrice;
+  const realPrice = getPretulItemActualPrice(item);
+  roundState.realPrice = realPrice;
   const distanceA = Math.abs(answerA - realPrice);
   const distanceB = Math.abs(answerB - realPrice);
   const maxBetA = getMaxBetAmount(state.teams.teamA.money, "pretul-corect");
@@ -8433,8 +8739,7 @@ function applyPretulRoundResult() {
   roundState.betTeamA = betA;
   roundState.betTeamB = betB;
 
-  const item = state.pretul.items.find((entry) => entry.id === selectedItemId);
-  const itemLabel = item?.name || "selected item";
+  const itemLabel = getPretulItemTitle(item);
   let resultText = "";
   let winnerTeam = "draw";
   let deltaA = 0;
@@ -8497,8 +8802,6 @@ function applyPretulRoundResult() {
   const usedItemIds = getPretulUsedItemIdSet();
   usedItemIds.add(selectedItemId);
   roundState.usedItemIds = Array.from(usedItemIds);
-  const nextAvailable = state.pretul.items.find((entry) => !usedItemIds.has(entry.id));
-  roundState.selectedItemId = nextAvailable?.id || "";
   roundState.payoutApplied = true;
   roundState.lastResult = resultText;
 
@@ -11088,7 +11391,9 @@ function getTriviaCategoryOptions(category) {
 
 function getTriviaCorrectOptionIndex(category) {
   const options = getTriviaCategoryOptions(category);
-  let index = Math.round(sanitizeNumber(category?.correctOptionIndex, -1));
+  let index = Math.round(
+    sanitizeNumber(category?.correctAnswerIndex, sanitizeNumber(category?.correctOptionIndex, -1))
+  );
   if (index < 0 || index >= options.length) {
     const answer = sanitizeString(category?.answer, "").trim();
     index = options.findIndex((option) => normalizeTextToken(option) === normalizeTextToken(answer));
@@ -12411,9 +12716,11 @@ function bindEvents() {
   }
   if (elements.pretulRealPriceInput) {
     elements.pretulRealPriceInput.addEventListener("change", () => {
-      updatePretulRoundInputs();
+      const roundState = getOrCreatePretulRoundState();
+      const selectedItem = state.pretul.items.find((item) => item.id === roundState.selectedItemId);
+      roundState.realPrice = getPretulItemActualPrice(selectedItem);
       renderPretulControls();
-      saveState("Pretul real price updated.");
+      saveState("Pretul real price remains item-sourced.");
     });
   }
   if (elements.pretulEvaluateBtn) {
