@@ -942,10 +942,86 @@ const DEFAULT_FILM_ROUND_LIBRARY = [
   }
 ];
 
+const CHARACTER_IMAGE_LINKS = [
+  {
+    id: 0,
+    character: "Thomas Shelby",
+    imageUrl: "https://static.wikia.nocookie.net/peaky-blinders/images/8/8e/Tommys3.jpg/revision/latest?cb=20190715140230"
+  },
+  {
+    id: 1,
+    character: "Jesse Pinkman",
+    imageUrl: "https://static.wikia.nocookie.net/breakingbad/images/c/ca/Jesse_Season_5B.jpg/revision/latest?cb=20220611094739"
+  },
+  {
+    id: 2,
+    character: "Dustin Henderson",
+    imageUrl: "https://static.wikia.nocookie.net/strangerthings8338/images/4/4f/Dustin_Henderson_1989.png/revision/latest?cb=20260313155936"
+  },
+  {
+    id: 3,
+    character: "Enid Sinclair",
+    imageUrl: "https://static.wikia.nocookie.net/addamsfamily/images/0/0b/Enid_Sinclair_%282022%29_001.jpg/revision/latest?cb=20231107202042"
+  },
+  {
+    id: 4,
+    character: "Angela Martin",
+    imageUrl: "https://static.wikia.nocookie.net/theoffice/images/0/0b/Angela_Martin.jpg/revision/latest?cb=20170701090232"
+  },
+  {
+    id: 5,
+    character: "Tenten",
+    imageUrl: "https://static.wikia.nocookie.net/naruto/images/d/da/Tenten_Part_I.png/revision/latest/scale-to-width-down/97?cb=20150321090834"
+  },
+  {
+    id: 6,
+    character: "Lester Crest",
+    imageUrl: "https://static.wikia.nocookie.net/gtawiki/images/4/49/LesterCrest-GTAVee.png/revision/latest?cb=20220322175049"
+  },
+  {
+    id: 7,
+    character: "Queen Charlotte",
+    imageUrl: "https://static.wikia.nocookie.net/bridgerton/images/0/0f/QC1x01-1.jpeg/revision/latest/scale-to-width-down/203?cb=20230115235620"
+  },
+  {
+    id: 8,
+    character: "Mindy Chen",
+    imageUrl: "https://static.wikia.nocookie.net/spykids-mc/images/3/31/EIP_Mindy-Infobox.png/revision/latest?cb=20241029045100"
+  },
+  {
+    id: 9,
+    character: "Pepper Potts",
+    imageUrl:
+      "https://static.wikia.nocookie.net/marveldatabase/images/1/11/Virginia_Potts_%28Earth-199999%29_from_Avengers_Endgame_promotional_art_002.jpg/revision/latest?cb=20190510232319"
+  },
+  {
+    id: 10,
+    character: "Dembe Zuma",
+    imageUrl: "https://static.wikia.nocookie.net/blacklist/images/e/e8/Dembe_Zuma.png/revision/latest?cb=20170501124352"
+  },
+  {
+    id: 11,
+    character: "Sharpay Evans",
+    imageUrl: "https://static.wikia.nocookie.net/hsm/images/0/03/SharpayEvansHSM1.jpg/revision/latest?cb=20160127025051"
+  }
+];
+const CHARACTER_IMAGE_LINKS_BY_ID = new Map(
+  CHARACTER_IMAGE_LINKS.filter((entry) => typeof entry?.imageUrl === "string" && entry.imageUrl.trim()).map((entry) => [
+    Number(entry.id),
+    entry.imageUrl.trim()
+  ])
+);
+
 const DEFAULT_FILM_ITEMS = DEFAULT_FILM_ROUND_LIBRARY.map((entry, index) => ({
+  ...(() => {
+    const mainImageUrl = CHARACTER_IMAGE_LINKS_BY_ID.get(Number(entry.id)) || FILM_FALLBACK_IMAGE;
+    return {
+      imageUrl: mainImageUrl,
+      characterImageUrl: mainImageUrl
+    };
+  })(),
   id: `film-item-${index + 1}`,
   title: `Card ${index + 1}`,
-  imageUrl: FILM_FALLBACK_IMAGE,
   imageAlt: entry.imageSearchHint || `Round ${index + 1} image`,
   imageSourcePageUrl: entry.imageSourcePageUrl || "",
   imageSearchHint: entry.imageSearchHint || "",
@@ -1487,63 +1563,18 @@ function isPlaceholderImageUrl(value) {
   if (token.startsWith("data:image/svg+xml")) {
     return true;
   }
-  return /placeholder|demo round image|product reveal placeholder/i.test(token);
-}
-
-function hashText(value) {
-  let hash = 0;
-  const text = String(value ?? "");
-  for (let index = 0; index < text.length; index += 1) {
-    hash = (hash << 5) - hash + text.charCodeAt(index);
-    hash |= 0;
-  }
-  return Math.abs(hash);
-}
-
-function buildHintImageUrl(hint, seedKey, width = 1200, height = 675) {
-  const token = sanitizeString(hint, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, ",")
-    .replace(/,+/g, ",")
-    .replace(/^,|,$/g, "");
-  if (!token) {
-    return "";
-  }
-  const safeWidth = Math.max(360, Math.round(sanitizeNumber(width, 1200)));
-  const safeHeight = Math.max(200, Math.round(sanitizeNumber(height, 675)));
-  const lock = (hashText(seedKey || token) % 999983) + 1;
-  return `https://loremflickr.com/${safeWidth}/${safeHeight}/${token}?lock=${lock}`;
-}
-
-function deriveHintFromSourceUrl(sourceUrl) {
-  const safeUrl = sanitizeString(sourceUrl, "").trim();
-  if (!safeUrl) {
-    return "";
-  }
-  const lastChunk = safeUrl.split("/").filter(Boolean).pop() || "";
-  return decodeURIComponent(lastChunk)
-    .replace(/[_\-]+/g, " ")
-    .replace(/\([^)]*\)/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+  return /placeholder|demo round image|product reveal placeholder|loremflickr\.com|s\.wordpress\.com\/mshots/i.test(token);
 }
 
 function resolveFilmImageUrl(primaryUrl, options = {}) {
-  const sourcePageUrl = sanitizeString(options.sourcePageUrl, "").trim();
-  const imageHint = sanitizeString(options.imageHint, "").trim();
-  const seedKey = sanitizeString(options.seedKey, "").trim();
+  const defaultImageUrl = sanitizeString(options.defaultImageUrl, "").trim();
   const fallbackUrl = options.fallbackUrl || FILM_FALLBACK_IMAGE;
   const cleanPrimary = sanitizeString(primaryUrl, "").trim();
   if (cleanPrimary && !isPlaceholderImageUrl(cleanPrimary)) {
     return cleanPrimary;
   }
-  const hintUrl = buildHintImageUrl(imageHint, seedKey || imageHint, 1200, 675);
-  if (hintUrl) {
-    return hintUrl;
-  }
-  const derivedHintUrl = buildHintImageUrl(deriveHintFromSourceUrl(sourcePageUrl), seedKey || sourcePageUrl, 1200, 675);
-  if (derivedHintUrl) {
-    return derivedHintUrl;
+  if (defaultImageUrl && !isPlaceholderImageUrl(defaultImageUrl)) {
+    return defaultImageUrl;
   }
   return fallbackUrl;
 }
@@ -2526,11 +2557,14 @@ function sanitizeFilmItems(rawItems) {
       sanitizeString(rawItem?.funFactPrompt, "").trim() ||
       sanitizeString(rawItem?.funFact?.targetFact, "").trim() ||
       "Text reveal Fun Fact.";
+    const fallbackImageUrl = sanitizeString(fallbackItem?.imageUrl, FILM_FALLBACK_IMAGE).trim() || FILM_FALLBACK_IMAGE;
+    const rawImageUrl = sanitizeString(rawItem?.imageUrl, "").trim();
+    const resolvedImageUrl = !isPlaceholderImageUrl(rawImageUrl) ? rawImageUrl : fallbackImageUrl;
 
     sanitized.push({
       id,
       title,
-      imageUrl: sanitizeString(rawItem?.imageUrl, FILM_FALLBACK_IMAGE).trim() || FILM_FALLBACK_IMAGE,
+      imageUrl: resolvedImageUrl,
       imageAlt:
         sanitizeString(rawItem?.imageAlt, "").trim() ||
         sanitizeString(fallbackItem?.imageAlt, "").trim() ||
@@ -6184,9 +6218,7 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
     roundState.outcomes = { ...roundState.outcomesByTeam[playingTeamKey] };
     const item = state.filmGame.items.find((entry) => entry.id === roundState.selectedItemId);
     const stageImageUrl = resolveFilmImageUrl(item?.imageUrl, {
-      sourcePageUrl: item?.imageSourcePageUrl,
-      imageHint: item?.imageSearchHint,
-      seedKey: `${item?.id || "film"}-stage`,
+      defaultImageUrl: CHARACTER_IMAGE_LINKS_BY_ID.get(Math.max(0, Number(item?.id?.replace("film-item-", "")) - 1)),
       fallbackUrl: FILM_FALLBACK_IMAGE
     });
     const breakdown = getFilmRoundBreakdown(roundState, roundState.betAmount, playingTeamKey);
@@ -6194,41 +6226,17 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
       {
         key: "character",
         title: "Character / Title",
-        revealText: item?.characterPrompt || "Placeholder character/title",
-        imageUrl: resolveFilmImageUrl(item?.characterImageUrl, {
-          sourcePageUrl: item?.characterSourcePageUrl || item?.imageSourcePageUrl,
-          imageHint: item?.characterImageHint || item?.imageSearchHint,
-          seedKey: `${item?.id || "film"}-character`,
-          fallbackUrl: stageImageUrl
-        }),
-        imageAlt: item?.characterImageHint || "Character / Title visual",
-        sourceUrl: item?.characterSourcePageUrl || item?.imageSourcePageUrl || ""
+        revealText: item?.characterPrompt || "Placeholder character/title"
       },
       {
         key: "franchise",
         title: "Franchise",
-        revealText: item?.franchisePrompt || "Placeholder franchise",
-        imageUrl: resolveFilmImageUrl(item?.franchiseImageUrl, {
-          sourcePageUrl: item?.franchiseSourcePageUrl || item?.imageSourcePageUrl,
-          imageHint: item?.franchiseImageHint || item?.imageSearchHint,
-          seedKey: `${item?.id || "film"}-franchise`,
-          fallbackUrl: stageImageUrl
-        }),
-        imageAlt: item?.franchiseImageHint || "Franchise visual",
-        sourceUrl: item?.franchiseSourcePageUrl || item?.imageSourcePageUrl || ""
+        revealText: item?.franchisePrompt || "Placeholder franchise"
       },
       {
         key: "funFact",
         title: "Fun Fact",
-        revealText: item?.funFactPrompt || "Placeholder fun fact",
-        imageUrl: resolveFilmImageUrl(item?.funFactImageUrl, {
-          sourcePageUrl: item?.funFactSourcePageUrl || item?.imageSourcePageUrl,
-          imageHint: item?.funFactImageHint || item?.imageSearchHint,
-          seedKey: `${item?.id || "film"}-funfact`,
-          fallbackUrl: stageImageUrl
-        }),
-        imageAlt: item?.funFactImageHint || "Fun Fact visual",
-        sourceUrl: item?.funFactSourcePageUrl || item?.imageSourcePageUrl || ""
+        revealText: item?.funFactPrompt || "Placeholder fun fact"
       }
     ];
     const betPresets = Array.from(
@@ -6309,19 +6317,11 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
                 const activeOutcome = roundState.outcomesByTeam[playingTeamKey][card.key];
                 return `
                   <article class="show-film-reveal-card ${revealState ? "is-open" : ""}">
-                    <figure class="show-film-reveal-figure">
-                      <img src="${escapeHtml(card.imageUrl)}" alt="${escapeHtml(card.imageAlt)}">
-                    </figure>
                     <div class="show-film-card-head">
                       <p class="show-info-label">${escapeHtml(card.title)}</p>
                       <button class="pill-btn" type="button" data-show-film-reveal="${card.key}">${revealState ? "Hide" : "Reveal"}</button>
                     </div>
                     <p class="show-round-copy">${escapeHtml(revealState ? card.revealText : "Hidden until reveal")}</p>
-                    ${
-                      card.sourceUrl
-                        ? `<p class="show-info-sub">Source: <a href="${escapeHtml(card.sourceUrl)}" target="_blank" rel="noopener noreferrer">link</a></p>`
-                        : ""
-                    }
                     <div class="show-film-outcome-row">
                       <span class="show-info-sub">${escapeHtml(playingTeam.name)}</span>
                       <button class="pill-btn ${activeOutcome === "correct" ? "is-active" : ""}" type="button" data-show-film-outcome="${card.key}:correct">Correct</button>
