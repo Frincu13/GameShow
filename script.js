@@ -687,116 +687,278 @@ const FILM_COMPONENT_WEIGHTS = {
   franchise: 1,
   funFact: 3
 };
-const DEFAULT_FILM_ITEMS = [
+const DEFAULT_FILM_ROUND_LIBRARY = [
   {
-    id: "film-item-1",
-    title: "Runda 1 - Wizard School",
-    imageUrl: FILM_FALLBACK_IMAGE,
-    imageAlt: "Imagine demo runda 1",
-    characterPrompt: "Hermione Granger",
-    franchisePrompt: "Harry Potter",
-    funFactPrompt: "Prima carte Harry Potter a fost publicata in 1997."
+    id: 0,
+    category: "Character / Franchise / Wild Fact",
+    imageSourcePageUrl: "https://peaky-blinders.fandom.com/wiki/Thomas_Shelby",
+    imageSearchHint: "Thomas Shelby Peaky Blinders portrait",
+    characterOrTitle: {
+      answer: "Thomas Shelby",
+      imageSourcePageUrl: "https://peaky-blinders.fandom.com/wiki/Thomas_Shelby",
+      imageSearchHint: "Thomas Shelby Peaky Blinders portrait"
+    },
+    franchise: {
+      answer: "Peaky Blinders",
+      imageSourcePageUrl: "https://www.netflix.com/tudum/articles/peaky-blinders-real-life-true-story",
+      imageSearchHint: "Peaky Blinders official promo"
+    },
+    funFact: {
+      targetFact: "Pentru Thomas Shelby, Cillian Murphy a tras mii de tigari din plante la filmari.",
+      imageSourcePageUrl: "https://peaky-blinders.fandom.com/wiki/Thomas_Shelby",
+      imageSearchHint: "Thomas Shelby smoking Peaky Blinders still"
+    }
   },
   {
-    id: "film-item-2",
-    title: "Runda 2 - God of War",
-    imageUrl: FILM_FALLBACK_IMAGE,
-    imageAlt: "Imagine demo runda 2",
-    characterPrompt: "Kratos",
-    franchisePrompt: "God of War",
-    funFactPrompt: "Seria God of War a debutat pe PlayStation 2 in 2005."
+    id: 1,
+    category: "Character / Franchise / Wild Fact",
+    imageSourcePageUrl: "https://breakingbad.fandom.com/wiki/Jesse_Pinkman",
+    imageSearchHint: "Jesse Pinkman Breaking Bad portrait",
+    characterOrTitle: {
+      answer: "Jesse Pinkman",
+      imageSourcePageUrl: "https://breakingbad.fandom.com/wiki/Jesse_Pinkman",
+      imageSearchHint: "Jesse Pinkman Breaking Bad portrait"
+    },
+    franchise: {
+      answer: "Breaking Bad",
+      imageSourcePageUrl: "https://breakingbad.fandom.com/wiki/Breaking_Bad",
+      imageSearchHint: "Breaking Bad official poster"
+    },
+    funFact: {
+      targetFact: "Jesse trebuia sa moara in sezonul 1.",
+      imageSourcePageUrl: "https://breakingbad.fandom.com/wiki/Jesse_Pinkman",
+      imageSearchHint: "Jesse Pinkman Breaking Bad promo"
+    }
   },
   {
-    id: "film-item-3",
-    title: "Runda 3 - MCU",
-    imageUrl: FILM_FALLBACK_IMAGE,
-    imageAlt: "Imagine demo runda 3",
-    characterPrompt: "Tony Stark / Iron Man",
-    franchisePrompt: "Marvel Cinematic Universe",
-    funFactPrompt: "Primul film MCU a fost Iron Man (2008)."
+    id: 2,
+    category: "Character / Franchise / Wild Fact",
+    imageSourcePageUrl: "https://strangerthings.fandom.com/wiki/Dustin_Henderson",
+    imageSearchHint: "Dustin Henderson Stranger Things portrait",
+    characterOrTitle: {
+      answer: "Dustin Henderson",
+      imageSourcePageUrl: "https://strangerthings.fandom.com/wiki/Dustin_Henderson",
+      imageSearchHint: "Dustin Henderson Stranger Things portrait"
+    },
+    franchise: {
+      answer: "Stranger Things",
+      imageSourcePageUrl: "https://www.netflix.com/tudum/articles/stranger-things-steve-harrington-joe-keery",
+      imageSearchHint: "Stranger Things official poster"
+    },
+    funFact: {
+      targetFact: "Actorul lui Dustin chiar are aceeasi boala rara ca personajul: cleidocranial dysplasia.",
+      imageSourcePageUrl: "https://strangerthings.fandom.com/wiki/Dustin_Henderson",
+      imageSearchHint: "Dustin Henderson close up Stranger Things"
+    }
   },
   {
-    id: "film-item-4",
-    title: "Runda 4 - Gotham",
-    imageUrl: FILM_FALLBACK_IMAGE,
-    imageAlt: "Imagine demo runda 4",
-    characterPrompt: "Bruce Wayne / Batman",
-    franchisePrompt: "DC Universe",
-    funFactPrompt: "Batman a aparut prima data in Detective Comics #27 (1939)."
+    id: 3,
+    category: "Character / Franchise / Wild Fact",
+    imageSourcePageUrl: "https://addamsfamily.fandom.com/wiki/Enid_Sinclair",
+    imageSearchHint: "Enid Sinclair Wednesday portrait",
+    characterOrTitle: {
+      answer: "Enid Sinclair",
+      imageSourcePageUrl: "https://addamsfamily.fandom.com/wiki/Enid_Sinclair",
+      imageSearchHint: "Enid Sinclair Wednesday portrait"
+    },
+    franchise: {
+      answer: "Wednesday",
+      imageSourcePageUrl: "https://www.netflix.com/tudum/articles/wednesday-character-cast-guide-season-1",
+      imageSearchHint: "Wednesday Netflix official poster"
+    },
+    funFact: {
+      targetFact: "Jenna Ortega si-a inventat singura dansul viral.",
+      imageSourcePageUrl: "https://www.netflix.com/tudum/articles/wednesday-character-cast-guide-season-1",
+      imageSearchHint: "Wednesday dance scene Jenna Ortega"
+    }
   },
   {
-    id: "film-item-5",
-    title: "Runda 5 - Mushroom Kingdom",
-    imageUrl: FILM_FALLBACK_IMAGE,
-    imageAlt: "Imagine demo runda 5",
-    characterPrompt: "Mario",
-    franchisePrompt: "Super Mario",
-    funFactPrompt: "Prima aparitie a lui Mario a fost in Donkey Kong (1981)."
+    id: 4,
+    category: "Character / Franchise / Wild Fact",
+    imageSourcePageUrl: "https://theoffice.fandom.com/wiki/Angela_Martin",
+    imageSearchHint: "Angela Martin The Office portrait",
+    characterOrTitle: {
+      answer: "Angela Martin",
+      imageSourcePageUrl: "https://theoffice.fandom.com/wiki/Angela_Martin",
+      imageSearchHint: "Angela Martin The Office portrait"
+    },
+    franchise: {
+      answer: "The Office",
+      imageSourcePageUrl: "https://theoffice.fandom.com/wiki/The_Office_(US)",
+      imageSearchHint: "The Office US cast promo"
+    },
+    funFact: {
+      targetFact: "Pisica aruncata in tavan in The Office era un fake de 12.000 de dolari.",
+      imageSourcePageUrl: "https://theoffice.fandom.com/wiki/Stress_Relief",
+      imageSearchHint: "The Office Stress Relief cat scene"
+    }
   },
   {
-    id: "film-item-6",
-    title: "Runda 6 - Galaxy Saga",
-    imageUrl: FILM_FALLBACK_IMAGE,
-    imageAlt: "Imagine demo runda 6",
-    characterPrompt: "Luke Skywalker",
-    franchisePrompt: "Star Wars",
-    funFactPrompt: "Star Wars: A New Hope a fost lansat in 1977."
+    id: 5,
+    category: "Character / Franchise / Wild Fact",
+    imageSourcePageUrl: "https://naruto.fandom.com/wiki/Tenten",
+    imageSearchHint: "Tenten Naruto portrait",
+    characterOrTitle: {
+      answer: "Tenten",
+      imageSourcePageUrl: "https://naruto.fandom.com/wiki/Tenten",
+      imageSearchHint: "Tenten Naruto portrait"
+    },
+    franchise: {
+      answer: "Naruto",
+      imageSourcePageUrl: "https://naruto.fandom.com/wiki/Naruto_(series)",
+      imageSearchHint: "Naruto anime official poster"
+    },
+    funFact: {
+      targetFact: "Potrivit unor numaratori facute de fani, Tenten ar avea mai putin screen time decat swing-kun.",
+      imageSourcePageUrl: "https://naruto.fandom.com/wiki/Tenten",
+      imageSearchHint: "Tenten Naruto anime still"
+    }
   },
   {
-    id: "film-item-7",
-    title: "Runda 7 - Post Apocalyptic",
-    imageUrl: FILM_FALLBACK_IMAGE,
-    imageAlt: "Imagine demo runda 7",
-    characterPrompt: "Joel Miller",
-    franchisePrompt: "The Last of Us",
-    funFactPrompt: "Jocul original The Last of Us a fost lansat in 2013."
+    id: 6,
+    category: "Character / Franchise / Wild Fact",
+    imageSourcePageUrl: "https://gta.fandom.com/wiki/Lester_Crest",
+    imageSearchHint: "Lester Crest GTA 5 artwork",
+    characterOrTitle: {
+      answer: "Lester Crest",
+      imageSourcePageUrl: "https://gta.fandom.com/wiki/Lester_Crest",
+      imageSearchHint: "Lester Crest GTA 5 artwork"
+    },
+    franchise: {
+      answer: "GTA 5",
+      imageSourcePageUrl: "https://gta.fandom.com/wiki/Grand_Theft_Auto_V",
+      imageSearchHint: "GTA 5 official key art"
+    },
+    funFact: {
+      targetFact: "GTA 5 a facut peste 800 de milioane de dolari chiar din prima zi.",
+      imageSourcePageUrl: "https://gta.fandom.com/wiki/Grand_Theft_Auto_V",
+      imageSearchHint: "GTA 5 launch artwork"
+    }
   },
   {
-    id: "film-item-8",
-    title: "Runda 8 - Ring Quest",
-    imageUrl: FILM_FALLBACK_IMAGE,
-    imageAlt: "Imagine demo runda 8",
-    characterPrompt: "Frodo Baggins",
-    franchisePrompt: "The Lord of the Rings",
-    funFactPrompt: "Trilogia LOTR a fost filmata in Noua Zeelanda."
+    id: 7,
+    category: "Character / Franchise / Wild Fact",
+    imageSourcePageUrl: "https://bridgerton.fandom.com/wiki/Queen_Charlotte",
+    imageSearchHint: "Queen Charlotte Bridgerton portrait",
+    characterOrTitle: {
+      answer: "Queen Charlotte",
+      imageSourcePageUrl: "https://bridgerton.fandom.com/wiki/Queen_Charlotte",
+      imageSearchHint: "Queen Charlotte Bridgerton portrait"
+    },
+    franchise: {
+      answer: "Bridgerton",
+      imageSourcePageUrl: "https://www.netflix.com/tudum/articles/queen-charlotte-bridgerton-cast-guide",
+      imageSearchHint: "Bridgerton official poster"
+    },
+    funFact: {
+      targetFact: "Queen Charlotte a adus Pomeranianii in Anglia.",
+      imageSourcePageUrl: "https://www.netflix.com/tudum/articles/queen-charlotte-bridgerton-cast-guide",
+      imageSearchHint: "Queen Charlotte Pomeranian Bridgerton"
+    }
   },
   {
-    id: "film-item-9",
-    title: "Runda 9 - Racing Legend",
-    imageUrl: FILM_FALLBACK_IMAGE,
-    imageAlt: "Imagine demo runda 9",
-    characterPrompt: "Dominic Toretto",
-    franchisePrompt: "Fast & Furious",
-    funFactPrompt: "Primul film Fast & Furious a aparut in 2001."
+    id: 8,
+    category: "Character / Franchise / Wild Fact",
+    imageSourcePageUrl: "https://emilyinparis.fandom.com/wiki/Mindy_Chen",
+    imageSearchHint: "Mindy Chen Emily in Paris portrait",
+    characterOrTitle: {
+      answer: "Mindy Chen",
+      imageSourcePageUrl: "https://emilyinparis.fandom.com/wiki/Mindy_Chen",
+      imageSearchHint: "Mindy Chen Emily in Paris portrait"
+    },
+    franchise: {
+      answer: "Emily in Paris",
+      imageSourcePageUrl: "https://www.netflix.com/tudum/articles/emily-in-paris-season-5-ending-explained-recap",
+      imageSearchHint: "Emily in Paris official poster"
+    },
+    funFact: {
+      targetFact: "Mindy si Emily sunt aproape sogorite: au impartit acelasi barbat, pe Alfie.",
+      imageSourcePageUrl: "https://www.netflix.com/tudum/articles/emily-in-paris-season-5-ending-explained-recap",
+      imageSearchHint: "Mindy Chen Alfie Emily in Paris still"
+    }
   },
   {
-    id: "film-item-10",
-    title: "Runda 10 - Assassin",
-    imageUrl: FILM_FALLBACK_IMAGE,
-    imageAlt: "Imagine demo runda 10",
-    characterPrompt: "Ezio Auditore",
-    franchisePrompt: "Assassin's Creed",
-    funFactPrompt: "Assassin's Creed II a fost lansat in 2009."
+    id: 9,
+    category: "Character / Franchise / Wild Fact",
+    imageSourcePageUrl: "https://marvel.fandom.com/wiki/Virginia_Potts_(Earth-199999)",
+    imageSearchHint: "Pepper Potts Iron Man movie portrait",
+    characterOrTitle: {
+      answer: "Pepper Potts",
+      imageSourcePageUrl: "https://marvel.fandom.com/wiki/Virginia_Potts_(Earth-199999)",
+      imageSearchHint: "Pepper Potts Iron Man movie portrait"
+    },
+    franchise: {
+      answer: "Iron Man",
+      imageSourcePageUrl: "https://www.marvel.com/characters/iron-man-tony-stark",
+      imageSearchHint: "Iron Man official movie poster"
+    },
+    funFact: {
+      targetFact: "Daca Iron Man nu era un succes, MCU-ul putea sa dea faliment.",
+      imageSourcePageUrl: "https://www.marvel.com/characters/iron-man-tony-stark",
+      imageSearchHint: "Iron Man 2008 movie still"
+    }
   },
   {
-    id: "film-item-11",
-    title: "Runda 11 - Magic World",
-    imageUrl: FILM_FALLBACK_IMAGE,
-    imageAlt: "Imagine demo runda 11",
-    characterPrompt: "Geralt of Rivia",
-    franchisePrompt: "The Witcher",
-    funFactPrompt: "Saga Witcher a inceput ca serie de carti in Polonia."
+    id: 10,
+    category: "Character / Franchise / Wild Fact",
+    imageSourcePageUrl: "https://the-blacklist.fandom.com/wiki/Dembe_Zuma",
+    imageSearchHint: "Dembe Zuma The Blacklist portrait",
+    characterOrTitle: {
+      answer: "Dembe Zuma",
+      imageSourcePageUrl: "https://the-blacklist.fandom.com/wiki/Dembe_Zuma",
+      imageSearchHint: "Dembe Zuma The Blacklist portrait"
+    },
+    franchise: {
+      answer: "The Blacklist",
+      imageSourcePageUrl: "https://the-blacklist.fandom.com/wiki/The_Blacklist",
+      imageSearchHint: "The Blacklist official poster"
+    },
+    funFact: {
+      targetFact: "James Spader a intrat pe rolul lui Red cu doar 3 zile inainte de filmari.",
+      imageSourcePageUrl: "https://the-blacklist.fandom.com/wiki/Raymond_Reddington",
+      imageSearchHint: "Raymond Reddington The Blacklist promo"
+    }
   },
   {
-    id: "film-item-12",
-    title: "Runda 12 - Pirate Adventure",
-    imageUrl: FILM_FALLBACK_IMAGE,
-    imageAlt: "Imagine demo runda 12",
-    characterPrompt: "Jack Sparrow",
-    franchisePrompt: "Pirates of the Caribbean",
-    funFactPrompt: "Primul film Pirates of the Caribbean a aparut in 2003."
+    id: 11,
+    category: "Character / Franchise / Wild Fact",
+    imageSourcePageUrl: "https://high-school-musical.fandom.com/wiki/Sharpay_Evans",
+    imageSearchHint: "Sharpay Evans High School Musical promo",
+    characterOrTitle: {
+      answer: "Sharpay Evans",
+      imageSourcePageUrl: "https://high-school-musical.fandom.com/wiki/Sharpay_Evans",
+      imageSearchHint: "Sharpay Evans High School Musical promo"
+    },
+    franchise: {
+      answer: "High School Musical",
+      imageSourcePageUrl: "https://www.eonline.com/photos/29378/25-high-school-musical-secrets-revealed",
+      imageSearchHint: "High School Musical official poster"
+    },
+    funFact: {
+      targetFact: "Ashley Tisdale a dat prima proba pentru Gabriella, nu pentru Sharpay.",
+      imageSourcePageUrl: "https://www.eonline.com/photos/29378/25-high-school-musical-secrets-revealed",
+      imageSearchHint: "Ashley Tisdale High School Musical audition era"
+    }
   }
 ];
+
+const DEFAULT_FILM_ITEMS = DEFAULT_FILM_ROUND_LIBRARY.map((entry, index) => ({
+  id: `film-item-${index + 1}`,
+  title: `Card ${index + 1}`,
+  imageUrl: FILM_FALLBACK_IMAGE,
+  imageAlt: entry.imageSearchHint || `Round ${index + 1} image`,
+  imageSourcePageUrl: entry.imageSourcePageUrl || "",
+  imageSearchHint: entry.imageSearchHint || "",
+  characterPrompt: entry.characterOrTitle?.answer || "Text reveal Character/Title.",
+  characterSourcePageUrl: entry.characterOrTitle?.imageSourcePageUrl || "",
+  characterImageHint: entry.characterOrTitle?.imageSearchHint || "",
+  franchisePrompt: entry.franchise?.answer || "Text reveal Franchise.",
+  franchiseSourcePageUrl: entry.franchise?.imageSourcePageUrl || "",
+  franchiseImageHint: entry.franchise?.imageSearchHint || "",
+  funFactPrompt: entry.funFact?.targetFact || "Text reveal Fun Fact.",
+  funFactSourcePageUrl: entry.funFact?.imageSourcePageUrl || "",
+  funFactImageHint: entry.funFact?.imageSearchHint || ""
+}));
 const DEFAULT_SAMSAR_ROUNDS = [
   {
     id: "samsar-round-1",
@@ -1496,6 +1658,29 @@ function shouldUseDemoFilmItems(items) {
   if (!Array.isArray(items) || items.length === 0) {
     return true;
   }
+
+  const legacyFilmTitles = new Set([
+    "runda 1 - wizard school",
+    "runda 2 - god of war",
+    "runda 3 - mcu",
+    "runda 4 - gotham",
+    "runda 5 - mushroom kingdom",
+    "runda 6 - galaxy saga",
+    "runda 7 - post apocalyptic",
+    "runda 8 - ring quest",
+    "runda 9 - racing legend",
+    "runda 10 - assassin",
+    "runda 11 - magic world",
+    "runda 12 - pirate adventure"
+  ]);
+  const legacyMatches = items.reduce((count, item) => {
+    const token = normalizeTextToken(item?.title);
+    return count + (legacyFilmTitles.has(token) ? 1 : 0);
+  }, 0);
+  if (items.length === 12 && legacyMatches >= 8) {
+    return true;
+  }
+
   return items.every((item) => {
     const title = normalizeTextToken(item?.title);
     const genericTitle =
@@ -2246,10 +2431,10 @@ function sanitizeFilmItems(rawItems) {
   const sanitized = [];
 
   for (const rawItem of rawItems) {
-    const title = sanitizeString(rawItem?.title, "").trim();
-    if (!title) {
-      continue;
-    }
+    const title =
+      sanitizeString(rawItem?.title, "").trim() ||
+      sanitizeString(rawItem?.category, "").trim() ||
+      `Card ${sanitized.length + 1}`;
 
     let id = sanitizeString(rawItem?.id, "").trim();
     if (!id || seenIds.has(id)) {
@@ -2257,20 +2442,47 @@ function sanitizeFilmItems(rawItems) {
     }
     seenIds.add(id);
 
+    const characterPrompt =
+      sanitizeString(rawItem?.characterPrompt, "").trim() ||
+      sanitizeString(rawItem?.characterOrTitle?.answer, "").trim() ||
+      "Text reveal Character/Title.";
+    const franchisePrompt =
+      sanitizeString(rawItem?.franchisePrompt, "").trim() ||
+      sanitizeString(rawItem?.franchise?.answer, "").trim() ||
+      "Text reveal Franchise.";
+    const funFactPrompt =
+      sanitizeString(rawItem?.funFactPrompt, "").trim() ||
+      sanitizeString(rawItem?.funFact?.targetFact, "").trim() ||
+      "Text reveal Fun Fact.";
+
     sanitized.push({
       id,
       title,
       imageUrl: sanitizeString(rawItem?.imageUrl, FILM_FALLBACK_IMAGE).trim() || FILM_FALLBACK_IMAGE,
       imageAlt: sanitizeString(rawItem?.imageAlt, "Imagine demo runda").trim() || "Imagine demo runda",
-      characterPrompt:
-        sanitizeString(rawItem?.characterPrompt, "Text reveal Character/Title.").trim() ||
-        "Text reveal Character/Title.",
-      franchisePrompt:
-        sanitizeString(rawItem?.franchisePrompt, "Text reveal Franchise.").trim() ||
-        "Text reveal Franchise.",
-      funFactPrompt:
-        sanitizeString(rawItem?.funFactPrompt, "Text reveal Fun Fact.").trim() ||
-        "Text reveal Fun Fact."
+      imageSourcePageUrl: sanitizeString(rawItem?.imageSourcePageUrl, "").trim(),
+      imageSearchHint: sanitizeString(rawItem?.imageSearchHint, "").trim(),
+      characterPrompt,
+      characterSourcePageUrl:
+        sanitizeString(rawItem?.characterSourcePageUrl, "").trim() ||
+        sanitizeString(rawItem?.characterOrTitle?.imageSourcePageUrl, "").trim(),
+      characterImageHint:
+        sanitizeString(rawItem?.characterImageHint, "").trim() ||
+        sanitizeString(rawItem?.characterOrTitle?.imageSearchHint, "").trim(),
+      franchisePrompt,
+      franchiseSourcePageUrl:
+        sanitizeString(rawItem?.franchiseSourcePageUrl, "").trim() ||
+        sanitizeString(rawItem?.franchise?.imageSourcePageUrl, "").trim(),
+      franchiseImageHint:
+        sanitizeString(rawItem?.franchiseImageHint, "").trim() ||
+        sanitizeString(rawItem?.franchise?.imageSearchHint, "").trim(),
+      funFactPrompt,
+      funFactSourcePageUrl:
+        sanitizeString(rawItem?.funFactSourcePageUrl, "").trim() ||
+        sanitizeString(rawItem?.funFact?.imageSourcePageUrl, "").trim(),
+      funFactImageHint:
+        sanitizeString(rawItem?.funFactImageHint, "").trim() ||
+        sanitizeString(rawItem?.funFact?.imageSearchHint, "").trim()
     });
   }
 
@@ -5535,14 +5747,12 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
           const isUsed = roundState.usedCategoryIds.includes(entry.id);
           const isSelected = entry.id === roundState.selectedCategoryId;
           const statusLabel = isUsed ? "USED" : "TOPIC";
-          const previewText = getTriviaCategoryQuestion(entry).slice(0, 96);
           return `
             <button class="show-trivia-topic-tile ${isSelected ? "is-selected" : ""}" type="button" data-show-trivia-topic="${
               entry.id
             }" ${isUsed ? "disabled" : ""}>
               <span class="show-trivia-topic-status ${isUsed ? "is-used" : ""}">${statusLabel}</span>
               <span class="show-trivia-topic-title">${escapeHtml(entry.title)}</span>
-              <span class="show-trivia-topic-preview">${escapeHtml(previewText)}${previewText.length >= 96 ? "..." : ""}</span>
             </button>
           `;
         })
