@@ -6321,36 +6321,38 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
       return `
         <section class="show-stage-stack">
           <p class="show-info-label">Image + Cards</p>
-          <figure class="show-film-stage-figure">
-            <img
-              src="${escapeHtml(stageImagePrimaryUrl)}"
-              alt="${escapeHtml(item?.imageAlt || "Round image")}"
-              data-fallback-src="${escapeHtml(stageImageFallbackUrl)}"
-              data-ultimate-fallback-src="${escapeHtml(FILM_FALLBACK_IMAGE)}"
-            >
-            <figcaption>${escapeHtml(item?.title || "No round item selected")}</figcaption>
-          </figure>
-          <div class="show-film-card-grid">
-            ${cardConfig
-              .map((card) => {
-                const revealState = roundState.revealed[card.key];
-                const activeOutcome = roundState.outcomesByTeam[playingTeamKey][card.key];
-                return `
-                  <article class="show-film-reveal-card ${revealState ? "is-open" : ""}">
-                    <div class="show-film-card-head">
-                      <p class="show-info-label">${escapeHtml(card.title)}</p>
-                      <button class="pill-btn" type="button" data-show-film-reveal="${card.key}">${revealState ? "Hide" : "Reveal"}</button>
-                    </div>
-                    <p class="show-round-copy">${escapeHtml(revealState ? card.revealText : "Hidden until reveal")}</p>
-                    <div class="show-film-outcome-row">
-                      <span class="show-info-sub">${escapeHtml(playingTeam.name)}</span>
-                      <button class="pill-btn ${activeOutcome === "correct" ? "is-active" : ""}" type="button" data-show-film-outcome="${card.key}:correct">Correct</button>
-                      <button class="pill-btn ${activeOutcome === "wrong" ? "is-active" : ""}" type="button" data-show-film-outcome="${card.key}:wrong">Wrong</button>
-                    </div>
-                  </article>
-                `;
-              })
-              .join("")}
+          <div class="show-film-stage-layout">
+            <figure class="show-film-stage-figure show-film-stage-figure-portrait">
+              <img
+                src="${escapeHtml(stageImagePrimaryUrl)}"
+                alt="${escapeHtml(item?.imageAlt || "Round image")}"
+                data-fallback-src="${escapeHtml(stageImageFallbackUrl)}"
+                data-ultimate-fallback-src="${escapeHtml(FILM_FALLBACK_IMAGE)}"
+              >
+              <figcaption>${escapeHtml(item?.title || "No round item selected")}</figcaption>
+            </figure>
+            <div class="show-film-card-column">
+              ${cardConfig
+                .map((card) => {
+                  const revealState = roundState.revealed[card.key];
+                  const activeOutcome = roundState.outcomesByTeam[playingTeamKey][card.key];
+                  return `
+                    <article class="show-film-reveal-card ${revealState ? "is-open" : ""}">
+                      <div class="show-film-card-head">
+                        <p class="show-info-label">${escapeHtml(card.title)}</p>
+                        <button class="pill-btn" type="button" data-show-film-reveal="${card.key}">${revealState ? "Hide" : "Reveal"}</button>
+                      </div>
+                      <p class="show-round-copy">${escapeHtml(revealState ? card.revealText : "Hidden until reveal")}</p>
+                      <div class="show-film-outcome-row">
+                        <span class="show-info-sub">${escapeHtml(playingTeam.name)}</span>
+                        <button class="pill-btn ${activeOutcome === "correct" ? "is-active" : ""}" type="button" data-show-film-outcome="${card.key}:correct">Correct</button>
+                        <button class="pill-btn ${activeOutcome === "wrong" ? "is-active" : ""}" type="button" data-show-film-outcome="${card.key}:wrong">Wrong</button>
+                      </div>
+                    </article>
+                  `;
+                })
+                .join("")}
+            </div>
           </div>
         </section>
       `;
