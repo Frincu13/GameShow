@@ -1,7 +1,7 @@
 const STORAGE_KEY = "gameshow-host-dashboard-v3";
 const LEGACY_STORAGE_KEYS = ["gameshow-host-dashboard-v2", "gameshow-host-dashboard-v1"];
 const TEAM_START_MONEY = 1000;
-const MAX_ACTIVE_PER_TEAM = 6;
+const MAX_ACTIVE_PER_TEAM = 9999;
 const BET_ROUNDING_STEP = 10;
 const SAMSAR_STANDARD_BET = 100;
 const RESULT_UNDO_LIMIT = 30;
@@ -1904,8 +1904,7 @@ function reconcileStateAfterMigration(clean) {
         }
         seenLive.add(playerId);
         return true;
-      })
-      .slice(0, MAX_ACTIVE_PER_TEAM);
+      });
 
   clean.roundSelection.activeByTeam.teamA = normalizeActiveLane(clean.roundSelection.activeByTeam.teamA);
   clean.roundSelection.activeByTeam.teamB = normalizeActiveLane(clean.roundSelection.activeByTeam.teamB);
@@ -1921,8 +1920,7 @@ function reconcileStateAfterMigration(clean) {
           }
           seenSnapshot.add(playerId);
           return true;
-        })
-        .slice(0, MAX_ACTIVE_PER_TEAM);
+        });
     snapshot.activeByTeam.teamA = normalizeSnapshotLane(snapshot.activeByTeam.teamA);
     snapshot.activeByTeam.teamB = normalizeSnapshotLane(snapshot.activeByTeam.teamB);
     snapshot.jokerAssignment = "out";
@@ -4292,11 +4290,7 @@ function ensureCurrentRoundSelectionValid() {
   state.roundSelection.activeByTeam.teamA = normalizeLane(state.roundSelection.activeByTeam.teamA);
   state.roundSelection.activeByTeam.teamB = normalizeLane(state.roundSelection.activeByTeam.teamB);
 
-  for (const teamKey of ["teamA", "teamB"]) {
-    if (state.roundSelection.activeByTeam[teamKey].length > MAX_ACTIVE_PER_TEAM) {
-      state.roundSelection.activeByTeam[teamKey] = state.roundSelection.activeByTeam[teamKey].slice(0, MAX_ACTIVE_PER_TEAM);
-    }
-  }
+  // No max cap for active players.
 
   state.roundSelection.jokerAssignment = "out";
 }
@@ -4317,11 +4311,9 @@ function saveCurrentRoundSnapshot() {
 function buildDefaultTeamLineupSnapshot() {
   const defaultTeamA = state.teams.teamA.players
     .filter((player) => player.status === "available")
-    .slice(0, MAX_ACTIVE_PER_TEAM)
     .map((player) => player.id);
   const defaultTeamB = state.teams.teamB.players
     .filter((player) => player.status === "available")
-    .slice(0, MAX_ACTIVE_PER_TEAM)
     .map((player) => player.id);
   return sanitizeHistorySnapshot({
     activeByTeam: {
@@ -4802,14 +4794,14 @@ function getGameIntroRules(gameId) {
     return [
       "Team vs team manual result entry.",
       `Standard payout with draw allowed (+${formatMoney(getStandardFixedBonus("guess-right-order"))} winner bonus + bet win).`,
-      `Game lineup is selected once at game start (max 6 per team), ${getGameRoundLimit("guess-right-order")} rounds total.`
+      `Game lineup is selected once at game start, ${getGameRoundLimit("guess-right-order")} rounds total.`
     ];
   }
   if (gameId === "beer-pong") {
     return [
       "Team vs team manual result entry.",
       `Standard payout with draw allowed (+${formatMoney(getStandardFixedBonus("beer-pong"))} winner bonus + bet win).`,
-      `Game lineup is selected once at game start (max 6 per team), ${getGameRoundLimit("beer-pong")} rounds total.`
+      `Game lineup is selected once at game start, ${getGameRoundLimit("beer-pong")} rounds total.`
     ];
   }
   if (gameId === "shot-fake") {
@@ -4890,7 +4882,7 @@ function canAssignShowPlayerToTeam(playerId, targetTeamKey) {
   if (!record?.player || record.player.status !== "available") {
     return false;
   }
-  return countActiveWithJoker(targetTeamKey) < MAX_ACTIVE_PER_TEAM;
+  return true;
 }
 
 function assignShowPlayerToLane(playerId, targetLane) {
@@ -4919,11 +4911,7 @@ function assignShowPlayerToLane(playerId, targetLane) {
       saveState("Show assignment rejected: player unavailable.");
       return;
     }
-    if (!canAssignShowPlayerToTeam(playerId, targetLane)) {
-      setLastResultSummary(`${state.teams[targetLane].name} reached max ${MAX_ACTIVE_PER_TEAM} active players.`);
-      saveState("Show assignment rejected: active limit reached.");
-      return;
-    }
+    // No max cap for active players.
   }
 
   state.roundSelection.activeByTeam.teamA = state.roundSelection.activeByTeam.teamA.filter((id) => id !== playerId);
@@ -4999,7 +4987,7 @@ function renderShowPlayerAssignmentBoard() {
     {
       lane: "teamA",
       title: state.teams.teamA.name,
-      subtitle: `${countActiveWithJoker("teamA")}/${MAX_ACTIVE_PER_TEAM} active`
+      subtitle: `${countActiveWithJoker("teamA")} active`
     },
     {
       lane: "out",
@@ -5009,7 +4997,7 @@ function renderShowPlayerAssignmentBoard() {
     {
       lane: "teamB",
       title: state.teams.teamB.name,
-      subtitle: `${countActiveWithJoker("teamB")}/${MAX_ACTIVE_PER_TEAM} active`
+      subtitle: `${countActiveWithJoker("teamB")} active`
     }
   ]
     .map((laneCard) => {
@@ -5090,7 +5078,7 @@ function renderShowPlayerSelectionBlock(teamKey, options = {}) {
     <article class="show-player-card">
       <div class="show-player-head">
         <p class="show-info-label">${escapeHtml(team.name)} active</p>
-        <p class="show-info-sub">${activeCount}/${MAX_ACTIVE_PER_TEAM}</p>
+        <p class="show-info-sub">${activeCount}</p>
       </div>
       <div class="show-player-actions">
         <button
@@ -7541,11 +7529,7 @@ function applyAdminPlayerFix() {
     }
 
     const activeIds = state.roundSelection.activeByTeam[teamKey];
-    if (!activeIds.includes(player.id) && activeIds.length >= MAX_ACTIVE_PER_TEAM) {
-      setLastResultSummary(`Admin fix blocked: ${team.name} reached max ${MAX_ACTIVE_PER_TEAM} active players.`);
-      saveState("Admin player fix blocked: active limit.");
-      return;
-    }
+    // No max cap for active players.
     if (!activeIds.includes(player.id)) {
       activeIds.push(player.id);
     }
@@ -8860,8 +8844,8 @@ function renderTriviaControls() {
     const otherTeamKey = playingTeamKey === "teamA" ? "teamB" : "teamA";
     const otherCount = countActiveWithJoker(otherTeamKey);
     elements.triviaActiveSelectionInfo.textContent =
-      `${playingTeam.name} is active for this round (${playingCount}/${MAX_ACTIVE_PER_TEAM}). ` +
-      `${state.teams[otherTeamKey].name} is inactive (${otherCount}/${MAX_ACTIVE_PER_TEAM}).`;
+      `${playingTeam.name} is active for this round (${playingCount}). ` +
+      `${state.teams[otherTeamKey].name} is inactive (${otherCount}).`;
   }
 
   elements.triviaCategoriesBoard.innerHTML = state.trivia.categories
@@ -8905,7 +8889,7 @@ function renderPretulActiveList(teamKey, container) {
 
   container.innerHTML = `
     <div class="pretul-active-toolbar">
-      <p class="muted"><strong>${activeCount}/${MAX_ACTIVE_PER_TEAM}</strong> active</p>
+      <p class="muted"><strong>${activeCount}</strong> active</p>
       <button
         class="pill-btn"
         type="button"
@@ -9490,7 +9474,7 @@ function renderFilmControls() {
 
   const activeCount = countActiveWithJoker(playingTeamKey);
   elements.filmActiveSelectionInfo.textContent =
-    `${playingTeam.name} lineup for this game: ${activeCount}/${MAX_ACTIVE_PER_TEAM} active. ` +
+    `${playingTeam.name} lineup for this game: ${activeCount} active. ` +
     `Lineup stays fixed for the whole mini-game unless host override is used.`;
   const hasAnyActive =
     state.roundSelection.activeByTeam[playingTeamKey].length > 0;
@@ -10330,7 +10314,7 @@ function renderManualActiveList(teamKey, container) {
 
   container.innerHTML = `
     <div class="manual-active-toolbar">
-      <p class="muted"><strong>${activeCount}/${MAX_ACTIVE_PER_TEAM}</strong> active</p>
+      <p class="muted"><strong>${activeCount}</strong> active</p>
       <button
         class="pill-btn"
         type="button"
@@ -11051,7 +11035,7 @@ function renderCurseActiveList(teamKey, container) {
 
   container.innerHTML = `
     <div class="curse-active-toolbar">
-      <p class="muted"><strong>${activeCount}/${MAX_ACTIVE_PER_TEAM}</strong> active</p>
+      <p class="muted"><strong>${activeCount}</strong> active</p>
       <button
         class="pill-btn"
         type="button"
@@ -12334,10 +12318,10 @@ function renderRoundSelection() {
   const countA = countActiveWithJoker("teamA");
   const countB = countActiveWithJoker("teamB");
   if (elements.activeCountTeamA) {
-    elements.activeCountTeamA.textContent = `${countA}/${MAX_ACTIVE_PER_TEAM}`;
+    elements.activeCountTeamA.textContent = `${countA}`;
   }
   if (elements.activeCountTeamB) {
-    elements.activeCountTeamB.textContent = `${countB}/${MAX_ACTIVE_PER_TEAM}`;
+    elements.activeCountTeamB.textContent = `${countB}`;
   }
 
   renderTeamPlayersList("teamA");
@@ -12771,12 +12755,6 @@ function togglePlayerActive(teamKey, playerId, shouldBeActive) {
       return;
     }
     if (!isAlreadyActive) {
-      if (countActiveWithJoker(teamKey) >= MAX_ACTIVE_PER_TEAM) {
-        setLastResultSummary(`${state.teams[teamKey].name} reached max ${MAX_ACTIVE_PER_TEAM} active players for this game.`);
-        renderRoundSelection();
-        saveState("Active limit reached.");
-        return;
-      }
       activeIds.push(playerId);
     }
   } else if (isAlreadyActive) {
