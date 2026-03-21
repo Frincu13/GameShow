@@ -1479,6 +1479,38 @@ function normalizeTextToken(value) {
     .trim();
 }
 
+function isPlaceholderImageUrl(value) {
+  const token = sanitizeString(value, "").trim();
+  if (!token) {
+    return true;
+  }
+  if (token.startsWith("data:image/svg+xml")) {
+    return true;
+  }
+  return /placeholder|demo round image|product reveal placeholder/i.test(token);
+}
+
+function buildWebPreviewImageUrl(pageUrl, width = 1200) {
+  const safeUrl = sanitizeString(pageUrl, "").trim();
+  if (!safeUrl) {
+    return "";
+  }
+  const safeWidth = Math.max(360, Math.round(sanitizeNumber(width, 1200)));
+  return `https://s.wordpress.com/mshots/v1/${encodeURIComponent(safeUrl)}?w=${safeWidth}`;
+}
+
+function resolveFilmImageUrl(primaryUrl, sourcePageUrl, fallbackUrl = FILM_FALLBACK_IMAGE) {
+  const cleanPrimary = sanitizeString(primaryUrl, "").trim();
+  if (cleanPrimary && !isPlaceholderImageUrl(cleanPrimary)) {
+    return cleanPrimary;
+  }
+  const sourcePreview = buildWebPreviewImageUrl(sourcePageUrl, 1200);
+  if (sourcePreview) {
+    return sourcePreview;
+  }
+  return fallbackUrl;
+}
+
 function matchesAnyLegacyPattern(value, patterns) {
   const token = normalizeTextToken(value);
   if (!token) {
@@ -2441,6 +2473,9 @@ function sanitizeFilmItems(rawItems) {
       id = `film-item-${sanitized.length + 1}`;
     }
     seenIds.add(id);
+    const fallbackItem =
+      fallback.find((entry) => entry.id === id) ||
+      fallback.find((entry) => normalizeTextToken(entry.title) === normalizeTextToken(title));
 
     const characterPrompt =
       sanitizeString(rawItem?.characterPrompt, "").trim() ||
@@ -2459,30 +2494,52 @@ function sanitizeFilmItems(rawItems) {
       id,
       title,
       imageUrl: sanitizeString(rawItem?.imageUrl, FILM_FALLBACK_IMAGE).trim() || FILM_FALLBACK_IMAGE,
-      imageAlt: sanitizeString(rawItem?.imageAlt, "Imagine demo runda").trim() || "Imagine demo runda",
-      imageSourcePageUrl: sanitizeString(rawItem?.imageSourcePageUrl, "").trim(),
-      imageSearchHint: sanitizeString(rawItem?.imageSearchHint, "").trim(),
+      imageAlt:
+        sanitizeString(rawItem?.imageAlt, "").trim() ||
+        sanitizeString(fallbackItem?.imageAlt, "").trim() ||
+        "Imagine demo runda",
+      imageSourcePageUrl:
+        sanitizeString(rawItem?.imageSourcePageUrl, "").trim() ||
+        sanitizeString(fallbackItem?.imageSourcePageUrl, "").trim(),
+      imageSearchHint:
+        sanitizeString(rawItem?.imageSearchHint, "").trim() ||
+        sanitizeString(fallbackItem?.imageSearchHint, "").trim(),
       characterPrompt,
       characterSourcePageUrl:
         sanitizeString(rawItem?.characterSourcePageUrl, "").trim() ||
-        sanitizeString(rawItem?.characterOrTitle?.imageSourcePageUrl, "").trim(),
+        sanitizeString(rawItem?.characterOrTitle?.imageSourcePageUrl, "").trim() ||
+        sanitizeString(fallbackItem?.characterSourcePageUrl, "").trim(),
+      characterImageUrl:
+        sanitizeString(rawItem?.characterImageUrl, "").trim() ||
+        sanitizeString(fallbackItem?.characterImageUrl, "").trim(),
       characterImageHint:
         sanitizeString(rawItem?.characterImageHint, "").trim() ||
-        sanitizeString(rawItem?.characterOrTitle?.imageSearchHint, "").trim(),
+        sanitizeString(rawItem?.characterOrTitle?.imageSearchHint, "").trim() ||
+        sanitizeString(fallbackItem?.characterImageHint, "").trim(),
       franchisePrompt,
       franchiseSourcePageUrl:
         sanitizeString(rawItem?.franchiseSourcePageUrl, "").trim() ||
-        sanitizeString(rawItem?.franchise?.imageSourcePageUrl, "").trim(),
+        sanitizeString(rawItem?.franchise?.imageSourcePageUrl, "").trim() ||
+        sanitizeString(fallbackItem?.franchiseSourcePageUrl, "").trim(),
+      franchiseImageUrl:
+        sanitizeString(rawItem?.franchiseImageUrl, "").trim() ||
+        sanitizeString(fallbackItem?.franchiseImageUrl, "").trim(),
       franchiseImageHint:
         sanitizeString(rawItem?.franchiseImageHint, "").trim() ||
-        sanitizeString(rawItem?.franchise?.imageSearchHint, "").trim(),
+        sanitizeString(rawItem?.franchise?.imageSearchHint, "").trim() ||
+        sanitizeString(fallbackItem?.franchiseImageHint, "").trim(),
       funFactPrompt,
       funFactSourcePageUrl:
         sanitizeString(rawItem?.funFactSourcePageUrl, "").trim() ||
-        sanitizeString(rawItem?.funFact?.imageSourcePageUrl, "").trim(),
+        sanitizeString(rawItem?.funFact?.imageSourcePageUrl, "").trim() ||
+        sanitizeString(fallbackItem?.funFactSourcePageUrl, "").trim(),
+      funFactImageUrl:
+        sanitizeString(rawItem?.funFactImageUrl, "").trim() ||
+        sanitizeString(fallbackItem?.funFactImageUrl, "").trim(),
       funFactImageHint:
         sanitizeString(rawItem?.funFactImageHint, "").trim() ||
-        sanitizeString(rawItem?.funFact?.imageSearchHint, "").trim()
+        sanitizeString(rawItem?.funFact?.imageSearchHint, "").trim() ||
+        sanitizeString(fallbackItem?.funFactImageHint, "").trim()
     });
   }
 
@@ -6089,11 +6146,33 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
     }
     roundState.outcomes = { ...roundState.outcomesByTeam[playingTeamKey] };
     const item = state.filmGame.items.find((entry) => entry.id === roundState.selectedItemId);
+    const stageImageUrl = resolveFilmImageUrl(item?.imageUrl, item?.imageSourcePageUrl, FILM_FALLBACK_IMAGE);
     const breakdown = getFilmRoundBreakdown(roundState, roundState.betAmount, playingTeamKey);
     const cardConfig = [
-      { key: "character", title: "Character / Title", revealText: item?.characterPrompt || "Placeholder character/title" },
-      { key: "franchise", title: "Franchise", revealText: item?.franchisePrompt || "Placeholder franchise" },
-      { key: "funFact", title: "Fun Fact", revealText: item?.funFactPrompt || "Placeholder fun fact" }
+      {
+        key: "character",
+        title: "Character / Title",
+        revealText: item?.characterPrompt || "Placeholder character/title",
+        imageUrl: resolveFilmImageUrl(item?.characterImageUrl, item?.characterSourcePageUrl || item?.imageSourcePageUrl, stageImageUrl),
+        imageAlt: item?.characterImageHint || "Character / Title visual",
+        sourceUrl: item?.characterSourcePageUrl || item?.imageSourcePageUrl || ""
+      },
+      {
+        key: "franchise",
+        title: "Franchise",
+        revealText: item?.franchisePrompt || "Placeholder franchise",
+        imageUrl: resolveFilmImageUrl(item?.franchiseImageUrl, item?.franchiseSourcePageUrl || item?.imageSourcePageUrl, stageImageUrl),
+        imageAlt: item?.franchiseImageHint || "Franchise visual",
+        sourceUrl: item?.franchiseSourcePageUrl || item?.imageSourcePageUrl || ""
+      },
+      {
+        key: "funFact",
+        title: "Fun Fact",
+        revealText: item?.funFactPrompt || "Placeholder fun fact",
+        imageUrl: resolveFilmImageUrl(item?.funFactImageUrl, item?.funFactSourcePageUrl || item?.imageSourcePageUrl, stageImageUrl),
+        imageAlt: item?.funFactImageHint || "Fun Fact visual",
+        sourceUrl: item?.funFactSourcePageUrl || item?.imageSourcePageUrl || ""
+      }
     ];
     const betPresets = Array.from(
       new Set(
@@ -6163,7 +6242,7 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
         <section class="show-stage-stack">
           <p class="show-info-label">Image + Cards</p>
           <figure class="show-film-stage-figure">
-            <img src="${escapeHtml(item?.imageUrl || FILM_FALLBACK_IMAGE)}" alt="${escapeHtml(item?.imageAlt || "Round image")}">
+            <img src="${escapeHtml(stageImageUrl)}" alt="${escapeHtml(item?.imageAlt || "Round image")}">
             <figcaption>${escapeHtml(item?.title || "No round item selected")}</figcaption>
           </figure>
           <div class="show-film-card-grid">
@@ -6173,11 +6252,19 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
                 const activeOutcome = roundState.outcomesByTeam[playingTeamKey][card.key];
                 return `
                   <article class="show-film-reveal-card ${revealState ? "is-open" : ""}">
+                    <figure class="show-film-reveal-figure">
+                      <img src="${escapeHtml(card.imageUrl)}" alt="${escapeHtml(card.imageAlt)}">
+                    </figure>
                     <div class="show-film-card-head">
                       <p class="show-info-label">${escapeHtml(card.title)}</p>
                       <button class="pill-btn" type="button" data-show-film-reveal="${card.key}">${revealState ? "Hide" : "Reveal"}</button>
                     </div>
                     <p class="show-round-copy">${escapeHtml(revealState ? card.revealText : "Hidden until reveal")}</p>
+                    ${
+                      card.sourceUrl
+                        ? `<p class="show-info-sub">Source: <a href="${escapeHtml(card.sourceUrl)}" target="_blank" rel="noopener noreferrer">link</a></p>`
+                        : ""
+                    }
                     <div class="show-film-outcome-row">
                       <span class="show-info-sub">${escapeHtml(playingTeam.name)}</span>
                       <button class="pill-btn ${activeOutcome === "correct" ? "is-active" : ""}" type="button" data-show-film-outcome="${card.key}:correct">Correct</button>
@@ -7088,7 +7175,32 @@ function buildShowScreenContent(screenId) {
       <div class="show-round-card">
         <p class="show-info-label">Manage Players / Roster</p>
         <p class="show-round-title">Total Player Pool</p>
-        <p class="show-round-copy">Use this screen to add, remove, rename, or mark players unavailable. Lineup assignment for a game stays in Game Intro.</p>
+        <p class="show-round-copy">Use this screen to rename teams, add/remove players, edit player names, or mark players unavailable.</p>
+        <p class="show-round-copy">Lineup assignment for each game stays in Game Intro.</p>
+      </div>
+      <div class="show-overlay-grid two-col">
+        <article class="show-control-card">
+          <h3>${escapeHtml(state.teams.teamA.name)} team name</h3>
+          <input
+            class="text-input"
+            type="text"
+            maxlength="40"
+            value="${escapeHtml(state.teams.teamA.name)}"
+            data-show-team-name
+            data-team="teamA"
+          >
+        </article>
+        <article class="show-control-card">
+          <h3>${escapeHtml(state.teams.teamB.name)} team name</h3>
+          <input
+            class="text-input"
+            type="text"
+            maxlength="40"
+            value="${escapeHtml(state.teams.teamB.name)}"
+            data-show-team-name
+            data-team="teamB"
+          >
+        </article>
       </div>
       <div class="show-overlay-grid two-col">
         ${renderShowRosterManagementTeam("teamA")}
@@ -12755,6 +12867,26 @@ function bindEvents() {
     });
     elements.showScreenContent.addEventListener("change", (event) => {
       handleShowOverlayChange(event.target);
+    });
+    elements.showScreenContent.addEventListener("keydown", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) {
+        return;
+      }
+
+      if (event.key === "Enter" && target.matches("[data-show-roster-add-name]")) {
+        const teamKey = target.getAttribute("data-team");
+        if (["teamA", "teamB"].includes(teamKey)) {
+          event.preventDefault();
+          addPlayer(teamKey, target, { ignoreLock: true });
+        }
+        return;
+      }
+
+      if (event.key === "Enter" && target.matches("[data-show-team-name]")) {
+        event.preventDefault();
+        target.blur();
+      }
     });
   }
 
