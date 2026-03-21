@@ -1490,23 +1490,60 @@ function isPlaceholderImageUrl(value) {
   return /placeholder|demo round image|product reveal placeholder/i.test(token);
 }
 
-function buildWebPreviewImageUrl(pageUrl, width = 1200) {
-  const safeUrl = sanitizeString(pageUrl, "").trim();
-  if (!safeUrl) {
+function hashText(value) {
+  let hash = 0;
+  const text = String(value ?? "");
+  for (let index = 0; index < text.length; index += 1) {
+    hash = (hash << 5) - hash + text.charCodeAt(index);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+}
+
+function buildHintImageUrl(hint, seedKey, width = 1200, height = 675) {
+  const token = sanitizeString(hint, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ",")
+    .replace(/,+/g, ",")
+    .replace(/^,|,$/g, "");
+  if (!token) {
     return "";
   }
   const safeWidth = Math.max(360, Math.round(sanitizeNumber(width, 1200)));
-  return `https://s.wordpress.com/mshots/v1/${encodeURIComponent(safeUrl)}?w=${safeWidth}`;
+  const safeHeight = Math.max(200, Math.round(sanitizeNumber(height, 675)));
+  const lock = (hashText(seedKey || token) % 999983) + 1;
+  return `https://loremflickr.com/${safeWidth}/${safeHeight}/${token}?lock=${lock}`;
 }
 
-function resolveFilmImageUrl(primaryUrl, sourcePageUrl, fallbackUrl = FILM_FALLBACK_IMAGE) {
+function deriveHintFromSourceUrl(sourceUrl) {
+  const safeUrl = sanitizeString(sourceUrl, "").trim();
+  if (!safeUrl) {
+    return "";
+  }
+  const lastChunk = safeUrl.split("/").filter(Boolean).pop() || "";
+  return decodeURIComponent(lastChunk)
+    .replace(/[_\-]+/g, " ")
+    .replace(/\([^)]*\)/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function resolveFilmImageUrl(primaryUrl, options = {}) {
+  const sourcePageUrl = sanitizeString(options.sourcePageUrl, "").trim();
+  const imageHint = sanitizeString(options.imageHint, "").trim();
+  const seedKey = sanitizeString(options.seedKey, "").trim();
+  const fallbackUrl = options.fallbackUrl || FILM_FALLBACK_IMAGE;
   const cleanPrimary = sanitizeString(primaryUrl, "").trim();
   if (cleanPrimary && !isPlaceholderImageUrl(cleanPrimary)) {
     return cleanPrimary;
   }
-  const sourcePreview = buildWebPreviewImageUrl(sourcePageUrl, 1200);
-  if (sourcePreview) {
-    return sourcePreview;
+  const hintUrl = buildHintImageUrl(imageHint, seedKey || imageHint, 1200, 675);
+  if (hintUrl) {
+    return hintUrl;
+  }
+  const derivedHintUrl = buildHintImageUrl(deriveHintFromSourceUrl(sourcePageUrl), seedKey || sourcePageUrl, 1200, 675);
+  if (derivedHintUrl) {
+    return derivedHintUrl;
   }
   return fallbackUrl;
 }
@@ -6146,14 +6183,24 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
     }
     roundState.outcomes = { ...roundState.outcomesByTeam[playingTeamKey] };
     const item = state.filmGame.items.find((entry) => entry.id === roundState.selectedItemId);
-    const stageImageUrl = resolveFilmImageUrl(item?.imageUrl, item?.imageSourcePageUrl, FILM_FALLBACK_IMAGE);
+    const stageImageUrl = resolveFilmImageUrl(item?.imageUrl, {
+      sourcePageUrl: item?.imageSourcePageUrl,
+      imageHint: item?.imageSearchHint,
+      seedKey: `${item?.id || "film"}-stage`,
+      fallbackUrl: FILM_FALLBACK_IMAGE
+    });
     const breakdown = getFilmRoundBreakdown(roundState, roundState.betAmount, playingTeamKey);
     const cardConfig = [
       {
         key: "character",
         title: "Character / Title",
         revealText: item?.characterPrompt || "Placeholder character/title",
-        imageUrl: resolveFilmImageUrl(item?.characterImageUrl, item?.characterSourcePageUrl || item?.imageSourcePageUrl, stageImageUrl),
+        imageUrl: resolveFilmImageUrl(item?.characterImageUrl, {
+          sourcePageUrl: item?.characterSourcePageUrl || item?.imageSourcePageUrl,
+          imageHint: item?.characterImageHint || item?.imageSearchHint,
+          seedKey: `${item?.id || "film"}-character`,
+          fallbackUrl: stageImageUrl
+        }),
         imageAlt: item?.characterImageHint || "Character / Title visual",
         sourceUrl: item?.characterSourcePageUrl || item?.imageSourcePageUrl || ""
       },
@@ -6161,7 +6208,12 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
         key: "franchise",
         title: "Franchise",
         revealText: item?.franchisePrompt || "Placeholder franchise",
-        imageUrl: resolveFilmImageUrl(item?.franchiseImageUrl, item?.franchiseSourcePageUrl || item?.imageSourcePageUrl, stageImageUrl),
+        imageUrl: resolveFilmImageUrl(item?.franchiseImageUrl, {
+          sourcePageUrl: item?.franchiseSourcePageUrl || item?.imageSourcePageUrl,
+          imageHint: item?.franchiseImageHint || item?.imageSearchHint,
+          seedKey: `${item?.id || "film"}-franchise`,
+          fallbackUrl: stageImageUrl
+        }),
         imageAlt: item?.franchiseImageHint || "Franchise visual",
         sourceUrl: item?.franchiseSourcePageUrl || item?.imageSourcePageUrl || ""
       },
@@ -6169,7 +6221,12 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
         key: "funFact",
         title: "Fun Fact",
         revealText: item?.funFactPrompt || "Placeholder fun fact",
-        imageUrl: resolveFilmImageUrl(item?.funFactImageUrl, item?.funFactSourcePageUrl || item?.imageSourcePageUrl, stageImageUrl),
+        imageUrl: resolveFilmImageUrl(item?.funFactImageUrl, {
+          sourcePageUrl: item?.funFactSourcePageUrl || item?.imageSourcePageUrl,
+          imageHint: item?.funFactImageHint || item?.imageSearchHint,
+          seedKey: `${item?.id || "film"}-funfact`,
+          fallbackUrl: stageImageUrl
+        }),
         imageAlt: item?.funFactImageHint || "Fun Fact visual",
         sourceUrl: item?.funFactSourcePageUrl || item?.imageSourcePageUrl || ""
       }
