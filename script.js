@@ -5535,12 +5535,14 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
           const isUsed = roundState.usedCategoryIds.includes(entry.id);
           const isSelected = entry.id === roundState.selectedCategoryId;
           const statusLabel = isUsed ? "USED" : "TOPIC";
+          const previewText = getTriviaCategoryQuestion(entry).slice(0, 96);
           return `
             <button class="show-trivia-topic-tile ${isSelected ? "is-selected" : ""}" type="button" data-show-trivia-topic="${
               entry.id
             }" ${isUsed ? "disabled" : ""}>
               <span class="show-trivia-topic-status ${isUsed ? "is-used" : ""}">${statusLabel}</span>
               <span class="show-trivia-topic-title">${escapeHtml(entry.title)}</span>
+              <span class="show-trivia-topic-preview">${escapeHtml(previewText)}${previewText.length >= 96 ? "..." : ""}</span>
             </button>
           `;
         })
@@ -5581,11 +5583,16 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
     }
 
     if (liveStep === "question-screen") {
+      const questionTextBase = category ? getTriviaCategoryQuestion(category) : "";
+      const questionText =
+        questionTextBase && questionTextBase.trim().length > 0
+          ? questionTextBase
+          : `Question missing for ${category?.title || "Trivia topic"}.`;
       return `
         <section class="show-trivia-qa-stage">
           <p class="show-info-label">Topic</p>
           <p class="show-trivia-category-title">${escapeHtml(category?.title || "No topic selected")}</p>
-          <h2 class="show-trivia-question">${escapeHtml(category ? getTriviaCategoryQuestion(category) : "Select a topic to continue.")}</h2>
+          <h2 class="show-trivia-question">${escapeHtml(questionText)}</h2>
           <div class="show-trivia-options-grid">
             ${options
               .map((option, index) => {

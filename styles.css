@@ -131,7 +131,7 @@ body {
   padding: 10px;
 }
 
-.show-shell.is-live-round-focus .show-main-card h2 {
+.show-shell.is-live-round-focus #showScreenTitle {
   display: none;
 }
 
