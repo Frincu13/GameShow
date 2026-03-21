@@ -1579,6 +1579,18 @@ function resolveFilmImageUrl(primaryUrl, options = {}) {
   return fallbackUrl;
 }
 
+function buildRemoteImageProxyUrl(imageUrl) {
+  const safeUrl = sanitizeString(imageUrl, "").trim();
+  if (!safeUrl) {
+    return "";
+  }
+  if (!/^https?:\/\//i.test(safeUrl)) {
+    return safeUrl;
+  }
+  const stripped = safeUrl.replace(/^https?:\/\//i, "");
+  return `https://images.weserv.nl/?url=${encodeURIComponent(stripped)}&w=1600&q=88&output=jpg`;
+}
+
 function matchesAnyLegacyPattern(value, patterns) {
   const token = normalizeTextToken(value);
   if (!token) {
@@ -6221,6 +6233,9 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
       defaultImageUrl: CHARACTER_IMAGE_LINKS_BY_ID.get(Math.max(0, Number(item?.id?.replace("film-item-", "")) - 1)),
       fallbackUrl: FILM_FALLBACK_IMAGE
     });
+    const stageImageProxyUrl = buildRemoteImageProxyUrl(stageImageUrl);
+    const stageImagePrimaryUrl = stageImageProxyUrl || stageImageUrl;
+    const stageImageFallbackUrl = stageImagePrimaryUrl !== stageImageUrl ? stageImageUrl : FILM_FALLBACK_IMAGE;
     const breakdown = getFilmRoundBreakdown(roundState, roundState.betAmount, playingTeamKey);
     const cardConfig = [
       {
@@ -6307,7 +6322,12 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
         <section class="show-stage-stack">
           <p class="show-info-label">Image + Cards</p>
           <figure class="show-film-stage-figure">
-            <img src="${escapeHtml(stageImageUrl)}" alt="${escapeHtml(item?.imageAlt || "Round image")}">
+            <img
+              src="${escapeHtml(stageImagePrimaryUrl)}"
+              alt="${escapeHtml(item?.imageAlt || "Round image")}"
+              data-fallback-src="${escapeHtml(stageImageFallbackUrl)}"
+              data-ultimate-fallback-src="${escapeHtml(FILM_FALLBACK_IMAGE)}"
+            >
             <figcaption>${escapeHtml(item?.title || "No round item selected")}</figcaption>
           </figure>
           <div class="show-film-card-grid">
@@ -12925,6 +12945,26 @@ function bindEvents() {
     elements.showScreenContent.addEventListener("change", (event) => {
       handleShowOverlayChange(event.target);
     });
+    elements.showScreenContent.addEventListener(
+      "error",
+      (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLImageElement)) {
+          return;
+        }
+        const fallbackSrc = sanitizeString(target.dataset.fallbackSrc, "").trim();
+        const ultimateFallbackSrc = sanitizeString(target.dataset.ultimateFallbackSrc, "").trim();
+        const currentSrc = sanitizeString(target.getAttribute("src"), "").trim();
+        if (fallbackSrc && currentSrc !== fallbackSrc) {
+          target.setAttribute("src", fallbackSrc);
+          return;
+        }
+        if (ultimateFallbackSrc && currentSrc !== ultimateFallbackSrc) {
+          target.setAttribute("src", ultimateFallbackSrc);
+        }
+      },
+      true
+    );
     elements.showScreenContent.addEventListener("keydown", (event) => {
       const target = event.target;
       if (!(target instanceof HTMLElement)) {
