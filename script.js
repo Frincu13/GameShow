@@ -7293,12 +7293,26 @@ function buildLiveRoundQuickActions(gameId, liveStep) {
     const isUsedCategory = selectedCategory && triviaRoundState.usedCategoryIds.includes(selectedCategory.id);
     const hasTopic = Boolean(selectedCategory && !isUsedCategory);
     const flowComplete = isGameFlowComplete("trivia");
+    const totalPages = getTriviaTopicPageCount();
+    const pageIndex = clampTriviaTopicPageIndex(state.showUi.triviaPage, totalPages);
 
     if (liveStep === "topic-select") {
       if (hasTopic) {
         actions.push({ tone: "primary-btn", action: "live-step-bet-screen", label: "Continue to Bet" });
       }
       actions.push({ tone: "secondary-btn", action: "trivia-reset-used", label: "Reset topics" });
+      if (totalPages > 1) {
+        actions.push({
+          tone: "secondary-btn",
+          action: "trivia-page-prev",
+          label: `Prev page (${pageIndex + 1}/${totalPages})`
+        });
+        actions.push({
+          tone: "secondary-btn",
+          action: "trivia-page-next",
+          label: `Next page (${pageIndex + 1}/${totalPages})`
+        });
+      }
     } else if (liveStep === "bet-screen") {
       actions.push({ tone: "primary-btn", action: "trivia-confirm-bet", label: "Confirm Bet" });
       actions.push({ tone: "secondary-btn", action: "live-step-topic-select", label: "Back to Topics" });
@@ -8481,6 +8495,16 @@ function handleShowOverlayAction(action, trigger) {
   }
   if (action === "next-game") {
     nextGame();
+    return;
+  }
+  if (action === "trivia-page-prev") {
+    const totalPages = getTriviaTopicPageCount();
+    setTriviaTopicPageIndex(clampTriviaTopicPageIndex(state.showUi.triviaPage - 1, totalPages));
+    return;
+  }
+  if (action === "trivia-page-next") {
+    const totalPages = getTriviaTopicPageCount();
+    setTriviaTopicPageIndex(clampTriviaTopicPageIndex(state.showUi.triviaPage + 1, totalPages));
     return;
   }
   if (answerLockRequiredActions.has(action) && !isOverlayAnswerLocked()) {
