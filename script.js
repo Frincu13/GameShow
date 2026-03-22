@@ -12399,7 +12399,7 @@ function setTriviaTopicPageIndex(nextIndex, { persist = true } = {}) {
   if (persist) {
     saveState(`Trivia page set to ${clamped + 1}/${totalPages}.`);
   }
-  renderShowScreen();
+  renderShowUi();
 }
 
 function getTriviaCategoryOptions(category) {
