@@ -6291,15 +6291,7 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
 
     if (liveStep === "topic-select") {
       const totalPages = getTriviaTopicPageCount();
-      let pageIndex = clampTriviaTopicPageIndex(state.showUi.triviaPage, totalPages);
-      const selectedIndex = state.trivia.categories.findIndex((entry) => entry.id === roundState.selectedCategoryId);
-      if (selectedIndex >= 0) {
-        const selectedPage = Math.floor(selectedIndex / TRIVIA_TOPICS_PER_PAGE);
-        if (selectedPage !== pageIndex) {
-          pageIndex = selectedPage;
-          state.showUi.triviaPage = pageIndex;
-        }
-      }
+      const pageIndex = clampTriviaTopicPageIndex(state.showUi.triviaPage, totalPages);
       const pageStart = pageIndex * TRIVIA_TOPICS_PER_PAGE;
       const pageCategories = state.trivia.categories.slice(pageStart, pageStart + TRIVIA_TOPICS_PER_PAGE);
       const topicTiles = pageCategories
@@ -12274,6 +12266,12 @@ function setTriviaSelectedCategory(categoryId) {
   }
   if (triviaRoundState.usedCategoryIds.includes(categoryId)) {
     return;
+  }
+  const selectedIndex = state.trivia.categories.findIndex((category) => category.id === categoryId);
+  if (selectedIndex >= 0) {
+    const totalPages = getTriviaTopicPageCount();
+    const targetPage = Math.floor(selectedIndex / TRIVIA_TOPICS_PER_PAGE);
+    state.showUi.triviaPage = clampTriviaTopicPageIndex(targetPage, totalPages);
   }
   triviaRoundState.selectedCategoryId = categoryId;
   triviaRoundState.selectedOptionIndex = -1;
