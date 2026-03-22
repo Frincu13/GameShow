@@ -4887,6 +4887,7 @@ function getFlowGameEndRule(gameId) {
 
 function isGameFlowComplete(gameId) {
   if (gameId === "trivia") {
+    ensureTriviaCategoryBankExpanded();
     const roundState = getOrCreateTriviaRoundState();
     const total = Math.min(getGameRoundLimit("trivia"), Math.max(0, state.trivia.categories.length));
     return total > 0 && roundState.usedCategoryIds.length >= total;
@@ -12344,6 +12345,38 @@ function resetTriviaUsedCategories() {
   renderTriviaControls();
   setLastResultSummary("Trivia used categories reset for current round.");
   saveState("Trivia categories reset.");
+}
+
+function ensureTriviaCategoryBankExpanded() {
+  const fallback = DEFAULT_TRIVIA_CATEGORIES;
+  if (!Array.isArray(state.trivia.categories)) {
+    state.trivia.categories = fallback.map((entry) => ({ ...entry }));
+    return;
+  }
+  if (state.trivia.categories.length >= fallback.length) {
+    return;
+  }
+  const existingIdSet = new Set(state.trivia.categories.map((entry) => entry.id));
+  const existingTitleSet = new Set(state.trivia.categories.map((entry) => normalizeTextToken(entry.title)));
+  for (const fallbackCategory of fallback) {
+    if (state.trivia.categories.length >= fallback.length) {
+      break;
+    }
+    const fallbackTitleToken = normalizeTextToken(fallbackCategory.title);
+    if (existingTitleSet.has(fallbackTitleToken)) {
+      continue;
+    }
+    let nextId = sanitizeString(fallbackCategory.id, "").trim();
+    if (!nextId || existingIdSet.has(nextId)) {
+      nextId = `trivia-cat-${state.trivia.categories.length}`;
+    }
+    existingIdSet.add(nextId);
+    existingTitleSet.add(fallbackTitleToken);
+    state.trivia.categories.push({
+      ...fallbackCategory,
+      id: nextId
+    });
+  }
 }
 
 function getTriviaTopicPageCount(categories = state.trivia.categories) {
