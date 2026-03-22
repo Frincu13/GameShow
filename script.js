@@ -8,6 +8,7 @@ const RESULT_UNDO_LIMIT = 30;
 const SAVE_EXPORT_FORMAT_VERSION = 1;
 const CURSE_RACE_TICK_MS = 520;
 const CURSE_RACE_FINISH_REVEAL_DELAY_MS = 1500;
+const TRIVIA_TOPICS_PER_PAGE = 18;
 
 const SECTION_IDS = [
   "home",
@@ -504,6 +505,416 @@ const DEFAULT_TRIVIA_CATEGORIES = [
     ],
     correctAnswerIndex: 3,
     answer: "O singura lumina centrala foarte puternica"
+  },
+  {
+    id: "19",
+    title: "Skincare activi",
+    question: "Ce ingredient este cunoscut in special pentru efectul de calmare si reparare a barierei pielii?",
+    options: ["Niacinamide", "Retinol", "Benzoyl peroxide", "AHA"],
+    correctAnswerIndex: 0,
+    answer: "Niacinamide"
+  },
+  {
+    id: "20",
+    title: "Chimie de baza",
+    question: "Care dintre urmatoarele este simbolul chimic al sodiului?",
+    options: ["So", "Sd", "Na", "S"],
+    correctAnswerIndex: 2,
+    answer: "Na"
+  },
+  {
+    id: "21",
+    title: "Arhitectura & stiluri",
+    question: "Ce stil este asociat frecvent cu arcade ascutite, vitralii mari si catedrale inalte?",
+    options: ["Baroc", "Gotic", "Rococo", "Brutalist"],
+    correctAnswerIndex: 1,
+    answer: "Gotic"
+  },
+  {
+    id: "22",
+    title: "Pictura celebra",
+    question: "Cine a pictat lucrarea \"Guernica\"?",
+    options: ["Salvador Dali", "Francisco Goya", "Pablo Picasso", "Diego Velazquez"],
+    correctAnswerIndex: 2,
+    answer: "Pablo Picasso"
+  },
+  {
+    id: "23",
+    title: "Sah tactic",
+    question: "Cum se numeste situatia in care o piesa ataca simultan doua tinte importante?",
+    options: ["Pin", "Fork", "Skewer", "Gambit"],
+    correctAnswerIndex: 1,
+    answer: "Fork"
+  },
+  {
+    id: "24",
+    title: "Sah campioni",
+    question: "Cine a devenit campion mondial de sah in 2013, invingandu-l pe Viswanathan Anand?",
+    options: ["Fabiano Caruana", "Magnus Carlsen", "Hikaru Nakamura", "Ding Liren"],
+    correctAnswerIndex: 1,
+    answer: "Magnus Carlsen"
+  },
+  {
+    id: "25",
+    title: "Stomatologie",
+    question: "Cum se numeste procedura prin care se indeparteaza nervul din interiorul dintelui?",
+    options: ["Detartraj", "Obturatie", "Tratament endodontic", "Albire"],
+    correctAnswerIndex: 2,
+    answer: "Tratament endodontic"
+  },
+  {
+    id: "26",
+    title: "Medicina generala",
+    question: "Care este organul principal responsabil pentru filtrarea sangelui si producerea urinei?",
+    options: ["Ficatul", "Pancreasul", "Rinichiul", "Plamanul"],
+    correctAnswerIndex: 2,
+    answer: "Rinichiul"
+  },
+  {
+    id: "27",
+    title: "Catan avansat",
+    question: "In Catan, cate puncte valoreaza in mod normal o asezare?",
+    options: ["1", "2", "3", "0"],
+    correctAnswerIndex: 0,
+    answer: "1"
+  },
+  {
+    id: "28",
+    title: "Board games",
+    question: "In Ticket to Ride, scopul principal este sa conectezi ce?",
+    options: ["Insule", "Orase", "Aeroporturi", "Porturi"],
+    correctAnswerIndex: 1,
+    answer: "Orase"
+  },
+  {
+    id: "29",
+    title: "Disney",
+    question: "Cum se numeste pestele-clovn din Finding Nemo?",
+    options: ["Marlin", "Dory", "Gill", "Bruce"],
+    correctAnswerIndex: 0,
+    answer: "Marlin"
+  },
+  {
+    id: "30",
+    title: "Copii & personaje",
+    question: "Cum se numeste porcusorul din serialul animat pentru copii care are un frate pe nume George?",
+    options: ["Masha", "Peppa", "Bluey", "Dora"],
+    correctAnswerIndex: 1,
+    answer: "Peppa"
+  },
+  {
+    id: "31",
+    title: "WWII fronturi",
+    question: "Debarcarea din Normandia este cunoscuta si sub numele de:",
+    options: ["D-Day", "VE Day", "VJ Day", "Battle of Britain"],
+    correctAnswerIndex: 0,
+    answer: "D-Day"
+  },
+  {
+    id: "32",
+    title: "WWII lideri",
+    question: "Cine era prim-ministrul Marii Britanii in cea mai mare parte a celui de-Al Doilea Razboi Mondial?",
+    options: ["Neville Chamberlain", "Winston Churchill", "Clement Attlee", "Edward Heath"],
+    correctAnswerIndex: 1,
+    answer: "Winston Churchill"
+  },
+  {
+    id: "33",
+    title: "Fotbal competitii",
+    question: "Ce echipa nationala a castigat Cupa Mondiala din 2018?",
+    options: ["Croatia", "Franta", "Germania", "Argentina"],
+    correctAnswerIndex: 1,
+    answer: "Franta"
+  },
+  {
+    id: "34",
+    title: "Fotbal cluburi",
+    question: "Pe ce stadion joaca FC Barcelona meciurile de acasa, traditional?",
+    options: ["Santiago Bernabeu", "Camp Nou", "Metropolitano", "Mestalla"],
+    correctAnswerIndex: 1,
+    answer: "Camp Nou"
+  },
+  {
+    id: "35",
+    title: "EURO 2016",
+    question: "Cine a marcat golul victoriei Portugaliei in finala EURO 2016?",
+    options: ["Cristiano Ronaldo", "Nani", "Eder", "Joao Mario"],
+    correctAnswerIndex: 2,
+    answer: "Eder"
+  },
+  {
+    id: "36",
+    title: "Franta & legende",
+    question: "Cine purta tricoul cu numarul 7 pentru Franta la EURO 2016?",
+    options: ["Griezmann", "Payet", "Pogba", "Giroud"],
+    correctAnswerIndex: 0,
+    answer: "Griezmann"
+  },
+  {
+    id: "37",
+    title: "Motoare BMW",
+    question: "BMW B58 este succesorul direct al carui motor celebru?",
+    options: ["S55", "N54/N55 family", "B48", "M54"],
+    correctAnswerIndex: 1,
+    answer: "N54/N55 family"
+  },
+  {
+    id: "38",
+    title: "Masini & tractiune",
+    question: "Ce configuratie ofera, in general, cea mai buna distributie a puterii catre toate cele 4 roti?",
+    options: ["FWD", "RWD", "AWD", "2WD"],
+    correctAnswerIndex: 2,
+    answer: "AWD"
+  },
+  {
+    id: "39",
+    title: "Supercar tech",
+    question: "Ce inseamna, in mod obisnuit, abrevierea ABS la o masina?",
+    options: ["Automatic Balance System", "Anti-lock Braking System", "Active Brake Suspension", "Advanced Body Stability"],
+    correctAnswerIndex: 1,
+    answer: "Anti-lock Braking System"
+  },
+  {
+    id: "40",
+    title: "F1 2020+",
+    question: "In ce an a debutat regulamentul de monoposturi F1 cu efect de sol in era moderna recenta?",
+    options: ["2020", "2021", "2022", "2023"],
+    correctAnswerIndex: 2,
+    answer: "2022"
+  },
+  {
+    id: "41",
+    title: "F1 echipe",
+    question: "Ce echipa folosea numele AlphaTauri inainte de a fi redenumita astfel?",
+    options: ["Toro Rosso", "Sauber", "Force India", "Williams"],
+    correctAnswerIndex: 0,
+    answer: "Toro Rosso"
+  },
+  {
+    id: "42",
+    title: "Max quotes",
+    question:
+      "Cine a spus despre Verstappen, in esenta, ca este \"cel mai bun de pe grila si foarte greu de invins cand are masina potrivita\"?",
+    options: ["Fernando Alonso", "George Russell", "Zak Brown", "Jacques Villeneuve"],
+    correctAnswerIndex: 0,
+    answer: "Fernando Alonso"
+  },
+  {
+    id: "43",
+    title: "Design interior",
+    question: "Ce stil de design interior pune accent pe materiale brute, metal, beton si look urban?",
+    options: ["Scandinav", "Industrial", "Art Deco", "Coastal"],
+    correctAnswerIndex: 1,
+    answer: "Industrial"
+  },
+  {
+    id: "44",
+    title: "Design & culori",
+    question: "Cum se numesc culorile precum bej, grej, crem si alb cald, folosite frecvent ca baza in interioare?",
+    options: ["Neon", "Primare", "Neutre", "Complementare"],
+    correctAnswerIndex: 2,
+    answer: "Neutre"
+  },
+  {
+    id: "45",
+    title: "Business termeni",
+    question: "Cum se numeste profitul ramas dupa ce din venituri se scad toate cheltuielile?",
+    options: ["Cashflow", "Marja bruta", "Profit net", "Break-even"],
+    correctAnswerIndex: 2,
+    answer: "Profit net"
+  },
+  {
+    id: "46",
+    title: "Marketing",
+    question: "Cum se numeste procesul prin care o companie construieste imaginea si identitatea unui produs sau brand?",
+    options: ["Outsourcing", "Branding", "Forecasting", "Auditing"],
+    correctAnswerIndex: 1,
+    answer: "Branding"
+  },
+  {
+    id: "47",
+    title: "Literatura romana",
+    question: "Cine a scris romanul \"Morometii\"?",
+    options: ["Marin Preda", "Mihail Sadoveanu", "Liviu Rebreanu", "George Calinescu"],
+    correctAnswerIndex: 0,
+    answer: "Marin Preda"
+  },
+  {
+    id: "48",
+    title: "Mircea Eliade",
+    question: "Cum se numeste nuvela lui Mircea Eliade cu personajul Gavrilescu?",
+    options: ["La tiganci", "Domnisoara Christina", "Maitreyi", "Nunta in cer"],
+    correctAnswerIndex: 0,
+    answer: "La tiganci"
+  },
+  {
+    id: "49",
+    title: "Istoria Romaniei",
+    question: "Cum se numea spatiul locuit de geto-daci in Antichitate, in linii mari?",
+    options: ["Iliria", "Dacia", "Moesia", "Pannonia"],
+    correctAnswerIndex: 1,
+    answer: "Dacia"
+  },
+  {
+    id: "50",
+    title: "Arhitectura veche",
+    question: "Stilul brancovenesc este asociat cel mai mult cu ce spatiu cultural?",
+    options: ["Transilvania medievala", "Tara Romaneasca", "Moldova fanariota", "Dobrogea otomana"],
+    correctAnswerIndex: 1,
+    answer: "Tara Romaneasca"
+  },
+  {
+    id: "51",
+    title: "Vedete Romania",
+    question:
+      "Cine a fost cunoscuta in tabloide si reality TV pentru replici memorabile si aparitii foarte extravagante, fiind des asociata cu perioada 'wow monden' de la TV?",
+    options: ["Andreea Tonciu", "Andreea Esca", "Irina Rimes", "Andreea Marin"],
+    correctAnswerIndex: 0,
+    answer: "Andreea Tonciu"
+  },
+  {
+    id: "52",
+    title: "Replici mondene",
+    question:
+      "Cine este vedeta cunoscuta pentru imaginea de 'bomba sexy' si aparitiile frecvente in presa tabloida, asociata adesea cu replici amuzante si viata mondena intensa?",
+    options: ["Daniela Crudu", "Monica Birladeanu", "Teo Trandafir", "Andra"],
+    correctAnswerIndex: 0,
+    answer: "Daniela Crudu"
+  },
+  {
+    id: "53",
+    title: "Romania orase",
+    question: "In ce oras se afla Palatul Culturii, cladire emblematica a Moldovei?",
+    options: ["Bacau", "Suceava", "Iasi", "Piatra Neamt"],
+    correctAnswerIndex: 2,
+    answer: "Iasi"
+  },
+  {
+    id: "54",
+    title: "Geografie generala",
+    question: "Care este cel mai mare continent ca suprafata?",
+    options: ["Africa", "Asia", "Europa", "America de Sud"],
+    correctAnswerIndex: 1,
+    answer: "Asia"
+  },
+  {
+    id: "55",
+    title: "Capitale",
+    question: "Care este capitala Canadei?",
+    options: ["Toronto", "Vancouver", "Ottawa", "Montreal"],
+    correctAnswerIndex: 2,
+    answer: "Ottawa"
+  },
+  {
+    id: "56",
+    title: "Seriale",
+    question: "Cum se numeste familia principala din serialul Succession?",
+    options: ["Logan", "Roy", "Pierce", "Murdock"],
+    correctAnswerIndex: 1,
+    answer: "Roy"
+  },
+  {
+    id: "57",
+    title: "Filme Marvel",
+    question: "Cum se numeste metalul fictiv din care este facut scutul lui Captain America?",
+    options: ["Adamantium", "Vibranium", "Beskar", "Titansteel"],
+    correctAnswerIndex: 1,
+    answer: "Vibranium"
+  },
+  {
+    id: "58",
+    title: "Muzica pop culture",
+    question: "Ce artista este cunoscuta pentru albumul \"1989\"?",
+    options: ["Ariana Grande", "Taylor Swift", "Dua Lipa", "Selena Gomez"],
+    correctAnswerIndex: 1,
+    answer: "Taylor Swift"
+  },
+  {
+    id: "59",
+    title: "General knowledge",
+    question: "Ce planeta este cunoscuta drept \"Planeta Rosie\"?",
+    options: ["Venus", "Jupiter", "Marte", "Mercur"],
+    correctAnswerIndex: 2,
+    answer: "Marte"
+  },
+  {
+    id: "60",
+    title: "Istorie europeana",
+    question: "In ce oras se afla celebrul turn Eiffel?",
+    options: ["Lyon", "Marsilia", "Paris", "Bruxelles"],
+    correctAnswerIndex: 2,
+    answer: "Paris"
+  },
+  {
+    id: "61",
+    title: "Interior & materiale",
+    question:
+      "Cum se numeste materialul compozit foarte folosit la blaturi moderne de bucatarie, apreciat pentru rezistenta si aspect uniform?",
+    options: ["Rigips", "Quartz compozit", "OSB", "PVC expandat"],
+    correctAnswerIndex: 1,
+    answer: "Quartz compozit"
+  },
+  {
+    id: "62",
+    title: "Fotbal jucatori",
+    question: "Pentru ce tara a jucat Zinedine Zidane la nivel de echipa nationala?",
+    options: ["Algeria", "Franta", "Belgia", "Tunisia"],
+    correctAnswerIndex: 1,
+    answer: "Franta"
+  },
+  {
+    id: "63",
+    title: "Masini premium",
+    question: "In gama BMW, litera 'M' este asociata in principal cu:",
+    options: [
+      "Modele electrice entry-level",
+      "Modele de performanta si motorsport",
+      "Modele diesel de flota",
+      "Modele exclusiv SUV"
+    ],
+    correctAnswerIndex: 1,
+    answer: "Modele de performanta si motorsport"
+  },
+  {
+    id: "64",
+    title: "F1 circuite",
+    question: "Pe ce circuit se desfasoara traditional Marele Premiu al Principatului Monaco?",
+    options: ["Monza", "Spa-Francorchamps", "Circuit de Monaco", "Imola"],
+    correctAnswerIndex: 2,
+    answer: "Circuit de Monaco"
+  },
+  {
+    id: "65",
+    title: "Cultura generala fun",
+    question: "Ce animal este simbolul folosit frecvent pentru jocul de sah la piesa calului?",
+    options: ["Cerb", "Cal", "Leu", "Lup"],
+    correctAnswerIndex: 1,
+    answer: "Cal"
+  },
+  {
+    id: "66",
+    title: "Istorie & migratii",
+    question: "Ce popor migrator a exercitat o influenta importanta in spatiul romanesc in Evul Mediu timpuriu?",
+    options: ["Vikingii", "Slavii", "Celtii", "Normanzii"],
+    correctAnswerIndex: 1,
+    answer: "Slavii"
+  },
+  {
+    id: "67",
+    title: "Business strategie",
+    question: "Cum se numeste punctul in care veniturile totale sunt egale cu costurile totale?",
+    options: ["Cashout point", "Break-even point", "Profit threshold", "Margin point"],
+    correctAnswerIndex: 1,
+    answer: "Break-even point"
+  },
+  {
+    id: "68",
+    title: "Vedete & TV",
+    question:
+      "Cine este cunoscuta pentru expresia si stilul foarte direct, fiind una dintre cele mai recognoscibile prezente mondene din Romania anilor 2010?",
+    options: ["Andreea Tonciu", "Paula Seling", "Delia", "Andreea Raicu"],
+    correctAnswerIndex: 0,
+    answer: "Andreea Tonciu"
   }
 ];
 const PRETUL_PRODUCT_PLACEHOLDER =
@@ -1174,7 +1585,8 @@ const DEFAULT_STATE = {
     lineupReadyByGame: {},
     answerLocked: false,
     hostPanelOpen: false,
-    adminAdvancedOpen: false
+    adminAdvancedOpen: false,
+    triviaPage: 0
   },
   settings: {
     showTitle: "GameShow Friday Night",
@@ -2159,7 +2571,7 @@ function rosterTextToPlayers(rosterText, teamKey) {
 
 function sanitizeTriviaCategories(rawCategories) {
   const fallback = cloneDefaultState().trivia.categories;
-  const minimumTriviaCategories = Math.max(1, Math.round(sanitizeNumber(GAME_ROUND_LIMITS.trivia, 18)));
+  const minimumTriviaCategories = Math.max(1, fallback.length);
   if (!Array.isArray(rawCategories) || rawCategories.length === 0) {
     return fallback;
   }
@@ -2194,7 +2606,10 @@ function sanitizeTriviaCategories(rawCategories) {
     }
 
     let correctAnswerIndex = Math.round(
-      sanitizeNumber(rawCategory?.correctAnswerIndex, sanitizeNumber(rawCategory?.correctOptionIndex, 0))
+      sanitizeNumber(
+        rawCategory?.correctAnswerIndex,
+        sanitizeNumber(rawCategory?.correctOptionIndex, sanitizeNumber(rawCategory?.correctAnswer, 0))
+      )
     );
     if (correctAnswerIndex < 0 || correctAnswerIndex >= options.length) {
       correctAnswerIndex = options.findIndex((option) => normalizeTextToken(option) === normalizeTextToken(answer));
@@ -3213,6 +3628,7 @@ function sanitizeState(rawState) {
   clean.showUi.answerLocked = Boolean(source.showUi?.answerLocked);
   clean.showUi.hostPanelOpen = Boolean(source.showUi?.hostPanelOpen);
   clean.showUi.adminAdvancedOpen = Boolean(source.showUi?.adminAdvancedOpen);
+  clean.showUi.triviaPage = Math.max(0, Math.floor(sanitizeNumber(source.showUi?.triviaPage, 0)));
 
   clean.settings.showTitle =
     sanitizeString(source.settings?.showTitle, clean.settings.showTitle).trim() || clean.settings.showTitle;
@@ -4540,6 +4956,9 @@ function ensureShowUiState() {
   }
   if (typeof state.showUi.answerLocked !== "boolean") {
     state.showUi.answerLocked = false;
+  }
+  if (typeof state.showUi.triviaPage !== "number" || Number.isNaN(state.showUi.triviaPage)) {
+    state.showUi.triviaPage = 0;
   }
   if (
     currentGameId === "film-joc-franciza-fun-fact" &&
@@ -5870,7 +6289,19 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
     ).sort((left, right) => left - right);
 
     if (liveStep === "topic-select") {
-      const topicTiles = state.trivia.categories
+      const totalPages = getTriviaTopicPageCount();
+      let pageIndex = clampTriviaTopicPageIndex(state.showUi.triviaPage, totalPages);
+      const selectedIndex = state.trivia.categories.findIndex((entry) => entry.id === roundState.selectedCategoryId);
+      if (selectedIndex >= 0) {
+        const selectedPage = Math.floor(selectedIndex / TRIVIA_TOPICS_PER_PAGE);
+        if (selectedPage !== pageIndex) {
+          pageIndex = selectedPage;
+          state.showUi.triviaPage = pageIndex;
+        }
+      }
+      const pageStart = pageIndex * TRIVIA_TOPICS_PER_PAGE;
+      const pageCategories = state.trivia.categories.slice(pageStart, pageStart + TRIVIA_TOPICS_PER_PAGE);
+      const topicTiles = pageCategories
         .map((entry) => {
           const isUsed = roundState.usedCategoryIds.includes(entry.id);
           const isSelected = entry.id === roundState.selectedCategoryId;
@@ -5885,6 +6316,17 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
           `;
         })
         .join("");
+      const pageButtons =
+        totalPages > 1
+          ? Array.from({ length: totalPages }, (_, idx) => {
+              const active = idx === pageIndex ? "is-active" : "";
+              return `<button class="pill-btn show-trivia-page-btn ${active}" type="button" data-show-trivia-page="${idx}">${
+                idx + 1
+              }</button>`;
+            }).join("")
+          : "";
+      const prevDisabled = pageIndex <= 0 ? "disabled" : "";
+      const nextDisabled = pageIndex >= totalPages - 1 ? "disabled" : "";
       return `
         <div class="show-round-card show-trivia-turn-card">
           <p class="show-info-label">Active Team</p>
@@ -5892,6 +6334,15 @@ function buildLiveRoundFocusContent(gameId, liveStep) {
           <p class="show-round-copy">Pick one topic card.</p>
         </div>
         <div class="show-trivia-topic-grid">${topicTiles}</div>
+        ${
+          totalPages > 1
+            ? `<div class="show-trivia-topic-pagination">
+                <button class="pill-btn show-trivia-page-nav" type="button" data-show-trivia-page="prev" ${prevDisabled}>Prev</button>
+                <div class="show-trivia-topic-pages">${pageButtons}</div>
+                <button class="pill-btn show-trivia-page-nav" type="button" data-show-trivia-page="next" ${nextDisabled}>Next</button>
+              </div>`
+            : ""
+        }
       `;
     }
 
@@ -8444,6 +8895,22 @@ function handleShowOverlayClick(event) {
   if (triviaTopicButton) {
     const topicId = triviaTopicButton.getAttribute("data-show-trivia-topic");
     selectTriviaTopicFromOverlay(topicId);
+    return;
+  }
+
+  const triviaPageButton = event.target.closest("[data-show-trivia-page]");
+  if (triviaPageButton) {
+    const pageValue = triviaPageButton.getAttribute("data-show-trivia-page") || "";
+    const totalPages = getTriviaTopicPageCount();
+    let nextIndex = clampTriviaTopicPageIndex(state.showUi.triviaPage, totalPages);
+    if (pageValue === "prev") {
+      nextIndex -= 1;
+    } else if (pageValue === "next") {
+      nextIndex += 1;
+    } else {
+      nextIndex = Math.floor(sanitizeNumber(pageValue, nextIndex));
+    }
+    setTriviaTopicPageIndex(nextIndex);
     return;
   }
 
@@ -11855,6 +12322,29 @@ function resetTriviaUsedCategories() {
   saveState("Trivia categories reset.");
 }
 
+function getTriviaTopicPageCount(categories = state.trivia.categories) {
+  const total = Array.isArray(categories) ? categories.length : 0;
+  return Math.max(1, Math.ceil(total / TRIVIA_TOPICS_PER_PAGE));
+}
+
+function clampTriviaTopicPageIndex(value, totalPages) {
+  const numeric = Math.floor(sanitizeNumber(value, 0));
+  if (totalPages <= 1) {
+    return 0;
+  }
+  return Math.min(Math.max(numeric, 0), totalPages - 1);
+}
+
+function setTriviaTopicPageIndex(nextIndex, { persist = true } = {}) {
+  const totalPages = getTriviaTopicPageCount();
+  const clamped = clampTriviaTopicPageIndex(nextIndex, totalPages);
+  state.showUi.triviaPage = clamped;
+  if (persist) {
+    saveState(`Trivia page set to ${clamped + 1}/${totalPages}.`);
+  }
+  renderShowScreen();
+}
+
 function getTriviaCategoryOptions(category) {
   const rawOptions = Array.isArray(category?.options)
     ? category.options.map((option) => sanitizeString(option, "").trim()).filter((option) => option.length > 0)
@@ -11892,7 +12382,10 @@ function getTriviaCategoryOptions(category) {
 function getTriviaCorrectOptionIndex(category) {
   const options = getTriviaCategoryOptions(category);
   let index = Math.round(
-    sanitizeNumber(category?.correctAnswerIndex, sanitizeNumber(category?.correctOptionIndex, -1))
+    sanitizeNumber(
+      category?.correctAnswerIndex,
+      sanitizeNumber(category?.correctOptionIndex, sanitizeNumber(category?.correctAnswer, -1))
+    )
   );
   if (index < 0 || index >= options.length) {
     const answer = sanitizeString(category?.answer, "").trim();

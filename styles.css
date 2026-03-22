@@ -1473,6 +1473,34 @@ textarea:disabled {
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
+.show-trivia-topic-pagination {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+}
+
+.show-trivia-topic-pages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.show-trivia-page-btn.is-active {
+  border-color: rgba(246, 194, 73, 0.9);
+  color: #0d1a33;
+  background: rgba(246, 194, 73, 0.85);
+  box-shadow: 0 0 0 1px rgba(246, 194, 73, 0.3) inset;
+}
+
+.show-trivia-page-nav:disabled,
+.show-trivia-page-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .show-trivia-topic-tile {
   border: 1px solid rgba(122, 169, 255, 0.32);
   border-radius: 14px;
